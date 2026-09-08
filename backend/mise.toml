@@ -1,0 +1,6 @@
+[settings]
+# Railway (Railpack) instala Python vía mise. Ciertos builds de
+# python-build-standalone no publican "GitHub artifact attestations",
+# lo que hace fallar `mise install` aunque el binario sea válido (el
+# checksum sí se verifica igual). Se desactiva solo esa verificación.
+python.github_attestations = false
