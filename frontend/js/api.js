@@ -2,7 +2,7 @@
 // Ajusta API_URL al dominio real del backend antes de desplegar a producción.
 const API_URL = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
   ? 'http://localhost:8080'
-  : 'https://api.jgparfums.com';
+  : 'https://jg-parfums-production.up.railway.app';
 
 const TOKEN_KEY = 'jg_token';
 
