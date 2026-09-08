@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iniciar sesión — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .auth-wrap { max-width: 400px; margin: 0 auto; padding-block: var(--space-16); }
+  .auth-logo { height: 32px; margin-bottom: var(--space-8); }
+  .form-error { color: var(--danger); margin-bottom: var(--space-4); }
+  .auth-footer { text-align: center; margin-top: var(--space-6); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="container auth-wrap">
+    <a href="/index.html"><img class="auth-logo" src="/assets/logos/jg-parfums-onyx.svg" alt="JG Parfums"></a>
+    <h1 class="h1" style="margin-bottom: var(--space-6);">Inicia sesión</h1>
+
+    <form id="loginForm">
+      <p class="form-error" id="formError" hidden></p>
+      <div class="field">
+        <label for="email">Correo</label>
+        <input id="email" name="email" type="email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+    </form>
+
+    <p class="auth-footer">
+      <a class="link" href="/recuperar-password.html">Olvidé mi contraseña</a>
+    </p>
+    <p class="auth-footer text-muted">
+      ¿No tienes cuenta? <a class="link" href="/registro.html">Regístrate</a> o
+      <a class="link" href="/catalogo.html">compra como invitado</a>.
+    </p>
+  </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('formError');
+    errorEl.hidden = true;
+    const form = new FormData(event.target);
+
+    try {
+      const result = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
+      });
+      setToken(result.access_token);
+      const redirectTo = new URLSearchParams(window.location.search).get('next') || '/mi-cuenta.html';
+      window.location.href = redirectTo;
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi cuenta — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .account-header { display: flex; justify-content: space-between; align-items: center; padding-block: var(--space-8) var(--space-6); }
+  .order-row { padding: var(--space-4); margin-bottom: var(--space-3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
+  .guest-panel { max-width: 420px; padding: var(--space-8); text-align: center; }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/catalogo.html">Catálogo</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="nav-cart-count" data-cart-count hidden>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container" id="loggedOutView" hidden>
+    <div class="guest-panel card" style="margin: var(--space-16) auto;">
+      <h1 class="h2" style="margin-bottom: var(--space-4);">Mi cuenta</h1>
+      <p class="text-muted" style="margin-bottom: var(--space-6);">Inicia sesión para ver tu historial de pedidos.</p>
+      <a class="btn btn-primary btn-block" href="/login.html?next=/mi-cuenta.html">Iniciar sesión</a>
+      <p style="margin-top: var(--space-4);"><a class="link" href="/registro.html">Crear cuenta</a></p>
+    </div>
+  </div>
+
+  <div class="container" id="loggedInView" hidden>
+    <div class="account-header">
+      <div>
+        <h1 class="h1">Mi cuenta</h1>
+        <p class="text-muted" id="userEmail"></p>
+      </div>
+      <button class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+    </div>
+
+    <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
+    <div id="ordersList"></div>
+    <p class="empty-state" id="noOrders" hidden>Todavía no tienes pedidos. <a class="link" href="/catalogo.html">Ver catálogo</a>.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/cart.js"></script>
+<script>
+  const STATUS_LABEL = {
+    pending: 'Pago pendiente', paid: 'Pago confirmado', processing: 'En preparación',
+    shipped: 'Enviado', completed: 'Entregado', cancelled: 'Cancelado',
+  };
+
+  async function init() {
+    if (!isLoggedIn()) {
+      document.getElementById('loggedOutView').hidden = false;
+      return;
+    }
+
+    try {
+      const me = await apiFetch('/auth/me');
+      document.getElementById('userEmail').textContent = me.email;
+      document.getElementById('loggedInView').hidden = false;
+
+      const orders = await apiFetch('/orders/me');
+      if (orders.length === 0) {
+        document.getElementById('noOrders').hidden = false;
+      } else {
+        document.getElementById('ordersList').innerHTML = orders.map((order) => `
+          <div class="order-row card">
+            <div>
+              <p><strong>${order.order_number}</strong></p>
+              <p class="text-muted text-small">${new Date(order.created_at).toLocaleDateString('es-CO')}</p>
+            </div>
+            <div style="text-align:right;">
+              <p>${formatCOP(order.total)}</p>
+              <p class="text-small text-muted">${STATUS_LABEL[order.status] || order.status}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (err) {
+      document.getElementById('loggedOutView').hidden = false;
+    }
+  }
+
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    removeToken();
+    window.location.reload();
+  });
+
+  init();
+</script>
+</body>
+</html>

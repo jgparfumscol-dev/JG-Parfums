@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@400;500;600&display=swap');
+
+:root {
+  /* marca */
+  --jg-onyx: #201E1F;
+  --jg-gold: #D3AE6A;
+  --jg-paper: #F7F5F1;
+  --jg-white: #FFFFFF;
+  --jg-smoke: #6E6A67;
+
+  /* escala dorado */
+  --gold-50:  #F8F2E7;
+  --gold-100: #EFE1C8;
+  --gold-200: #E3CCA1;
+  --gold-400: #D3AE6A;
+  --gold-500: #CB9F4E;
+  --gold-600: #B18534;
+  --gold-700: #8E6B2A;
+  --gold-800: #6A501F;
+
+  /* neutros */
+  --ink-900: #201E1F;
+  --ink-800: #2C2A2B;
+  --ink-600: #6E6A67;
+  --ink-300: #C9C4BF;
+  --ink-100: #EDE9E3;
+
+  /* semánticos */
+  --success: #4E7A52;
+  --warning: #B5772A;
+  --danger:  #9E3B34;
+  --info:    #3F5D73;
+
+  /* roles */
+  --bg: var(--jg-paper);
+  --surface: var(--jg-white);
+  --text: var(--ink-900);
+  --text-muted: var(--ink-600);
+  --border: var(--ink-300);
+  --accent: var(--gold-400);
+  --accent-text: var(--gold-700);
+
+  /* tipografía */
+  --font-display: 'Bodoni Moda', 'Didot', Georgia, serif;
+  --font-body: 'Jost', 'Futura', 'Century Gothic', system-ui, sans-serif;
+
+  /* espaciado (escala de 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  --container-max: 1200px;
+  --radius: 2px;
+  --shadow-float: 0 8px 24px rgba(32, 30, 31, .12);
+}
+
+[data-theme="dark"] {
+  --bg: var(--ink-900);
+  --surface: var(--ink-800);
+  --text: #FFFFFF;
+  --text-muted: #B9B4B0;
+  --border: #3A3739;
+  --accent: var(--gold-400);
+  --accent-text: var(--gold-400);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
+
+.display { font-size: 40px; line-height: 1.05; letter-spacing: -0.02em; }
+.h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.01em; }
+.h2 { font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; }
+.h3 { font-family: var(--font-body); font-weight: 500; font-size: 20px; line-height: 1.3; margin: 0; }
+.text-small { font-size: 14px; line-height: 1.5; letter-spacing: 0.01em; }
+.text-caption { font-size: 12px; line-height: 1.4; letter-spacing: 0.03em; font-weight: 500; }
+.text-muted { color: var(--text-muted); }
+
+@media (min-width: 1024px) {
+  .display { font-size: 64px; }
+  .h1 { font-size: 48px; }
+  .h2 { font-size: 34px; }
+  .h3 { font-size: 22px; }
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .container { padding: 0 var(--space-12); }
+}
+
+.section {
+  padding-block: var(--space-16);
+}
+
+@media (min-width: 1024px) {
+  .section { padding-block: var(--space-24); }
+}
+
+.section-title {
+  position: relative;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 1px;
+  background: var(--gold-400);
+}
+
+.section-dark {
+  background: var(--ink-900);
+  color: #FFFFFF;
+}
+
+.section-dark .text-muted { color: #B9B4B0; }
+
+:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

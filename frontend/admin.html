@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .admin-header { display: flex; justify-content: space-between; align-items: center; padding-block: var(--space-6); border-bottom: 1px solid var(--ink-100); }
+  .admin-logo { height: 24px; }
+  .tabs { display: flex; gap: var(--space-6); border-bottom: 1px solid var(--ink-100); margin-bottom: var(--space-6); }
+  .tab-btn { background: none; border: none; padding: var(--space-3) 0; font-family: var(--font-body); font-size: 15px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+  .tab-btn.is-active { color: var(--jg-onyx); border-bottom-color: var(--gold-600); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--ink-100); vertical-align: middle; }
+  th { color: var(--text-muted); font-weight: 500; font-size: 12px; text-transform: none; }
+  .table-wrap { overflow-x: auto; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3); }
+  dialog { border: none; border-radius: var(--radius); padding: 0; max-width: 520px; width: 90vw; }
+  dialog::backdrop { background: rgba(32,30,31,.5); }
+  .dialog-inner { padding: var(--space-8); max-height: 80vh; overflow-y: auto; }
+  .dialog-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
+  .status-select { height: 36px; border: 1px solid var(--ink-300); border-radius: var(--radius); font-family: var(--font-body); }
+  .login-gate { max-width: 360px; margin: var(--space-24) auto; padding: var(--space-8); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--space-4); }
+  .image-row { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; margin-bottom: var(--space-2); }
+  .image-row img { width: 40px; height: 40px; object-fit: cover; }
+</style>
+</head>
+<body>
+<div id="loginGate" class="container login-gate card" hidden>
+  <h1 class="h2" style="margin-bottom: var(--space-4);">Panel JG Parfums</h1>
+  <form id="adminLoginForm">
+    <p class="form-error" id="loginError" style="color:var(--danger);" hidden></p>
+    <div class="field"><label for="email">Correo</label><input id="email" name="email" type="email" required></div>
+    <div class="field"><label for="password">Contraseña</label><input id="password" name="password" type="password" required></div>
+    <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="adminApp" hidden>
+  <header class="admin-header container">
+    <img class="admin-logo" src="/assets/logos/jg-parfums-onyx.svg" alt="JG Parfums">
+    <button class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+  </header>
+
+  <main class="container" style="padding-block: var(--space-6) var(--space-16);">
+    <div class="tabs">
+      <button class="tab-btn is-active" data-tab="products">Productos</button>
+      <button class="tab-btn" data-tab="orders">Pedidos</button>
+    </div>
+
+    <section id="tabProducts">
+      <div class="toolbar">
+        <h2 class="h3">Productos</h2>
+        <button class="btn btn-primary" id="newProductBtn">+ Nuevo producto</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Casa</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tabOrders" hidden>
+      <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>N.° pedido</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="productDialog">
+  <div class="dialog-inner">
+    <h2 class="h3" id="dialogTitle" style="margin-bottom: var(--space-4);">Nuevo producto</h2>
+    <form id="productForm">
+      <p class="form-error" id="productFormError" style="color:var(--danger);" hidden></p>
+      <div class="field"><label for="p_name">Nombre</label><input id="p_name" name="name" required></div>
+      <div class="field"><label for="p_slug">Slug (URL)</label><input id="p_slug" name="slug" required pattern="[a-z0-9-]+" placeholder="oud-royal"></div>
+      <div class="field"><label for="p_house">Casa</label><input id="p_house" name="house"></div>
+      <div class="field"><label for="p_description">Descripción</label><textarea id="p_description" name="description" required></textarea></div>
+      <div class="grid-2">
+        <div class="field"><label for="p_family">Familia olfativa</label><input id="p_family" name="olfactory_family" placeholder="amaderado"></div>
+        <div class="field"><label for="p_concentration">Concentración</label><input id="p_concentration" name="concentration" placeholder="EDP"></div>
+      </div>
+      <div class="field"><label for="p_notes_top">Notas de salida</label><input id="p_notes_top" name="notes_top"></div>
+      <div class="field"><label for="p_notes_heart">Notas de corazón</label><input id="p_notes_heart" name="notes_heart"></div>
+      <div class="field"><label for="p_notes_base">Notas de fondo</label><input id="p_notes_base" name="notes_base"></div>
+      <div class="grid-2">
+        <div class="field"><label for="p_size_ml">Tamaño (ml)</label><input id="p_size_ml" name="size_ml" type="number" min="1" required></div>
+        <div class="field"><label for="p_price">Precio (COP)</label><input id="p_price" name="price" type="number" min="1" required></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label for="p_stock">Stock</label><input id="p_stock" name="stock" type="number" min="0" required></div>
+        <div class="field"><label for="p_active">Estado</label>
+          <select id="p_active" name="is_active"><option value="true">Activo</option><option value="false">Inactivo</option></select>
+        </div>
+      </div>
+
+      <div id="imageSection" hidden>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Imágenes</p>
+        <div id="imageList"></div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2);">
+          <input id="newImageUrl" placeholder="URL de la imagen" style="flex:1; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <input id="newImageAlt" placeholder="Texto alternativo" style="flex:1; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <button class="btn btn-secondary" type="button" id="addImageBtn">Agregar</button>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" type="button" id="cancelDialogBtn">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<script src="/js/api.js"></script>
+<script>
+  let editingProductId = null;
+
+  async function checkAdmin() {
+    if (!isLoggedIn()) return showLoginGate();
+    try {
+      const me = await apiFetch('/auth/me');
+      if (!me.is_admin) return showLoginGate('Esta cuenta no tiene permisos de administrador');
+      document.getElementById('adminApp').hidden = false;
+      loadProducts();
+      loadOrders();
+    } catch (err) {
+      showLoginGate();
+    }
+  }
+
+  function showLoginGate(message) {
+    document.getElementById('loginGate').hidden = false;
+    document.getElementById('adminApp').hidden = true;
+    if (message) {
+      const errorEl = document.getElementById('loginError');
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+  }
+
+  document.getElementById('adminLoginForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('loginError');
+    errorEl.hidden = true;
+    const form = new FormData(event.target);
+    try {
+      const result = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
+      });
+      setToken(result.access_token);
+      document.getElementById('loginGate').hidden = true;
+      checkAdmin();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    removeToken();
+    window.location.reload();
+  });
+
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      document.getElementById('tabProducts').hidden = btn.dataset.tab !== 'products';
+      document.getElementById('tabOrders').hidden = btn.dataset.tab !== 'orders';
+    });
+  });
+
+  // --- Productos ---
+  async function loadProducts() {
+    const data = await apiFetch('/products?include_inactive=true&page_size=100');
+    document.getElementById('productsBody').innerHTML = data.items.map((p) => `
+      <tr>
+        <td>${p.name}</td>
+        <td class="text-muted">${p.house || '—'}</td>
+        <td>${formatCOP(p.price)}</td>
+        <td>${p.stock}</td>
+        <td>${p.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge text-muted">Inactivo</span>'}</td>
+        <td><button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button></td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => openProductDialog(data.items.find((p) => p.id === Number(btn.dataset.edit))));
+    });
+  }
+
+  function openProductDialog(product) {
+    editingProductId = product ? product.id : null;
+    document.getElementById('dialogTitle').textContent = product ? 'Editar producto' : 'Nuevo producto';
+    document.getElementById('productFormError').hidden = true;
+    const form = document.getElementById('productForm');
+    form.reset();
+
+    if (product) {
+      form.name.value = product.name;
+      form.slug.value = product.slug;
+      form.slug.disabled = true;
+      form.house.value = product.house || '';
+      form.description.value = product.description;
+      form.olfactory_family.value = product.olfactory_family || '';
+      form.concentration.value = product.concentration || '';
+      form.notes_top.value = product.notes_top || '';
+      form.notes_heart.value = product.notes_heart || '';
+      form.notes_base.value = product.notes_base || '';
+      form.size_ml.value = product.size_ml;
+      form.price.value = product.price;
+      form.stock.value = product.stock;
+      form.is_active.value = String(product.is_active);
+      document.getElementById('imageSection').hidden = false;
+      renderImages(product);
+    } else {
+      form.slug.disabled = false;
+      document.getElementById('imageSection').hidden = true;
+    }
+    document.getElementById('productDialog').showModal();
+  }
+
+  function renderImages(product) {
+    document.getElementById('imageList').innerHTML = product.images.map((img) => `
+      <div class="image-row"><img src="${img.url}" alt=""><span style="flex:1;">${img.alt_text}</span><button type="button" data-remove-image="${img.id}" class="remove-btn">Quitar</button></div>
+    `).join('');
+    document.querySelectorAll('[data-remove-image]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/images/${btn.dataset.removeImage}`, { method: 'DELETE' });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderImages(updated);
+      });
+    });
+  }
+
+  document.getElementById('addImageBtn').addEventListener('click', async () => {
+    const url = document.getElementById('newImageUrl').value.trim();
+    const alt = document.getElementById('newImageAlt').value.trim();
+    if (!url || !editingProductId) return;
+    await apiFetch(`/products/${editingProductId}/images`, {
+      method: 'POST',
+      body: JSON.stringify({ url, alt_text: alt || 'Producto JG Parfums', position: 0 }),
+    });
+    document.getElementById('newImageUrl').value = '';
+    document.getElementById('newImageAlt').value = '';
+    const slug = document.getElementById('p_slug').value;
+    const updated = await apiFetch(`/products/${slug}`);
+    renderImages(updated);
+  });
+
+  document.getElementById('newProductBtn').addEventListener('click', () => openProductDialog(null));
+  document.getElementById('cancelDialogBtn').addEventListener('click', () => document.getElementById('productDialog').close());
+
+  document.getElementById('productForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('productFormError');
+    errorEl.hidden = true;
+    const form = new FormData(event.target);
+    const payload = {
+      name: form.get('name'),
+      house: form.get('house') || null,
+      description: form.get('description'),
+      olfactory_family: form.get('olfactory_family') || null,
+      concentration: form.get('concentration') || null,
+      notes_top: form.get('notes_top') || null,
+      notes_heart: form.get('notes_heart') || null,
+      notes_base: form.get('notes_base') || null,
+      size_ml: Number(form.get('size_ml')),
+      price: Number(form.get('price')),
+      stock: Number(form.get('stock')),
+      is_active: form.get('is_active') === 'true',
+    };
+
+    try {
+      if (editingProductId) {
+        await apiFetch(`/products/${editingProductId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await apiFetch('/products', { method: 'POST', body: JSON.stringify({ ...payload, slug: form.get('slug') }) });
+      }
+      document.getElementById('productDialog').close();
+      loadProducts();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
+
+  // --- Pedidos ---
+  const ORDER_STATUSES = ['pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled'];
+  const STATUS_LABEL = { pending: 'Pendiente', paid: 'Pagado', processing: 'Preparando', shipped: 'Enviado', completed: 'Entregado', cancelled: 'Cancelado' };
+
+  async function loadOrders() {
+    const orders = await apiFetch('/orders');
+    document.getElementById('ordersBody').innerHTML = orders.map((order) => `
+      <tr>
+        <td>${order.order_number}</td>
+        <td>${order.guest_name}<br><span class="text-muted text-small">${order.guest_email}</span></td>
+        <td>${formatCOP(order.total)}</td>
+        <td class="text-small text-muted">${order.payment_provider || '—'} · ${order.payment_status}</td>
+        <td>
+          <select class="status-select" data-order="${order.id}">
+            ${ORDER_STATUSES.map((s) => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`).join('')}
+          </select>
+        </td>
+        <td class="text-small text-muted">${new Date(order.created_at).toLocaleDateString('es-CO')}</td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('[data-order]').forEach((select) => {
+      select.addEventListener('change', async () => {
+        await apiFetch(`/orders/${select.dataset.order}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: select.value }),
+        });
+      });
+    });
+  }
+
+  checkAdmin();
+</script>
+</body>
+</html>

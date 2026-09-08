@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JG Parfums — Perfumería de nicho en Colombia</title>
+<meta name="description" content="Perfumes originales de nicho. Notas, familia olfativa y duración de cada frasco, sin relleno.">
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 560px;
+    text-align: center;
+    gap: var(--space-6);
+  }
+  .hero-star { width: 40px; height: 40px; margin-inline: auto; }
+  .hero h1 { color: #FFFFFF; }
+  .hero p { max-width: 42ch; margin-inline: auto; }
+  .hero-actions { display: flex; flex-direction: column; gap: var(--space-3); align-items: center; }
+  @media (min-width: 640px) { .hero-actions { flex-direction: row; justify-content: center; } }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+  @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .product-card { text-decoration: none; color: inherit; display: block; }
+  .product-card-media {
+    aspect-ratio: 4 / 5;
+    background: var(--ink-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .product-card-media img { width: 100%; height: 100%; object-fit: cover; }
+  .product-card-body { padding: var(--space-3) var(--space-1) 0; }
+  .product-card-price { font-family: var(--font-body); font-weight: 600; font-size: 17px; margin-top: var(--space-1); }
+
+  .value-props {
+    display: grid;
+    gap: var(--space-8);
+  }
+  @media (min-width: 768px) { .value-props { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/catalogo.html">Catálogo</a></li>
+      <li><a href="/mi-cuenta.html">Mi cuenta</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="nav-icon-btn" href="/mi-cuenta.html" aria-label="Mi cuenta">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+      </a>
+      <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="nav-cart-count" data-cart-count hidden>0</span>
+      </a>
+      <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="nav-mobile-panel container" id="navMobilePanel">
+    <a href="/catalogo.html">Catálogo</a>
+    <a href="/mi-cuenta.html">Mi cuenta</a>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero section-dark">
+    <div class="container hero">
+      <img class="hero-star" src="/assets/logos/jg-star-blanco.svg" alt="">
+      <h1 class="display">Perfumes que se explican con hechos, no con adjetivos</h1>
+      <p class="text-muted">Notas, familia olfativa y duración de cada frasco. Nada de "experiencias sensoriales únicas".</p>
+      <div class="hero-actions">
+        <a class="btn btn-onDark" href="/catalogo.html">Ver catálogo</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="h2 section-title">Recién llegados</h2>
+      <div class="product-grid" id="featuredGrid" aria-live="polite"></div>
+      <p class="empty-state" id="featuredEmpty" hidden>Todavía no hay productos publicados. Vuelve pronto.</p>
+    </div>
+  </section>
+
+  <section class="section" style="background: var(--jg-white);">
+    <div class="container value-props">
+      <div>
+        <h3 class="h3">Frascos originales</h3>
+        <p class="text-muted text-small">Sin decants, sin imitaciones. Cada frasco es el original de la casa que lo produce.</p>
+      </div>
+      <div>
+        <h3 class="h3">Ficha completa</h3>
+        <p class="text-muted text-small">Notas de salida, corazón y fondo, concentración y duración estimada en cada producto.</p>
+      </div>
+      <div>
+        <h3 class="h3">Pago como prefieras</h3>
+        <p class="text-muted text-small">Tarjeta, PSE, Nequi o Bancolombia, sin salir del sitio.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+      <p class="text-muted text-small" style="margin-top:var(--space-4);">Perfumería de nicho en Colombia.</p>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
+      <ul class="footer-links">
+        <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
+        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
+        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Pago seguro</p>
+      <p class="text-muted text-small">Tarjetas, PSE, Nequi, botón Bancolombia y Mercado Pago.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/cart.js"></script>
+<script>
+  document.getElementById('navToggle').addEventListener('click', (event) => {
+    const panel = document.getElementById('navMobilePanel');
+    const isOpen = panel.classList.toggle('is-open');
+    event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  async function loadFeatured() {
+    const grid = document.getElementById('featuredGrid');
+    const empty = document.getElementById('featuredEmpty');
+    try {
+      const data = await apiFetch('/products?page_size=8');
+      if (data.items.length === 0) {
+        empty.hidden = false;
+        return;
+      }
+      grid.innerHTML = data.items.map((product) => `
+        <a class="product-card" href="/producto.html?slug=${encodeURIComponent(product.slug)}">
+          <div class="product-card-media">
+            ${product.images[0]
+              ? `<img src="${product.images[0].url}" alt="${product.images[0].alt_text}" loading="lazy">`
+              : ''}
+          </div>
+          <div class="product-card-body">
+            <p class="h3" style="font-size:15px;">${product.name}</p>
+            <p class="text-muted text-small">${product.size_ml} ml</p>
+            <p class="product-card-price">${formatCOP(product.price)}</p>
+          </div>
+        </a>
+      `).join('');
+    } catch (err) {
+      empty.hidden = false;
+      empty.textContent = 'No pudimos cargar el catálogo. Intenta de nuevo en un momento.';
+    }
+  }
+  loadFeatured();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagar — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .checkout-layout { display: flex; flex-direction: column; gap: var(--space-8); padding-block: var(--space-8) var(--space-16); }
+  @media (min-width: 1024px) { .checkout-layout { flex-direction: row; align-items: flex-start; } }
+  .checkout-form { flex: 1; max-width: 560px; }
+  .summary { width: 100%; padding: var(--space-6); }
+  @media (min-width: 1024px) { .summary { width: 340px; position: sticky; top: 96px; } }
+  .summary-line { display: flex; justify-content: space-between; padding-block: var(--space-2); border-bottom: 1px solid var(--ink-100); font-size: 14px; }
+  .summary-total { display: flex; justify-content: space-between; margin-top: var(--space-4); font-weight: 600; }
+  .payment-options { display: flex; flex-direction: column; gap: var(--space-3); margin-block: var(--space-4) var(--space-6); }
+  .payment-option { display: flex; align-items: center; gap: var(--space-3); border: 1px solid var(--ink-300); border-radius: var(--radius); padding: var(--space-4); cursor: pointer; }
+  .payment-option:has(input:checked) { border-color: var(--gold-600); }
+  .form-error { color: var(--danger); margin-bottom: var(--space-4); }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h1 class="h1" style="padding-top: var(--space-8);">Confirmar y pagar</h1>
+    <div class="checkout-layout" id="checkoutLayout">
+      <form class="checkout-form" id="checkoutForm">
+        <p class="form-error" id="formError" hidden></p>
+
+        <div class="field">
+          <label for="guest_name">Nombre completo</label>
+          <input id="guest_name" name="guest_name" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="guest_email">Correo</label>
+          <input id="guest_email" name="guest_email" type="email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="guest_phone">Celular</label>
+          <input id="guest_phone" name="guest_phone" required autocomplete="tel" placeholder="Para coordinar la entrega">
+        </div>
+        <div class="field">
+          <label for="shipping_city">Ciudad</label>
+          <input id="shipping_city" name="shipping_city" required autocomplete="address-level2">
+        </div>
+        <div class="field">
+          <label for="shipping_address">Dirección de entrega</label>
+          <input id="shipping_address" name="shipping_address" required autocomplete="street-address">
+        </div>
+        <div class="field">
+          <label for="shipping_notes">Notas de entrega (opcional)</label>
+          <textarea id="shipping_notes" name="shipping_notes" placeholder="Apartamento, referencia, horario"></textarea>
+        </div>
+
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Medio de pago</p>
+        <div class="payment-options">
+          <label class="payment-option">
+            <input type="radio" name="provider" value="wompi" checked>
+            <span>Wompi — tarjeta, PSE, Nequi, botón Bancolombia</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="provider" value="mercadopago">
+            <span>Mercado Pago</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Pagar</button>
+      </form>
+
+      <div class="summary card" id="summary"></div>
+    </div>
+  </div>
+</main>
+
+<form id="wompiRedirectForm" method="GET" action="https://checkout.wompi.co/p/" style="display:none">
+  <input type="hidden" name="public-key">
+  <input type="hidden" name="currency" value="COP">
+  <input type="hidden" name="amount-in-cents">
+  <input type="hidden" name="reference">
+  <input type="hidden" name="signature:integrity">
+  <input type="hidden" name="redirect-url">
+</form>
+
+<script src="/js/api.js"></script>
+<script src="/js/cart.js"></script>
+<script>
+  const items = getCart();
+
+  function renderSummary() {
+    const summary = document.getElementById('summary');
+    if (items.length === 0) {
+      summary.innerHTML = '<p>Tu carrito está vacío. <a class="link" href="/catalogo.html">Ver catálogo</a>.</p>';
+      document.getElementById('submitBtn').disabled = true;
+      return;
+    }
+    const subtotal = getCartTotal();
+    summary.innerHTML = `
+      ${items.map((item) => `
+        <div class="summary-line">
+          <span>${item.name} × ${item.quantity}</span>
+          <span>${formatCOP(item.price * item.quantity)}</span>
+        </div>
+      `).join('')}
+      <div class="summary-total"><span>Total</span><span>${formatCOP(subtotal)}</span></div>
+    `;
+  }
+  renderSummary();
+
+  document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('formError');
+    errorEl.hidden = true;
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Procesando...';
+
+    const form = new FormData(event.target);
+    const payload = {
+      guest_name: form.get('guest_name'),
+      guest_email: form.get('guest_email'),
+      guest_phone: form.get('guest_phone'),
+      shipping_city: form.get('shipping_city'),
+      shipping_address: form.get('shipping_address'),
+      shipping_notes: form.get('shipping_notes') || null,
+      items: items.map((item) => ({ product_id: item.product_id, quantity: item.quantity })),
+    };
+
+    try {
+      const order = await apiFetch('/orders', { method: 'POST', body: JSON.stringify(payload) });
+      // La página de confirmación necesita el email para poder pedir el estado
+      // del pedido (GET /orders/{order_number} exige email o sesión del dueño).
+      sessionStorage.setItem('jg_last_order_email', payload.guest_email);
+      const provider = form.get('provider');
+
+      if (provider === 'wompi') {
+        const init = await apiFetch(`/payments/wompi/${order.order_number}`, { method: 'POST' });
+        clearCart();
+        const redirectForm = document.getElementById('wompiRedirectForm');
+        redirectForm.querySelector('[name="public-key"]').value = init.public_key;
+        redirectForm.querySelector('[name="amount-in-cents"]').value = init.amount * 100;
+        redirectForm.querySelector('[name="reference"]').value = init.reference;
+        // La firma de integridad la calcula el backend con el secreto propio del
+        // comercio: nunca se calcula en el navegador ni se expone ese secreto.
+        redirectForm.querySelector('[name="signature:integrity"]').value = init.integrity_signature;
+        redirectForm.querySelector('[name="redirect-url"]').value = `${window.location.origin}/pedido-confirmado.html?order=${order.order_number}`;
+        redirectForm.submit();
+      } else {
+        const init = await apiFetch(`/payments/mercadopago/${order.order_number}`, { method: 'POST' });
+        clearCart();
+        window.location.href = init.checkout_url;
+      }
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Pagar';
+    }
+  });
+</script>
+</body>
+</html>

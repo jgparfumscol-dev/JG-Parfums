@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pedido recibido — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .confirm-wrap { max-width: 480px; margin: 0 auto; text-align: center; padding-block: var(--space-24) var(--space-16); }
+  .confirm-star { width: 40px; height: 40px; margin-inline: auto var(--space-6); }
+  .order-items { text-align: left; margin-block: var(--space-8); }
+  .order-line { display: flex; justify-content: space-between; padding-block: var(--space-2); border-bottom: 1px solid var(--ink-100); font-size: 14px; }
+  .status-badge { display: inline-block; margin-bottom: var(--space-4); }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="container confirm-wrap">
+    <img class="confirm-star" src="/assets/logos/jg-star.svg" alt="">
+    <div id="confirmContent">
+      <h1 class="h1">Recibimos tu pedido</h1>
+      <p class="text-muted">Estamos confirmando el pago. Te avisamos por correo apenas quede listo.</p>
+    </div>
+    <a class="btn btn-secondary" href="/catalogo.html" style="margin-top: var(--space-6);">Seguir viendo el catálogo</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script>
+  const STATUS_LABEL = {
+    pending: { text: 'Pago pendiente de confirmación', cls: 'badge-warning' },
+    paid: { text: 'Pago confirmado', cls: 'badge-success' },
+    processing: { text: 'En preparación', cls: 'badge-success' },
+    shipped: { text: 'Enviado', cls: 'badge-success' },
+    completed: { text: 'Entregado', cls: 'badge-success' },
+    cancelled: { text: 'Pago no confirmado', cls: 'badge-danger' },
+  };
+
+  async function loadOrder() {
+    const orderNumber = new URLSearchParams(window.location.search).get('order');
+    const email = sessionStorage.getItem('jg_last_order_email');
+    if (!orderNumber || !email) return;
+
+    try {
+      const order = await apiFetch(`/orders/${encodeURIComponent(orderNumber)}?email=${encodeURIComponent(email)}`);
+      const status = STATUS_LABEL[order.status] || { text: order.status, cls: 'badge-warning' };
+      document.getElementById('confirmContent').innerHTML = `
+        <p class="badge ${status.cls} status-badge">${status.text}</p>
+        <h1 class="h1">Pedido ${order.order_number}</h1>
+        <p class="text-muted">Enviamos el detalle a ${order.guest_email}.</p>
+        <div class="order-items">
+          ${order.items.map((item) => `
+            <div class="order-line"><span>${item.product_name} × ${item.quantity}</span><span>${formatCOP(item.unit_price * item.quantity)}</span></div>
+          `).join('')}
+          <div class="order-line" style="font-weight:600;border-bottom:none;"><span>Total</span><span>${formatCOP(order.total)}</span></div>
+        </div>
+      `;
+    } catch (err) {
+      // sin permiso o pedido no encontrado: se deja el mensaje genérico por defecto
+    }
+  }
+  loadOrder();
+</script>
+</body>
+</html>

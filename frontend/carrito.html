@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrito — JG Parfums</title>
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .cart-layout { display: flex; flex-direction: column; gap: var(--space-8); padding-block: var(--space-8) var(--space-16); }
+  @media (min-width: 1024px) { .cart-layout { flex-direction: row; align-items: flex-start; } }
+  .cart-items { flex: 1; display: flex; flex-direction: column; gap: var(--space-4); }
+  .cart-item { display: flex; gap: var(--space-4); padding: var(--space-4); }
+  .cart-item-media { width: 88px; height: 110px; background: var(--ink-100); flex-shrink: 0; overflow: hidden; }
+  .cart-item-media img { width: 100%; height: 100%; object-fit: cover; }
+  .cart-item-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+  .cart-item-row { display: flex; justify-content: space-between; align-items: center; }
+  .qty-control { display: flex; align-items: center; border: 1px solid var(--ink-300); border-radius: var(--radius); width: fit-content; }
+  .qty-control button { width: 36px; height: 36px; border: none; background: none; font-size: 16px; cursor: pointer; }
+  .qty-control span { width: 28px; text-align: center; }
+  .remove-btn { background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+  .summary { width: 100%; padding: var(--space-6); }
+  @media (min-width: 1024px) { .summary { width: 340px; position: sticky; top: 96px; } }
+  .summary-row { display: flex; justify-content: space-between; margin-bottom: var(--space-3); }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/catalogo.html">Catálogo</a></li>
+      <li><a href="/mi-cuenta.html">Mi cuenta</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="nav-cart-count" data-cart-count hidden>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <h1 class="h1" style="padding-top: var(--space-8);">Carrito</h1>
+    <div class="cart-layout" id="cartLayout"></div>
+    <div class="empty-state" id="emptyCart" hidden>
+      <p>Todavía no has agregado nada.</p>
+      <a class="btn btn-primary" href="/catalogo.html">Mira el catálogo</a>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/cart.js"></script>
+<script>
+  function render() {
+    const items = getCart();
+    const layout = document.getElementById('cartLayout');
+    const empty = document.getElementById('emptyCart');
+
+    if (items.length === 0) {
+      layout.innerHTML = '';
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    const itemsHtml = items.map((item) => `
+      <div class="cart-item card">
+        <div class="cart-item-media">
+          ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
+        </div>
+        <div class="cart-item-body">
+          <div class="cart-item-row">
+            <p class="h3" style="font-size:15px;">${item.name}</p>
+            <p class="text-muted text-small">${item.size_ml} ml</p>
+          </div>
+          <p class="text-muted text-small">${formatCOP(item.price)} c/u</p>
+          <div class="cart-item-row">
+            <div class="qty-control">
+              <button type="button" data-minus="${item.product_id}" aria-label="Restar">−</button>
+              <span>${item.quantity}</span>
+              <button type="button" data-plus="${item.product_id}" aria-label="Sumar" ${item.quantity >= item.stock ? 'disabled' : ''}>+</button>
+            </div>
+            <button class="remove-btn" data-remove="${item.product_id}">Quitar</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    const subtotal = getCartTotal();
+    layout.innerHTML = `
+      <div class="cart-items">${itemsHtml}</div>
+      <div class="summary card">
+        <div class="summary-row"><span>Subtotal</span><strong>${formatCOP(subtotal)}</strong></div>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">El envío se calcula en el siguiente paso.</p>
+        <a class="btn btn-primary btn-block" href="/checkout.html">Continuar al pago</a>
+      </div>
+    `;
+
+    layout.querySelectorAll('[data-minus]').forEach((btn) => btn.addEventListener('click', () => {
+      const item = items.find((i) => i.product_id === Number(btn.dataset.minus));
+      updateCartItemQuantity(item.product_id, item.quantity - 1);
+      render();
+    }));
+    layout.querySelectorAll('[data-plus]').forEach((btn) => btn.addEventListener('click', () => {
+      const item = items.find((i) => i.product_id === Number(btn.dataset.plus));
+      updateCartItemQuantity(item.product_id, item.quantity + 1);
+      render();
+    }));
+    layout.querySelectorAll('[data-remove]').forEach((btn) => btn.addEventListener('click', () => {
+      removeFromCart(Number(btn.dataset.remove));
+      render();
+    }));
+  }
+  render();
+</script>
+</body>
+</html>

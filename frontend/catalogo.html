@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo — JG Parfums</title>
+<meta name="description" content="Catálogo de perfumes originales de nicho. Filtra por familia olfativa y precio.">
+<link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/favicon/favicon-180.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/components.css">
+<style>
+  .catalog-header { padding-block: var(--space-8) var(--space-6); }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-8);
+  }
+  .filters select, .filters input {
+    height: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--ink-300);
+    border-radius: var(--radius);
+    background: var(--jg-white);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+  @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
+  .product-card { text-decoration: none; color: inherit; display: block; }
+  .product-card-media {
+    aspect-ratio: 4 / 5;
+    background: var(--ink-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .product-card-media img { width: 100%; height: 100%; object-fit: cover; }
+  .product-card-body { padding: var(--space-3) var(--space-1) 0; }
+  .product-card-price { font-weight: 600; font-size: 17px; margin-top: var(--space-1); }
+  .pagination { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-12); }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" aria-label="JG Parfums, inicio">
+      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/catalogo.html">Catálogo</a></li>
+      <li><a href="/mi-cuenta.html">Mi cuenta</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="nav-icon-btn" href="/mi-cuenta.html" aria-label="Mi cuenta">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+      </a>
+      <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="nav-cart-count" data-cart-count hidden>0</span>
+      </a>
+      <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="nav-mobile-panel container" id="navMobilePanel">
+    <a href="/catalogo.html">Catálogo</a>
+    <a href="/mi-cuenta.html">Mi cuenta</a>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="container catalog-header">
+    <h1 class="h1">Catálogo</h1>
+  </div>
+
+  <div class="container">
+    <form class="filters" id="filterForm">
+      <input type="search" name="search" placeholder="Buscar por nombre o casa" style="flex: 1 1 220px;">
+      <select name="family">
+        <option value="">Toda familia olfativa</option>
+        <option value="amaderado">Amaderado</option>
+        <option value="floral">Floral</option>
+        <option value="citrico">Cítrico</option>
+        <option value="oriental">Oriental</option>
+        <option value="aromatico">Aromático</option>
+      </select>
+      <select name="sort">
+        <option value="">Más recientes</option>
+        <option value="price_asc">Precio: menor a mayor</option>
+        <option value="price_desc">Precio: mayor a menor</option>
+      </select>
+    </form>
+
+    <div class="product-grid" id="productGrid" aria-live="polite"></div>
+    <p class="empty-state" id="emptyState" hidden>No encontramos productos con esos filtros.</p>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/cart.js"></script>
+<script>
+  document.getElementById('navToggle').addEventListener('click', (event) => {
+    const panel = document.getElementById('navMobilePanel');
+    const isOpen = panel.classList.toggle('is-open');
+    event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  const PAGE_SIZE = 12;
+  let currentPage = 1;
+
+  function renderProducts(items) {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = items.map((product) => `
+      <a class="product-card" href="/producto.html?slug=${encodeURIComponent(product.slug)}">
+        <div class="product-card-media">
+          ${product.images[0]
+            ? `<img src="${product.images[0].url}" alt="${product.images[0].alt_text}" loading="lazy">`
+            : ''}
+        </div>
+        <div class="product-card-body">
+          <p class="h3" style="font-size:15px;">${product.name}</p>
+          <p class="text-muted text-small">${product.house || ''}${product.house ? ' · ' : ''}${product.size_ml} ml</p>
+          <p class="product-card-price">${formatCOP(product.price)}</p>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  function renderPagination(total, page) {
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const el = document.getElementById('pagination');
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <button class="btn btn-secondary" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">Anterior</button>
+      <span class="text-muted" style="align-self:center;">${page} / ${totalPages}</span>
+      <button class="btn btn-secondary" ${page >= totalPages ? 'disabled' : ''} data-page="${page + 1}">Siguiente</button>
+    `;
+    el.querySelectorAll('[data-page]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentPage = Number(btn.dataset.page);
+        loadProducts();
+      });
+    });
+  }
+
+  async function loadProducts() {
+    const grid = document.getElementById('productGrid');
+    const empty = document.getElementById('emptyState');
+    empty.hidden = true;
+
+    const form = new FormData(document.getElementById('filterForm'));
+    const params = new URLSearchParams({ page: String(currentPage), page_size: String(PAGE_SIZE) });
+    if (form.get('search')) params.set('search', form.get('search'));
+    if (form.get('family')) params.set('family', form.get('family'));
+
+    try {
+      const data = await apiFetch(`/products?${params.toString()}`);
+      let items = data.items;
+      const sort = form.get('sort');
+      if (sort === 'price_asc') items = [...items].sort((a, b) => a.price - b.price);
+      if (sort === 'price_desc') items = [...items].sort((a, b) => b.price - a.price);
+
+      if (items.length === 0) {
+        grid.innerHTML = '';
+        empty.hidden = false;
+      } else {
+        renderProducts(items);
+      }
+      renderPagination(data.total, currentPage);
+    } catch (err) {
+      grid.innerHTML = '';
+      empty.hidden = false;
+      empty.textContent = 'No pudimos cargar el catálogo. Intenta de nuevo en un momento.';
+    }
+  }
+
+  document.getElementById('filterForm').addEventListener('input', () => {
+    currentPage = 1;
+    loadProducts();
+  });
+
+  loadProducts();
+</script>
+</body>
+</html>

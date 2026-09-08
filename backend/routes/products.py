@@ -1,0 +1,121 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from database import get_db
+from middleware.auth import get_current_admin, get_optional_user
+from models.product import Product, ProductImage
+from models.user import User
+from schemas.product import (
+    ProductCreate,
+    ProductImageCreate,
+    ProductImageResponse,
+    ProductListResponse,
+    ProductResponse,
+    ProductUpdate,
+)
+
+router = APIRouter(prefix="/products", tags=["products"])
+
+
+@router.get("", response_model=ProductListResponse)
+def list_products(
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+    family: str | None = None,
+    search: str | None = None,
+    min_price: int | None = Query(default=None, ge=0),
+    max_price: int | None = Query(default=None, ge=0),
+    include_inactive: bool = False,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=24, ge=1, le=100),
+):
+    query = db.query(Product)
+    # Solo un admin puede pedir productos inactivos (ej. para reactivarlos en el panel).
+    if not (include_inactive and user is not None and user.is_admin):
+        query = query.filter(Product.is_active.is_(True))
+    if family:
+        query = query.filter(Product.olfactory_family == family)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(Product.name.ilike(like) | Product.house.ilike(like))
+    if min_price is not None:
+        query = query.filter(Product.price >= min_price)
+    if max_price is not None:
+        query = query.filter(Product.price <= max_price)
+
+    total = query.count()
+    items = query.order_by(Product.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return ProductListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/{slug}", response_model=ProductResponse)
+def get_product(slug: str, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.slug == slug, Product.is_active.is_(True)).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+    return product
+
+
+@router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+def create_product(payload: ProductCreate, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    existing = db.query(Product).filter(Product.slug == payload.slug).first()
+    if existing is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un producto con ese slug")
+
+    product = Product(**payload.model_dump())
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.put("/{product_id}", response_model=ProductResponse)
+def update_product(
+    product_id: int, payload: ProductUpdate, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(product, field, value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+    # soft delete: un producto vendido antes no debe desaparecer de pedidos históricos
+    product.is_active = False
+    db.commit()
+
+
+@router.post("/{product_id}/images", response_model=ProductImageResponse, status_code=status.HTTP_201_CREATED)
+def add_product_image(
+    product_id: int,
+    payload: ProductImageCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    image = ProductImage(product_id=product_id, **payload.model_dump())
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+    return image
+
+
+@router.delete("/images/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_image(image_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    image = db.query(ProductImage).filter(ProductImage.id == image_id).first()
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imagen no encontrada")
+    db.delete(image)
+    db.commit()
