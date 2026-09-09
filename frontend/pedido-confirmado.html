@@ -9,10 +9,9 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .confirm-wrap { max-width: 480px; margin: 0 auto; text-align: center; padding-block: var(--space-24) var(--space-16); }
-  .confirm-star { width: 40px; height: 40px; margin-inline: auto var(--space-6); }
-  .order-items { text-align: left; margin-block: var(--space-8); }
-  .order-line { display: flex; justify-content: space-between; padding-block: var(--space-2); border-bottom: 1px solid var(--ink-100); font-size: 14px; }
+  .confirm-wrap { max-width: 480px; margin: 0 auto; text-align: center; padding-top: var(--space-24); padding-bottom: var(--space-16); }
+  .confirm-star { width: 32px; height: 32px; margin-inline: auto; margin-bottom: var(--space-6); }
+  .order-items { text-align: left; margin-top: var(--space-8); margin-bottom: var(--space-8); padding: var(--space-6); border: 1px solid var(--ink-100); }
   .status-badge { display: inline-block; margin-bottom: var(--space-4); }
 </style>
 </head>
@@ -37,8 +36,23 @@
 </main>
 
 <footer class="site-footer">
-  <div class="container">
-    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  <div class="container footer-grid">
+    <div>
+      <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+      <p class="text-muted text-small" style="margin-top:var(--space-4);">Perfumería de nicho en Colombia.</p>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
+      <ul class="footer-links">
+        <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
+        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
+        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Pago seguro</p>
+      <p class="text-muted text-small">Tarjetas, PSE, Nequi, botón Bancolombia y Mercado Pago.</p>
+    </div>
   </div>
 </footer>
 
@@ -66,10 +80,11 @@
         <h1 class="h1">Pedido ${order.order_number}</h1>
         <p class="text-muted">Enviamos el detalle a ${order.guest_email}.</p>
         <div class="order-items">
+          <p class="summary-heading" style="font-size:12px;letter-spacing:0.03em;color:var(--text-muted);margin:0 0 var(--space-2);">Detalle del pedido</p>
           ${order.items.map((item) => `
-            <div class="order-line"><span>${item.product_name} × ${item.quantity}</span><span>${formatCOP(item.unit_price * item.quantity)}</span></div>
+            <div class="ledger-row text-small"><span>${item.product_name} × ${item.quantity}</span><span>${formatCOP(item.unit_price * item.quantity)}</span></div>
           `).join('')}
-          <div class="order-line" style="font-weight:600;border-bottom:none;"><span>Total</span><span>${formatCOP(order.total)}</span></div>
+          <div class="ledger-row ledger-row-total"><span>Total</span><span>${formatCOP(order.total)}</span></div>
         </div>
       `;
     } catch (err) {

@@ -13,16 +13,17 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
-    padding-block: var(--space-8) var(--space-16);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
   }
   @media (min-width: 1024px) {
     .product-layout {
       flex-direction: row;
       align-items: flex-start;
-      gap: var(--space-12);
+      gap: var(--space-16);
     }
-    .product-gallery { position: sticky; top: 96px; flex: 0 0 48%; }
-    .product-info { flex: 1; max-width: 560px; }
+    .product-gallery { position: sticky; top: 96px; flex: 0 0 44%; }
+    .product-info { flex: 1; max-width: 520px; }
   }
   .product-gallery-main {
     aspect-ratio: 1 / 1;
@@ -36,11 +37,17 @@
     border: 1px solid var(--ink-100);
   }
   .product-house { color: var(--text-muted); margin-bottom: var(--space-1); }
-  .product-price { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin-block: var(--space-4); }
-  .notes-row { display: flex; gap: var(--space-6); margin-block: var(--space-6); flex-wrap: wrap; }
-  .notes-row div { min-width: 140px; }
-  .notes-row em { font-style: italic; }
-  .qty-row { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+  .product-price { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin-top: var(--space-4); margin-bottom: 0; }
+  .product-description { margin-top: var(--space-4); margin-bottom: 0; }
+
+  .product-notes {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--ink-100);
+  }
+  .product-notes-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
+
+  .qty-row { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-6); margin-bottom: var(--space-4); }
   .qty-control { display: flex; align-items: center; border: 1px solid var(--ink-300); border-radius: var(--radius); }
   .qty-control button { width: 44px; height: 44px; border: none; background: none; font-size: 18px; cursor: pointer; }
   .qty-control span { width: 32px; text-align: center; }
@@ -78,8 +85,23 @@
 </main>
 
 <footer class="site-footer">
-  <div class="container">
-    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  <div class="container footer-grid">
+    <div>
+      <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+      <p class="text-muted text-small" style="margin-top:var(--space-4);">Perfumería de nicho en Colombia.</p>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
+      <ul class="footer-links">
+        <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
+        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
+        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Pago seguro</p>
+      <p class="text-muted text-small">Tarjetas, PSE, Nequi, botón Bancolombia y Mercado Pago.</p>
+    </div>
   </div>
 </footer>
 
@@ -107,17 +129,24 @@
       <div class="product-info">
         ${product.house ? `<p class="product-house text-small">${product.house}</p>` : ''}
         <h1 class="h1">${product.name}</h1>
-        <p class="text-muted">${product.concentration || ''} ${product.concentration ? '·' : ''} ${product.size_ml} ml</p>
         <p class="product-price">${formatCOP(product.price)}</p>
-        <p>${product.description}</p>
-        <div class="notes-row text-small">
-          ${product.notes_top ? `<div><p class="text-caption">Salida</p><p><em>${product.notes_top}</em></p></div>` : ''}
-          ${product.notes_heart ? `<div><p class="text-caption">Corazón</p><p><em>${product.notes_heart}</em></p></div>` : ''}
-          ${product.notes_base ? `<div><p class="text-caption">Fondo</p><p><em>${product.notes_base}</em></p></div>` : ''}
-        </div>
+        <p class="text-muted product-description">${product.description}</p>
+
         ${product.stock === 0
-          ? '<p class="badge badge-danger">Agotado</p>'
-          : lowStock ? `<p class="badge badge-warning">Últimas ${product.stock} unidades</p>` : ''}
+          ? `<p class="badge badge-danger" style="margin-top:var(--space-4);">Agotado</p>`
+          : lowStock ? `<p class="badge badge-warning" style="margin-top:var(--space-4);">Últimas ${product.stock} unidades</p>` : ''}
+
+        <div class="product-notes">
+          <p class="product-notes-heading">Ficha olfativa</p>
+          <dl class="spec-list">
+            ${product.notes_top ? `<div class="spec-row"><dt>Salida</dt><dd>${product.notes_top}</dd></div>` : ''}
+            ${product.notes_heart ? `<div class="spec-row"><dt>Corazón</dt><dd>${product.notes_heart}</dd></div>` : ''}
+            ${product.notes_base ? `<div class="spec-row"><dt>Fondo</dt><dd>${product.notes_base}</dd></div>` : ''}
+            ${product.concentration ? `<div class="spec-row"><dt>Concentración</dt><dd>${product.concentration}</dd></div>` : ''}
+            <div class="spec-row"><dt>Tamaño</dt><dd>${product.size_ml} ml</dd></div>
+          </dl>
+        </div>
+
         <div class="qty-row">
           <div class="qty-control">
             <button type="button" id="qtyMinus" aria-label="Restar cantidad">−</button>

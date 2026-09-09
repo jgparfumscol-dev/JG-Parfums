@@ -10,13 +10,28 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .catalog-header { padding-block: var(--space-8) var(--space-6); }
-  .filters {
+  .catalog-header {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--ink-100);
+    margin-bottom: var(--space-8);
     display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
     flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .catalog-count { color: var(--text-muted); font-size: 14px; }
+
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--ink-100);
     margin-bottom: var(--space-8);
   }
+  @media (min-width: 640px) { .filters { grid-template-columns: 1.4fr 1fr 1fr; } }
   .filters select, .filters input {
     height: 44px;
     padding: 0 var(--space-3);
@@ -25,27 +40,32 @@
     background: var(--jg-white);
     font-family: var(--font-body);
     font-size: 14px;
+    width: 100%;
   }
+
   .product-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
+    gap: var(--space-8) var(--space-6);
   }
   @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
   @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
+
   .product-card { text-decoration: none; color: inherit; display: block; }
   .product-card-media {
     aspect-ratio: 4 / 5;
     background: var(--ink-100);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     overflow: hidden;
   }
-  .product-card-media img { width: 100%; height: 100%; object-fit: cover; }
-  .product-card-body { padding: var(--space-3) var(--space-1) 0; }
-  .product-card-price { font-weight: 600; font-size: 17px; margin-top: var(--space-1); }
-  .pagination { display: flex; justify-content: center; gap: var(--space-3); margin-top: var(--space-12); }
+  .product-card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .product-card:hover .product-card-media img { transform: scale(1.035); }
+  .product-card-body { padding-top: var(--space-3); margin-top: var(--space-3); border-top: 1px solid var(--ink-100); }
+  .product-card-name { font-family: var(--font-display); font-size: 16px; margin: 0; }
+  .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+  .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+
+  .pagination { display: flex; justify-content: center; align-items: center; gap: var(--space-4); margin-top: var(--space-12); }
 </style>
 </head>
 <body>
@@ -80,14 +100,15 @@
 </header>
 
 <main id="main">
-  <div class="container catalog-header">
-    <h1 class="h1">Catálogo</h1>
-  </div>
-
   <div class="container">
+    <div class="catalog-header">
+      <h1 class="h1">Catálogo</h1>
+      <p class="catalog-count" id="catalogCount" aria-live="polite"></p>
+    </div>
+
     <form class="filters" id="filterForm">
-      <input type="search" name="search" placeholder="Buscar por nombre o casa" style="flex: 1 1 220px;">
-      <select name="family">
+      <input type="search" name="search" placeholder="Buscar por nombre o casa" aria-label="Buscar por nombre o casa">
+      <select name="family" aria-label="Familia olfativa">
         <option value="">Toda familia olfativa</option>
         <option value="amaderado">Amaderado</option>
         <option value="floral">Floral</option>
@@ -95,7 +116,7 @@
         <option value="oriental">Oriental</option>
         <option value="aromatico">Aromático</option>
       </select>
-      <select name="sort">
+      <select name="sort" aria-label="Ordenar por">
         <option value="">Más recientes</option>
         <option value="price_asc">Precio: menor a mayor</option>
         <option value="price_desc">Precio: mayor a menor</option>
@@ -109,8 +130,23 @@
 </main>
 
 <footer class="site-footer">
-  <div class="container">
-    <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+  <div class="container footer-grid">
+    <div>
+      <img src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums" style="height:24px;">
+      <p class="text-muted text-small" style="margin-top:var(--space-4);">Perfumería de nicho en Colombia.</p>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
+      <ul class="footer-links">
+        <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
+        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
+        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-caption" style="margin-bottom:var(--space-3);">Pago seguro</p>
+      <p class="text-muted text-small">Tarjetas, PSE, Nequi, botón Bancolombia y Mercado Pago.</p>
+    </div>
   </div>
 </footer>
 
@@ -136,8 +172,8 @@
             : ''}
         </div>
         <div class="product-card-body">
-          <p class="h3" style="font-size:15px;">${product.name}</p>
-          <p class="text-muted text-small">${product.house || ''}${product.house ? ' · ' : ''}${product.size_ml} ml</p>
+          <p class="product-card-name">${product.name}</p>
+          <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
           <p class="product-card-price">${formatCOP(product.price)}</p>
         </div>
       </a>
@@ -185,6 +221,8 @@
         renderProducts(items);
       }
       renderPagination(data.total, currentPage);
+      const count = document.getElementById('catalogCount');
+      count.textContent = data.total === 1 ? '1 referencia' : `${data.total} referencias`;
     } catch (err) {
       grid.innerHTML = '';
       empty.hidden = false;

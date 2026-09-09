@@ -9,14 +9,15 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .checkout-layout { display: flex; flex-direction: column; gap: var(--space-8); padding-block: var(--space-8) var(--space-16); }
+  .checkout-layout { display: flex; flex-direction: column; gap: var(--space-12); padding-top: var(--space-8); padding-bottom: var(--space-16); }
   @media (min-width: 1024px) { .checkout-layout { flex-direction: row; align-items: flex-start; } }
   .checkout-form { flex: 1; max-width: 560px; }
+  .form-section-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: var(--space-8) 0 var(--space-3); }
+  .form-section-heading:first-of-type { margin-top: 0; }
   .summary { width: 100%; padding: var(--space-6); }
   @media (min-width: 1024px) { .summary { width: 340px; position: sticky; top: 96px; } }
-  .summary-line { display: flex; justify-content: space-between; padding-block: var(--space-2); border-bottom: 1px solid var(--ink-100); font-size: 14px; }
-  .summary-total { display: flex; justify-content: space-between; margin-top: var(--space-4); font-weight: 600; }
-  .payment-options { display: flex; flex-direction: column; gap: var(--space-3); margin-block: var(--space-4) var(--space-6); }
+  .summary-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
+  .payment-options { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); margin-bottom: var(--space-6); }
   .payment-option { display: flex; align-items: center; gap: var(--space-3); border: 1px solid var(--ink-300); border-radius: var(--radius); padding: var(--space-4); cursor: pointer; }
   .payment-option:has(input:checked) { border-color: var(--gold-600); }
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
@@ -38,6 +39,7 @@
       <form class="checkout-form" id="checkoutForm">
         <p class="form-error" id="formError" hidden></p>
 
+        <p class="form-section-heading">Datos de contacto</p>
         <div class="field">
           <label for="guest_name">Nombre completo</label>
           <input id="guest_name" name="guest_name" required autocomplete="name">
@@ -50,6 +52,8 @@
           <label for="guest_phone">Celular</label>
           <input id="guest_phone" name="guest_phone" required autocomplete="tel" placeholder="Para coordinar la entrega">
         </div>
+
+        <p class="form-section-heading">Entrega</p>
         <div class="field">
           <label for="shipping_city">Ciudad</label>
           <input id="shipping_city" name="shipping_city" required autocomplete="address-level2">
@@ -63,7 +67,7 @@
           <textarea id="shipping_notes" name="shipping_notes" placeholder="Apartamento, referencia, horario"></textarea>
         </div>
 
-        <p class="text-caption" style="margin-bottom: var(--space-2);">Medio de pago</p>
+        <p class="form-section-heading">Medio de pago</p>
         <div class="payment-options">
           <label class="payment-option">
             <input type="radio" name="provider" value="wompi" checked>
@@ -106,13 +110,14 @@
     }
     const subtotal = getCartTotal();
     summary.innerHTML = `
+      <p class="summary-heading">Resumen del pedido</p>
       ${items.map((item) => `
-        <div class="summary-line">
+        <div class="ledger-row text-small">
           <span>${item.name} × ${item.quantity}</span>
           <span>${formatCOP(item.price * item.quantity)}</span>
         </div>
       `).join('')}
-      <div class="summary-total"><span>Total</span><span>${formatCOP(subtotal)}</span></div>
+      <div class="ledger-row ledger-row-total"><span>Total</span><span>${formatCOP(subtotal)}</span></div>
     `;
   }
   renderSummary();

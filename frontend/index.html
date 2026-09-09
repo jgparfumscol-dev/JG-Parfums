@@ -11,24 +11,24 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .hero {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 560px;
-    text-align: center;
-    gap: var(--space-6);
+  .hero-split {
+    display: grid;
+    gap: var(--space-12);
   }
-  .hero-star { width: 40px; height: 40px; margin-inline: auto; }
-  .hero h1 { color: #FFFFFF; }
-  .hero p { max-width: 42ch; margin-inline: auto; }
-  .hero-actions { display: flex; flex-direction: column; gap: var(--space-3); align-items: center; }
-  @media (min-width: 640px) { .hero-actions { flex-direction: row; justify-content: center; } }
+  @media (min-width: 1024px) {
+    .hero-split { grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: var(--space-24); }
+  }
+  .hero-flag { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+  .hero-flag img { width: 20px; height: 20px; }
+  .hero-flag span { color: #B9B4B0; font-size: 13px; letter-spacing: 0.03em; }
+  .hero-copy h1 { color: #FFFFFF; max-width: 13ch; }
+  .hero-copy p { color: #B9B4B0; max-width: 44ch; margin-top: var(--space-4); }
+  .hero-actions { display: flex; gap: var(--space-3); margin-top: var(--space-8); flex-wrap: wrap; }
 
   .product-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
+    gap: var(--space-8) var(--space-6);
   }
   @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
   @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -37,20 +37,15 @@
   .product-card-media {
     aspect-ratio: 4 / 5;
     background: var(--ink-100);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     overflow: hidden;
   }
-  .product-card-media img { width: 100%; height: 100%; object-fit: cover; }
-  .product-card-body { padding: var(--space-3) var(--space-1) 0; }
-  .product-card-price { font-family: var(--font-body); font-weight: 600; font-size: 17px; margin-top: var(--space-1); }
-
-  .value-props {
-    display: grid;
-    gap: var(--space-8);
-  }
-  @media (min-width: 768px) { .value-props { grid-template-columns: repeat(3, 1fr); } }
+  .product-card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .product-card:hover .product-card-media img { transform: scale(1.035); }
+  .product-card-body { padding-top: var(--space-3); margin-top: var(--space-3); border-top: 1px solid var(--ink-100); }
+  .product-card-name { font-family: var(--font-display); font-size: 16px; margin: 0; }
+  .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+  .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -85,13 +80,33 @@
 </header>
 
 <main id="main">
-  <section class="hero section-dark">
-    <div class="container hero">
-      <img class="hero-star" src="/assets/logos/jg-star-blanco.svg" alt="">
-      <h1 class="display">Perfumes que se explican con hechos, no con adjetivos</h1>
-      <p class="text-muted">Notas, familia olfativa y duración de cada frasco. Nada de "experiencias sensoriales únicas".</p>
-      <div class="hero-actions">
-        <a class="btn btn-onDark" href="/catalogo.html">Ver catálogo</a>
+  <section class="section section-dark">
+    <div class="container hero-split">
+      <div class="hero-copy">
+        <div class="hero-flag">
+          <img src="/assets/logos/jg-star-blanco.svg" alt="">
+          <span>Perfumería de nicho · Colombia</span>
+        </div>
+        <h1 class="display">Perfumes que se explican con hechos, no con adjetivos</h1>
+        <p>Notas de salida, corazón y fondo, concentración y duración real. Nada de "experiencias sensoriales únicas": cada frasco es el original de la casa que lo produce.</p>
+        <div class="hero-actions">
+          <a class="btn btn-onDark" href="/catalogo.html">Ver catálogo</a>
+        </div>
+      </div>
+      <div class="scent-diagram">
+        <p class="scent-diagram-heading">Así se lee un perfume en JG</p>
+        <div class="scent-tier">
+          <div class="scent-tier-labels"><span class="scent-tier-name">Salida</span><span class="scent-tier-time">0–15 min</span></div>
+          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:28%; --d:0ms;"></div></div>
+        </div>
+        <div class="scent-tier">
+          <div class="scent-tier-labels"><span class="scent-tier-name">Corazón</span><span class="scent-tier-time">15 min – 3 h</span></div>
+          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:62%; --d:150ms;"></div></div>
+        </div>
+        <div class="scent-tier">
+          <div class="scent-tier-labels"><span class="scent-tier-name">Fondo</span><span class="scent-tier-time">3 – 10 h</span></div>
+          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:100%; --d:300ms;"></div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -105,17 +120,17 @@
   </section>
 
   <section class="section" style="background: var(--jg-white);">
-    <div class="container value-props">
-      <div>
-        <h3 class="h3">Frascos originales</h3>
+    <div class="container manifesto-strip">
+      <div class="manifesto-item">
+        <p class="manifesto-heading">Frascos originales</p>
         <p class="text-muted text-small">Sin decants, sin imitaciones. Cada frasco es el original de la casa que lo produce.</p>
       </div>
-      <div>
-        <h3 class="h3">Ficha completa</h3>
+      <div class="manifesto-item">
+        <p class="manifesto-heading">Ficha completa</p>
         <p class="text-muted text-small">Notas de salida, corazón y fondo, concentración y duración estimada en cada producto.</p>
       </div>
-      <div>
-        <h3 class="h3">Pago como prefieras</h3>
+      <div class="manifesto-item">
+        <p class="manifesto-heading">Pago como prefieras</p>
         <p class="text-muted text-small">Tarjeta, PSE, Nequi o Bancolombia, sin salir del sitio.</p>
       </div>
     </div>
@@ -169,8 +184,8 @@
               : ''}
           </div>
           <div class="product-card-body">
-            <p class="h3" style="font-size:15px;">${product.name}</p>
-            <p class="text-muted text-small">${product.size_ml} ml</p>
+            <p class="product-card-name">${product.name}</p>
+            <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
             <p class="product-card-price">${formatCOP(product.price)}</p>
           </div>
         </a>

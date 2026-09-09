@@ -117,11 +117,12 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
 }
 
 .section {
-  padding-block: var(--space-16);
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
 }
 
 @media (min-width: 1024px) {
-  .section { padding-block: var(--space-24); }
+  .section { padding-top: var(--space-24); padding-bottom: var(--space-24); }
 }
 
 .section-title {
@@ -151,6 +152,18 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
   outline: 2px solid var(--gold-400);
   outline-offset: 2px;
 }
+
+::selection {
+  background: var(--gold-400);
+  color: var(--jg-onyx);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--jg-paper); }
+::-webkit-scrollbar-thumb { background: var(--ink-300); }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-600); }
+
+.tabular { font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
