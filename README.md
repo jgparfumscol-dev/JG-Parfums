@@ -6,7 +6,7 @@
 
 Autenticación · Catálogo · Carrito · Checkout (registrado e invitado) · Pagos (Wompi + Mercado Pago) · Panel administrativo
 
-### 🔗 [jg-parfums.pages.dev](https://jg-parfums.pages.dev) — frontend en línea, en construcción
+### 🔗 [jg-parfums.pages.dev](https://jg-parfums.pages.dev) — frontend y backend en línea, en construcción
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -47,32 +47,33 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 ## Estado actual
 
-**El sitio todavía no está vendiendo.** El código de tienda (catálogo, carrito, checkout, pagos, cuentas, panel admin) está construido y probado, pero falta contenido real del cliente, credenciales de producción y conectar el backend a su hosting.
+**El sitio todavía no está vendiendo.** Todo el pipeline técnico (frontend, backend, base de datos, correos) ya está en línea y probado de punta a punta. Lo que falta es contenido real del cliente y credenciales de pago de producción.
 
 | Módulo | Estado |
 |---|---|
 | Backend (auth, catálogo, pedidos, pagos, admin) | ✅ Construido y probado (23 tests, contra Postgres real) |
+| Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Frontend (13 páginas: tienda, cuenta, panel admin) | ✅ Construido |
 | Frontend desplegado (Cloudflare Pages) | ✅ En línea — [jg-parfums.pages.dev](https://jg-parfums.pages.dev) |
-| Backend desplegado (Railway) | ⏳ Pendiente de conectar el repo |
+| CORS frontend ↔ backend | ✅ Verificado con petición real |
+| Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
 | Pago con Wompi | ⏳ Código listo — faltan credenciales reales del comercio |
 | Pago con Mercado Pago | ⏳ Código listo — faltan credenciales reales |
-| Correos transaccionales (Resend) | ⏳ Código listo — falta API key y dominio de envío verificado |
-| Catálogo con productos reales | ❌ Vacío — falta contenido y fotografía del cliente |
+| Catálogo con productos reales | ⏳ 4 productos de prueba cargados — falta contenido y fotografía real del cliente |
 | Política de tratamiento de datos / términos | ❌ Pendiente (obligatorio en Colombia, Ley 1581 de 2012) |
-| Dominio propio | ❌ Pendiente — usando `*.pages.dev` por ahora |
+| Dominio propio | ❌ Pendiente — usando `*.pages.dev` / `*.up.railway.app` por ahora |
 
 ## Qué falta antes de lanzar
 
 **Bloqueante para vender:**
-- [ ] Conectar el backend en Railway al repo (`backend/` como root directory) y generar su dominio público
 - [ ] Credenciales de producción de Wompi y Mercado Pago
-- [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume
+- [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene 4 productos de prueba, sin fotos)
 - [ ] Página de política de tratamiento de datos personales y términos de compra
+- [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
 
 **No bloqueante, pero pendiente:**
-- [ ] API key de Resend + dominio verificado para correos transaccionales
+- [ ] Borrar la cuenta admin y los productos de prueba antes de lanzar
 - [ ] Confirmar tono "tú/usted" del copy (hoy en "tú" por defecto)
 - [ ] Definir costo y política de envío (hoy el checkout cobra solo el subtotal)
 - [ ] Dominio propio (ej. `jgparfums.com`) en vez de los subdominios de Railway/Cloudflare
@@ -160,6 +161,12 @@ flowchart LR
 - Base de datos de producción migrada en Railway (7 tablas), verificada contra la base real antes y después de aplicar el esquema.
 - Repositorio transferido de la cuenta personal del desarrollador a la cuenta de GitHub del cliente (`jgparfumscol-dev`).
 - Frontend desplegado en Cloudflare Pages.
+- Backend desplegado en Railway. Tres problemas reales de build encontrados y corregidos en el camino:
+  - El *root directory* del servicio no apuntaba a `backend/`, así que Railway intentaba construir desde la raíz del repo y no encontraba nada reconocible.
+  - `mise` (usado por Railpack para instalar Python) fallaba instalando `python@3.12.3` por no encontrar "GitHub artifact attestations" de ese build — se agregó `backend/mise.toml` desactivando esa verificación puntual (el checksum del binario sí se sigue verificando).
+  - El puerto público del dominio generado apuntaba a `5432` (el de Postgres, no el de la app) — corregido al puerto real que Railway inyecta.
+- CORS bloqueaba el origen real del frontend (`Disallowed CORS origin`) hasta confirmar que Railway no redespliega solo al editar variables — hubo que redesplegar manualmente para que tomara el `FRONTEND_URL` correcto.
+- Integración de Resend verificada con un envío real: cuenta admin creada, 4 productos de prueba cargados vía API, y un registro de usuario real confirmó la entrega del correo de bienvenida en la bandeja del cliente.
 
 ## Stack técnico
 
@@ -239,10 +246,13 @@ pytest tests/test_payments.py -v   # un archivo puntual
 
 ## Despliegue
 
-- **Backend** → Railway (pendiente de conectar el repo — ver [Qué falta antes de lanzar](#-qué-falta-antes-de-lanzar))
+- **Backend** → Railway, en línea en `jg-parfums-production.up.railway.app`
 - **Frontend** → Cloudflare Pages, en línea en [jg-parfums.pages.dev](https://jg-parfums.pages.dev)
 - **Base de datos** → PostgreSQL en Railway, esquema ya migrado
+- **Correos transaccionales** → Resend, con remitente de pruebas (`onboarding@resend.dev`) hasta verificar un dominio propio
 - **Seguridad** → CORS con orígenes explícitos, rate limiting por IP en auth/checkout, sin enumeración de cuentas en registro/login/forgot-password
+
+> Nota: Railway no redespliega automáticamente al cambiar variables de entorno — hay que disparar un *redeploy* manual desde la pestaña Deployments después de editarlas.
 
 ---
 
