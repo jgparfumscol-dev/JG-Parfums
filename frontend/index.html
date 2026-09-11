@@ -112,6 +112,8 @@
       </div>
     </div>
   </section>
+
+  <div id="dynamicSections"></div>
 </main>
 
 <footer class="site-footer">
@@ -137,7 +139,9 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('home');
   document.getElementById('navToggle').addEventListener('click', (event) => {
     const panel = document.getElementById('navMobilePanel');
     const isOpen = panel.classList.toggle('is-open');

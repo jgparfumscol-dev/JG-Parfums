@@ -89,6 +89,7 @@
       <div class="summary card" id="summary"></div>
     </div>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <form id="wompiRedirectForm" method="GET" action="https://checkout.wompi.co/p/" style="display:none">
@@ -102,7 +103,9 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('checkout');
   const items = getCart();
 
   function renderSummary() {

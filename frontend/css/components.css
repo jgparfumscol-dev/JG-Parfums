@@ -472,3 +472,48 @@
 @media (min-width: 640px) { .access-card { padding: var(--space-12); } }
 .access-mark { width: 22px; height: 22px; margin-bottom: var(--space-6); }
 .access-footer { text-align: center; margin-top: var(--space-6); font-size: 14px; padding-top: var(--space-6); border-top: 1px solid var(--ink-100); }
+
+/* ============================================================
+   Secciones de página administrables desde "Tienda en vivo" —
+   banners, testimonios, contadores. El HTML/CSS libre no necesita
+   clases propias, trae las suyas.
+   ============================================================ */
+
+.pgs-banner {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--jg-onyx);
+  color: #FFFFFF;
+}
+.pgs-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(32, 30, 31, .45);
+}
+.pgs-banner-inner { position: relative; max-width: 480px; }
+.pgs-banner-title { margin: 0 0 var(--space-3); color: #FFFFFF; }
+.pgs-banner-subtitle { color: #B9B4B0; margin: 0 0 var(--space-6); }
+
+.pgs-testimonials { display: grid; gap: var(--space-8); }
+@media (min-width: 768px) { .pgs-testimonials { grid-template-columns: repeat(3, 1fr); } }
+.pgs-testimonial-card { padding: var(--space-6); border: 1px solid var(--ink-100); }
+.pgs-testimonial-text { font-family: var(--font-display); font-style: italic; margin: 0 0 var(--space-4); }
+.pgs-testimonial-author { display: flex; align-items: center; gap: var(--space-3); }
+.pgs-testimonial-author img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.pgs-testimonial-name { font-weight: 600; margin: 0; font-size: 14px; }
+.pgs-testimonial-detail { color: var(--text-muted); font-size: 13px; margin: 0; }
+
+.pgs-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  justify-content: space-around;
+  padding-block: var(--space-8);
+  border-top: 1px solid var(--ink-100);
+  border-bottom: 1px solid var(--ink-100);
+}
+.pgs-counter { text-align: center; }
+.pgs-counter-value { font-family: var(--font-display); font-size: 40px; margin: 0; }
+.pgs-counter-label { color: var(--text-muted); font-size: 13px; margin-top: var(--space-1); }

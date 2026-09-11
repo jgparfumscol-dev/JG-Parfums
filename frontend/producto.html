@@ -93,6 +93,7 @@
     <h2 class="h2 section-title">También te puede interesar</h2>
     <div class="product-grid" id="relatedGrid"></div>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <footer class="site-footer">
@@ -118,7 +119,9 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('producto');
   const slug = new URLSearchParams(window.location.search).get('slug');
   let quantity = 1;
   let currentProduct = null;

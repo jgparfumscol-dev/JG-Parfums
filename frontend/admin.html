@@ -43,6 +43,33 @@
   .stats-bar-track { flex: 1; height: 8px; background: var(--ink-100); position: relative; }
   .stats-bar-fill { position: absolute; inset-block: 0; left: 0; background: var(--gold-400); }
   .stats-bar-count { width: 32px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  /* editor de tienda en vivo */
+  .editor-layout { display: flex; flex-direction: column; gap: var(--space-6); }
+  @media (min-width: 1024px) { .editor-layout { flex-direction: row; align-items: stretch; } }
+  .editor-sidebar { width: 100%; }
+  @media (min-width: 1024px) { .editor-sidebar { width: 360px; flex-shrink: 0; } }
+  .editor-preview { flex: 1; min-height: 500px; border: 1px solid var(--ink-100); }
+  .editor-preview iframe { width: 100%; height: 100%; min-height: 500px; border: none; display: block; }
+  .editor-section-row { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--ink-100); }
+  .editor-section-row.is-inactive { opacity: .5; }
+  .editor-section-type { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+  .editor-section-label { flex: 1; font-size: 14px; margin: 2px 0 0; }
+  .editor-icon-btn {
+    background: none; border: 1px solid var(--ink-300); border-radius: var(--radius);
+    width: 30px; height: 30px; cursor: pointer; font-size: 13px; line-height: 1; flex-shrink: 0;
+  }
+  .editor-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .editor-add-row { display: flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; }
+
+  /* pantalla "solo en computador" para móvil */
+  .desktop-only-gate {
+    position: fixed; inset: 0; z-index: 50; background: var(--jg-paper);
+    display: flex; align-items: center; justify-content: center; padding: var(--space-8);
+  }
+  .desktop-only-gate[hidden] { display: none; }
+  .desktop-only-gate-inner { text-align: center; max-width: 360px; }
+  .desktop-only-gate-inner img { width: 32px; margin-inline: auto; margin-bottom: var(--space-6); }
 </style>
 </head>
 <body>
@@ -71,6 +98,7 @@
       <button class="tab-btn" data-tab="orders">Pedidos</button>
       <button class="tab-btn" data-tab="categories">Categorías</button>
       <button class="tab-btn" data-tab="stats">Estadísticas</button>
+      <button class="tab-btn" data-tab="editor">Tienda en vivo</button>
     </div>
 
     <section id="tabProducts">
@@ -138,7 +166,41 @@
         <div id="statsOrderStatus"></div>
       </div>
     </section>
+
+    <section id="tabEditor" hidden>
+      <div class="toolbar">
+        <h2 class="h3">Tienda en vivo</h2>
+        <select id="editorPageSelect" class="input-sm" aria-label="Página a editar"></select>
+      </div>
+      <p class="text-muted text-small" style="margin-bottom: var(--space-6);">Los cambios quedan publicados de inmediato en la web real — no hay borradores.</p>
+      <div class="editor-layout">
+        <div class="editor-sidebar">
+          <div id="editorSectionsList"></div>
+          <div class="editor-add-row">
+            <select id="newSectionType" class="input-sm" aria-label="Tipo de sección nueva">
+              <option value="banner">Banner</option>
+              <option value="testimonials">Testimonios</option>
+              <option value="counters">Contadores</option>
+              <option value="custom_html">Código HTML/CSS</option>
+            </select>
+            <button class="btn btn-primary" type="button" id="addSectionBtn">+ Agregar sección</button>
+          </div>
+        </div>
+        <div class="editor-preview">
+          <iframe id="editorPreview" title="Vista previa del sitio en vivo"></iframe>
+        </div>
+      </div>
+    </section>
   </main>
+</div>
+
+<div id="desktopOnlyGate" class="desktop-only-gate" hidden>
+  <div class="desktop-only-gate-inner">
+    <img src="/assets/logos/jg-star.svg" alt="">
+    <h1 class="h2" style="margin-bottom: var(--space-4);">Solo disponible en computador</h1>
+    <p class="text-muted" style="margin-bottom: var(--space-8);">Esta sección del panel administrativo todavía no está pensada para celular.</p>
+    <button class="btn btn-primary" id="backToProductsBtn">Volver a Productos</button>
+  </div>
 </div>
 
 <dialog id="productDialog">
@@ -210,6 +272,46 @@
   </div>
 </dialog>
 
+<dialog id="sectionDialog">
+  <div class="dialog-inner">
+    <h2 class="h3" id="sectionDialogTitle" style="margin-bottom: var(--space-4);">Nueva sección</h2>
+    <form id="sectionForm">
+      <p class="form-error" id="sectionFormError" style="color:var(--danger);" hidden></p>
+
+      <div id="sectionFieldsBanner" hidden>
+        <div class="field"><label for="s_banner_image">URL de la imagen</label><input id="s_banner_image" placeholder="https://..."></div>
+        <div class="field"><label for="s_banner_title">Título</label><input id="s_banner_title"></div>
+        <div class="field"><label for="s_banner_subtitle">Subtítulo</label><input id="s_banner_subtitle"></div>
+        <div class="field"><label for="s_banner_link">Enlace (opcional)</label><input id="s_banner_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_banner_cta">Texto del botón</label><input id="s_banner_cta" placeholder="Ver catálogo"></div>
+      </div>
+
+      <div id="sectionFieldsTestimonials" hidden>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Testimonios</p>
+        <div id="testimonialList"></div>
+        <button class="btn btn-secondary" type="button" id="addTestimonialBtn" style="margin-top:var(--space-2);">+ Agregar testimonio</button>
+      </div>
+
+      <div id="sectionFieldsCounters" hidden>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Contadores</p>
+        <div id="counterList"></div>
+        <button class="btn btn-secondary" type="button" id="addCounterBtn" style="margin-top:var(--space-2);">+ Agregar contador</button>
+      </div>
+
+      <div id="sectionFieldsCustomHtml" hidden>
+        <div class="field"><label for="s_custom_html">HTML</label><textarea id="s_custom_html" rows="6" style="font-family:monospace; font-size:13px;"></textarea></div>
+        <div class="field"><label for="s_custom_css">CSS</label><textarea id="s_custom_css" rows="6" style="font-family:monospace; font-size:13px;"></textarea></div>
+        <p class="text-muted text-small">Se inserta tal cual en la página en vivo — con cuidado.</p>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" type="button" id="cancelSectionDialogBtn">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
 <script src="/js/api.js"></script>
 <script>
   let editingProductId = null;
@@ -224,10 +326,52 @@
       loadProducts();
       loadOrders();
       loadStats();
+      initEditorPageSelect();
     } catch (err) {
       showLoginGate();
     }
   }
+
+  // --- Gate móvil: en celular, el panel solo sirve para crear/quitar
+  // producto. Cualquier otra pestaña muestra esta pantalla en vez de su
+  // contenido — no tiene sentido intentar hacer responsive Pedidos,
+  // Categorías, Estadísticas o el editor de tienda en pantalla chica.
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 767px)').matches;
+  }
+
+  function showDesktopOnlyGate() {
+    document.getElementById('desktopOnlyGate').hidden = false;
+  }
+
+  function hideDesktopOnlyGate() {
+    document.getElementById('desktopOnlyGate').hidden = true;
+  }
+
+  function activateTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tabName));
+    document.getElementById('tabProducts').hidden = tabName !== 'products';
+    document.getElementById('tabOrders').hidden = tabName !== 'orders';
+    document.getElementById('tabCategories').hidden = tabName !== 'categories';
+    document.getElementById('tabStats').hidden = tabName !== 'stats';
+    document.getElementById('tabEditor').hidden = tabName !== 'editor';
+    if (tabName === 'editor') loadEditorPage();
+    if (tabName === 'products') loadProducts();
+  }
+
+  document.getElementById('backToProductsBtn').addEventListener('click', () => {
+    hideDesktopOnlyGate();
+    activateTab('products');
+  });
+
+  function debounce(fn, ms) {
+    let timer;
+    return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+  }
+
+  window.addEventListener('resize', debounce(() => {
+    if (!isMobileViewport()) hideDesktopOnlyGate();
+  }, 200));
 
   function showLoginGate(message) {
     document.getElementById('loginGate').hidden = false;
@@ -265,12 +409,11 @@
 
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      document.getElementById('tabProducts').hidden = btn.dataset.tab !== 'products';
-      document.getElementById('tabOrders').hidden = btn.dataset.tab !== 'orders';
-      document.getElementById('tabCategories').hidden = btn.dataset.tab !== 'categories';
-      document.getElementById('tabStats').hidden = btn.dataset.tab !== 'stats';
+      if (isMobileViewport() && btn.dataset.tab !== 'products') {
+        showDesktopOnlyGate();
+        return;
+      }
+      activateTab(btn.dataset.tab);
     });
   });
 
@@ -325,6 +468,7 @@
       `;
       return;
     }
+    const mobile = isMobileViewport();
     document.getElementById('productsBody').innerHTML = data.items.map((p) => `
       <tr>
         <td>${p.name}</td>
@@ -332,12 +476,22 @@
         <td>${formatCOP(p.price)}</td>
         <td>${p.stock}</td>
         <td>${p.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge text-muted">Inactivo</span>'}</td>
-        <td><button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button></td>
+        <td style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+          ${mobile ? '' : `<button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button>`}
+          <button class="remove-btn" data-remove-product="${p.id}">Quitar</button>
+        </td>
       </tr>
     `).join('');
 
     document.querySelectorAll('[data-edit]').forEach((btn) => {
       btn.addEventListener('click', () => openProductDialog(data.items.find((p) => p.id === Number(btn.dataset.edit))));
+    });
+    document.querySelectorAll('[data-remove-product]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Quitar este producto de la tienda?')) return;
+        await apiFetch(`/products/${btn.dataset.removeProduct}`, { method: 'DELETE' });
+        loadProducts();
+      });
     });
   }
 
@@ -605,6 +759,241 @@
       ? statusEntries.map(([s, count]) => `<div class="ledger-row text-small"><span>${STATUS_LABEL[s] || s}</span><span>${count}</span></div>`).join('')
       : '<p class="text-muted text-small">Todavía no hay pedidos.</p>';
   }
+
+  // --- Tienda en vivo ---
+  const PAGE_LABELS = {
+    home: 'Inicio', catalogo: 'Catálogo', producto: 'Ficha de producto', carrito: 'Carrito',
+    checkout: 'Checkout', 'mi-cuenta': 'Mi cuenta', login: 'Iniciar sesión', registro: 'Registro',
+    'recuperar-password': 'Recuperar contraseña', 'reset-password': 'Restablecer contraseña',
+    'pedido-confirmado': 'Pedido confirmado',
+  };
+  const PAGE_URLS = {
+    home: '/index.html', catalogo: '/catalogo.html', producto: '/producto.html', carrito: '/carrito.html',
+    checkout: '/checkout.html', 'mi-cuenta': '/mi-cuenta.html', login: '/login.html', registro: '/registro.html',
+    'recuperar-password': '/recuperar-password.html', 'reset-password': '/reset-password.html',
+    'pedido-confirmado': '/pedido-confirmado.html',
+  };
+  const SECTION_TYPE_LABEL = { banner: 'Banner', testimonials: 'Testimonios', counters: 'Contadores', custom_html: 'Código HTML/CSS' };
+
+  let editingSectionId = null;
+  let editorSectionsCache = [];
+
+  function initEditorPageSelect() {
+    const select = document.getElementById('editorPageSelect');
+    select.innerHTML = Object.entries(PAGE_LABELS).map(([key, label]) => `<option value="${key}">${label}</option>`).join('');
+    select.addEventListener('change', loadEditorPage);
+  }
+
+  function reloadPreview() {
+    const iframe = document.getElementById('editorPreview');
+    try {
+      iframe.contentWindow.location.reload();
+    } catch (_err) {
+      iframe.src = iframe.src;
+    }
+  }
+
+  async function loadEditorPage() {
+    const pageKey = document.getElementById('editorPageSelect').value;
+    const iframe = document.getElementById('editorPreview');
+    if (iframe.dataset.page !== pageKey) {
+      iframe.src = PAGE_URLS[pageKey];
+      iframe.dataset.page = pageKey;
+    }
+    editorSectionsCache = await apiFetch(`/page-sections?page=${encodeURIComponent(pageKey)}&include_inactive=true`);
+    renderEditorSections();
+  }
+
+  function sectionPreviewLabel(section) {
+    if (section.type === 'banner') return section.content.title || '(sin título)';
+    if (section.type === 'testimonials') return `${(section.content.items || []).length} testimonio(s)`;
+    if (section.type === 'counters') return `${(section.content.items || []).length} contador(es)`;
+    return 'Código personalizado';
+  }
+
+  function renderEditorSections() {
+    const list = document.getElementById('editorSectionsList');
+    if (editorSectionsCache.length === 0) {
+      list.innerHTML = '<p class="text-muted text-small">Esta página todavía no tiene secciones.</p>';
+      return;
+    }
+    list.innerHTML = editorSectionsCache.map((s, index) => `
+      <div class="editor-section-row ${s.is_active ? '' : 'is-inactive'}">
+        <div style="flex:1; min-width:0;">
+          <p class="editor-section-type">${SECTION_TYPE_LABEL[s.type]}</p>
+          <p class="editor-section-label">${sectionPreviewLabel(s)}</p>
+        </div>
+        <button type="button" class="editor-icon-btn" data-move-up="${s.id}" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
+        <button type="button" class="editor-icon-btn" data-move-down="${s.id}" ${index === editorSectionsCache.length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
+        <button type="button" class="editor-icon-btn" data-toggle-active="${s.id}" aria-label="${s.is_active ? 'Ocultar' : 'Mostrar'}">${s.is_active ? '👁' : '🚫'}</button>
+        <button type="button" class="editor-icon-btn" data-edit-section="${s.id}" aria-label="Editar">✎</button>
+        <button type="button" class="editor-icon-btn" data-delete-section="${s.id}" aria-label="Eliminar">✕</button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-move-up]').forEach((btn) => btn.addEventListener('click', () => moveSection(btn.dataset.moveUp, 'up')));
+    list.querySelectorAll('[data-move-down]').forEach((btn) => btn.addEventListener('click', () => moveSection(btn.dataset.moveDown, 'down')));
+    list.querySelectorAll('[data-toggle-active]').forEach((btn) => btn.addEventListener('click', () => toggleSectionActive(btn.dataset.toggleActive)));
+    list.querySelectorAll('[data-edit-section]').forEach((btn) => btn.addEventListener('click', () => openSectionDialog(editorSectionsCache.find((s) => s.id === Number(btn.dataset.editSection)))));
+    list.querySelectorAll('[data-delete-section]').forEach((btn) => btn.addEventListener('click', () => deleteSection(btn.dataset.deleteSection)));
+  }
+
+  async function moveSection(id, direction) {
+    await apiFetch(`/page-sections/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) });
+    await loadEditorPage();
+    reloadPreview();
+  }
+
+  async function toggleSectionActive(id) {
+    const section = editorSectionsCache.find((s) => s.id === Number(id));
+    await apiFetch(`/page-sections/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: !section.is_active }) });
+    await loadEditorPage();
+    reloadPreview();
+  }
+
+  async function deleteSection(id) {
+    if (!confirm('¿Eliminar esta sección?')) return;
+    await apiFetch(`/page-sections/${id}`, { method: 'DELETE' });
+    await loadEditorPage();
+    reloadPreview();
+  }
+
+  function showSectionTypeFields(type) {
+    document.getElementById('sectionFieldsBanner').hidden = type !== 'banner';
+    document.getElementById('sectionFieldsTestimonials').hidden = type !== 'testimonials';
+    document.getElementById('sectionFieldsCounters').hidden = type !== 'counters';
+    document.getElementById('sectionFieldsCustomHtml').hidden = type !== 'custom_html';
+  }
+
+  function testimonialRowHtml(t = {}) {
+    return `
+      <div class="image-row testimonial-row" style="align-items:flex-start;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:var(--space-2);">
+          <input class="input-sm" placeholder="Nombre" data-t-name value="${t.author_name || ''}">
+          <input class="input-sm" placeholder="Detalle (ciudad, etc.)" data-t-detail value="${t.author_detail || ''}">
+          <textarea class="input-sm" placeholder="Texto del testimonio" data-t-text style="min-height:60px;">${t.text || ''}</textarea>
+          <input class="input-sm" placeholder="URL de la foto (opcional)" data-t-photo value="${t.photo_url || ''}">
+        </div>
+        <button type="button" class="remove-btn" data-remove-row>Quitar</button>
+      </div>
+    `;
+  }
+
+  function counterRowHtml(c = {}) {
+    return `
+      <div class="image-row counter-row">
+        <input class="input-sm" placeholder="Valor (ej. 500+)" data-c-value value="${c.value || ''}" style="width:120px;">
+        <input class="input-sm" placeholder="Etiqueta" data-c-label value="${c.label || ''}" style="flex:1;">
+        <button type="button" class="remove-btn" data-remove-row>Quitar</button>
+      </div>
+    `;
+  }
+
+  function bindRemoveRowButtons(containerId) {
+    document.getElementById(containerId).querySelectorAll('[data-remove-row]').forEach((btn) => {
+      btn.addEventListener('click', () => btn.closest('.image-row').remove());
+    });
+  }
+
+  document.getElementById('addTestimonialBtn').addEventListener('click', () => {
+    document.getElementById('testimonialList').insertAdjacentHTML('beforeend', testimonialRowHtml());
+    bindRemoveRowButtons('testimonialList');
+  });
+  document.getElementById('addCounterBtn').addEventListener('click', () => {
+    document.getElementById('counterList').insertAdjacentHTML('beforeend', counterRowHtml());
+    bindRemoveRowButtons('counterList');
+  });
+
+  function openSectionDialog(section) {
+    editingSectionId = section ? section.id : null;
+    const type = section ? section.type : document.getElementById('newSectionType').value;
+    document.getElementById('sectionDialogTitle').textContent = section
+      ? `Editar ${SECTION_TYPE_LABEL[type].toLowerCase()}`
+      : `Nuevo: ${SECTION_TYPE_LABEL[type]}`;
+    document.getElementById('sectionFormError').hidden = true;
+    document.getElementById('sectionForm').dataset.type = type;
+    showSectionTypeFields(type);
+
+    const c = (section && section.content) || {};
+    if (type === 'banner') {
+      document.getElementById('s_banner_image').value = c.image_url || '';
+      document.getElementById('s_banner_title').value = c.title || '';
+      document.getElementById('s_banner_subtitle').value = c.subtitle || '';
+      document.getElementById('s_banner_link').value = c.link_url || '';
+      document.getElementById('s_banner_cta').value = c.cta_label || '';
+    } else if (type === 'testimonials') {
+      document.getElementById('testimonialList').innerHTML = (c.items && c.items.length ? c.items : [{}]).map(testimonialRowHtml).join('');
+      bindRemoveRowButtons('testimonialList');
+    } else if (type === 'counters') {
+      document.getElementById('counterList').innerHTML = (c.items && c.items.length ? c.items : [{}, {}]).map(counterRowHtml).join('');
+      bindRemoveRowButtons('counterList');
+    } else if (type === 'custom_html') {
+      document.getElementById('s_custom_html').value = c.html || '';
+      document.getElementById('s_custom_css').value = c.css || '';
+    }
+    document.getElementById('sectionDialog').showModal();
+  }
+
+  function collectTestimonials() {
+    return Array.from(document.querySelectorAll('#testimonialList .testimonial-row')).map((row) => ({
+      author_name: row.querySelector('[data-t-name]').value.trim(),
+      author_detail: row.querySelector('[data-t-detail]').value.trim() || null,
+      text: row.querySelector('[data-t-text]').value.trim(),
+      photo_url: row.querySelector('[data-t-photo]').value.trim() || null,
+    })).filter((t) => t.author_name && t.text);
+  }
+
+  function collectCounters() {
+    return Array.from(document.querySelectorAll('#counterList .counter-row')).map((row) => ({
+      value: row.querySelector('[data-c-value]').value.trim(),
+      label: row.querySelector('[data-c-label]').value.trim(),
+    })).filter((c) => c.value && c.label);
+  }
+
+  document.getElementById('addSectionBtn').addEventListener('click', () => openSectionDialog(null));
+  document.getElementById('cancelSectionDialogBtn').addEventListener('click', () => document.getElementById('sectionDialog').close());
+
+  document.getElementById('sectionForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('sectionFormError');
+    errorEl.hidden = true;
+    const type = event.target.dataset.type;
+
+    let content;
+    if (type === 'banner') {
+      content = {
+        image_url: document.getElementById('s_banner_image').value.trim() || null,
+        title: document.getElementById('s_banner_title').value.trim() || null,
+        subtitle: document.getElementById('s_banner_subtitle').value.trim() || null,
+        link_url: document.getElementById('s_banner_link').value.trim() || null,
+        cta_label: document.getElementById('s_banner_cta').value.trim() || null,
+      };
+    } else if (type === 'testimonials') {
+      content = { items: collectTestimonials() };
+    } else if (type === 'counters') {
+      content = { items: collectCounters() };
+    } else {
+      content = {
+        html: document.getElementById('s_custom_html').value,
+        css: document.getElementById('s_custom_css').value,
+      };
+    }
+
+    try {
+      if (editingSectionId) {
+        await apiFetch(`/page-sections/${editingSectionId}`, { method: 'PUT', body: JSON.stringify({ content }) });
+      } else {
+        const pageKey = document.getElementById('editorPageSelect').value;
+        await apiFetch('/page-sections', { method: 'POST', body: JSON.stringify({ page: pageKey, type, content }) });
+      }
+      document.getElementById('sectionDialog').close();
+      await loadEditorPage();
+      reloadPreview();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
 
   checkAdmin();
 </script>

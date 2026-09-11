@@ -71,6 +71,7 @@
     <div id="ordersList"></div>
     <p class="empty-state" id="noOrders" hidden>Todavía no tienes pedidos. <a class="link" href="/catalogo.html">Ver catálogo</a>.</p>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <footer class="site-footer">
@@ -96,7 +97,9 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('mi-cuenta');
   document.getElementById('navToggle').addEventListener('click', (event) => {
     const panel = document.getElementById('navMobilePanel');
     const isOpen = panel.classList.toggle('is-open');

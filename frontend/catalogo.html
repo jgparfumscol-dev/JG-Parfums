@@ -113,6 +113,7 @@
     <p class="empty-state" id="emptyState" hidden>No encontramos productos con esos filtros.</p>
     <div class="pagination" id="pagination"></div>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <footer class="site-footer">
@@ -138,7 +139,9 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('catalogo');
   document.getElementById('navToggle').addEventListener('click', (event) => {
     const panel = document.getElementById('navMobilePanel');
     const isOpen = panel.classList.toggle('is-open');

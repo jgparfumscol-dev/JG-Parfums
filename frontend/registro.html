@@ -47,10 +47,13 @@
       </div>
     </div>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <script src="/js/api.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('registro');
   document.getElementById('registerForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const errorEl = document.getElementById('formError');

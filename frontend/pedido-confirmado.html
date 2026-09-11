@@ -33,6 +33,7 @@
     </div>
     <a class="btn btn-secondary" href="/catalogo.html" style="margin-top: var(--space-6);">Seguir viendo el catálogo</a>
   </div>
+  <div id="dynamicSections"></div>
 </main>
 
 <footer class="site-footer">
@@ -57,7 +58,9 @@
 </footer>
 
 <script src="/js/api.js"></script>
+<script src="/js/sections.js"></script>
 <script>
+  renderPageSections('pedido-confirmado');
   const STATUS_LABEL = {
     pending: { text: 'Pago pendiente de confirmación', cls: 'badge-warning' },
     paid: { text: 'Pago confirmado', cls: 'badge-success' },
