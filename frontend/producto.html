@@ -274,8 +274,8 @@
       // Prioriza la misma familia olfativa; si el catálogo todavía tiene
       // pocos productos, completa con los más recientes en vez de dejar
       // la sección vacía o a medias.
-      const byFamily = product.olfactory_family
-        ? await apiFetch(`/products?family=${encodeURIComponent(product.olfactory_family)}&page_size=8`)
+      const byFamily = product.category
+        ? await apiFetch(`/products?category_id=${product.category.id}&page_size=8`)
         : { items: [] };
       let candidates = byFamily.items.filter((p) => p.id !== product.id);
 

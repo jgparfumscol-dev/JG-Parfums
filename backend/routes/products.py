@@ -25,7 +25,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 def list_products(
     db: Session = Depends(get_db),
     user: User | None = Depends(get_optional_user),
-    family: str | None = None,
+    category_id: int | None = None,
     search: str | None = None,
     min_price: int | None = Query(default=None, ge=0),
     max_price: int | None = Query(default=None, ge=0),
@@ -38,8 +38,8 @@ def list_products(
     # Solo un admin puede pedir productos inactivos (ej. para reactivarlos en el panel).
     if not (include_inactive and user is not None and user.is_admin):
         query = query.filter(Product.is_active.is_(True))
-    if family:
-        query = query.filter(Product.olfactory_family == family)
+    if category_id is not None:
+        query = query.filter(Product.category_id == category_id)
     if search:
         like = f"%{search}%"
         query = query.filter(Product.name.ilike(like) | Product.house.ilike(like))

@@ -178,7 +178,7 @@
 
   function renderHeroProduct(product) {
     const hasNotes = Boolean(product.notes_top || product.notes_heart || product.notes_base);
-    document.getElementById('heroHouse').textContent = product.house ? `${product.house} · ${product.olfactory_family || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
+    document.getElementById('heroHouse').textContent = product.house ? `${product.house} · ${product.category?.name || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
     document.getElementById('heroName').textContent = product.name;
     document.getElementById('heroDesc').textContent = hasNotes
       ? `${product.concentration || 'Original'} · ${product.size_ml} ml — toca cada fase para leer sus notas reales.`

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catálogo — JG Parfums</title>
-<meta name="description" content="Catálogo de perfumes originales de nicho. Filtra por familia olfativa y precio.">
+<meta name="description" content="Catálogo de perfumes originales de nicho. Filtra por categoría y precio.">
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
 <link rel="stylesheet" href="/css/tokens.css">
@@ -90,13 +90,8 @@
     <form class="filters" id="filterForm">
       <div class="filters-row-main">
         <input type="search" name="search" placeholder="Buscar por nombre o casa" aria-label="Buscar por nombre o casa">
-        <select name="family" aria-label="Familia olfativa">
-          <option value="">Toda familia olfativa</option>
-          <option value="amaderado">Amaderado</option>
-          <option value="floral">Floral</option>
-          <option value="citrico">Cítrico</option>
-          <option value="oriental">Oriental</option>
-          <option value="aromatico">Aromático</option>
+        <select name="category_id" id="categoryFilter" aria-label="Categoría">
+          <option value="">Toda categoría</option>
         </select>
         <select name="sort" aria-label="Ordenar por">
           <option value="">Más recientes</option>
@@ -153,6 +148,16 @@
   const PAGE_SIZE = 12;
   let currentPage = 1;
 
+  async function loadCategoryFilter() {
+    try {
+      const categories = await apiFetch('/categories');
+      const select = document.getElementById('categoryFilter');
+      select.insertAdjacentHTML('beforeend', categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join(''));
+    } catch (err) {
+      // el filtro se queda solo con "Toda categoría" si esto falla
+    }
+  }
+
   function renderProducts(items) {
     const grid = document.getElementById('productGrid');
     grid.innerHTML = items.map((product) => `
@@ -207,7 +212,7 @@
     const form = new FormData(document.getElementById('filterForm'));
     const params = new URLSearchParams({ page: String(currentPage), page_size: String(PAGE_SIZE) });
     if (form.get('search')) params.set('search', form.get('search'));
-    if (form.get('family')) params.set('family', form.get('family'));
+    if (form.get('category_id')) params.set('category_id', form.get('category_id'));
     if (form.get('min_price')) params.set('min_price', form.get('min_price'));
     if (form.get('max_price')) params.set('max_price', form.get('max_price'));
     if (form.get('has_decant')) params.set('has_decant', 'true');
@@ -240,6 +245,7 @@
     loadProducts();
   });
 
+  loadCategoryFilter();
   loadProducts();
 </script>
 </body>

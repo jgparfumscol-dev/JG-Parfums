@@ -61,7 +61,10 @@
         <h1 class="h1">Mi cuenta</h1>
         <p class="text-muted" id="userEmail"></p>
       </div>
-      <button class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+      <div style="display:flex; gap: var(--space-3);">
+        <a class="btn btn-secondary" href="/admin.html" id="adminLink" hidden>Panel admin</a>
+        <button class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+      </div>
     </div>
 
     <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
@@ -115,6 +118,7 @@
       const me = await apiFetch('/auth/me');
       document.getElementById('userEmail').textContent = me.email;
       document.getElementById('loggedInView').hidden = false;
+      document.getElementById('adminLink').hidden = !me.is_admin;
 
       const orders = await apiFetch('/orders/me');
       if (orders.length === 0) {

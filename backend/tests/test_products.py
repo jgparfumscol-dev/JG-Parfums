@@ -4,7 +4,6 @@ def _product_payload(slug="oud-royal"):
         "name": "Oud Royal",
         "house": "Casa Ejemplo",
         "description": "Amaderado oriental, para la noche.",
-        "olfactory_family": "amaderado",
         "concentration": "EDP",
         "size_ml": 100,
         "price": 350000,

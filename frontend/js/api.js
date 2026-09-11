@@ -56,3 +56,14 @@ async function apiFetch(endpoint, options = {}) {
 function formatCOP(amount) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 }
+
+// Estadísticas propias del sitio: sin cookies, sin IP ni user-agent guardados,
+// solo qué página se vio. No cuenta el panel admin (es tráfico del dueño de
+// la tienda, no de clientes) ni falla nunca de forma visible al usuario.
+if (!location.pathname.startsWith('/admin')) {
+  fetch(`${API_URL}/stats/track`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
+}

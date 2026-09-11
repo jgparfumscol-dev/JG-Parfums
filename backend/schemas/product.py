@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from schemas.category import CategoryResponse
+
 
 class ProductImageResponse(BaseModel):
     id: int
@@ -44,7 +46,7 @@ class ProductBase(BaseModel):
     name: str = Field(min_length=1)
     house: str | None = None
     description: str = Field(min_length=1)
-    olfactory_family: str | None = None
+    category_id: int | None = None
     notes_top: str | None = None
     notes_heart: str | None = None
     notes_base: str | None = None
@@ -63,7 +65,7 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     house: str | None = None
     description: str | None = None
-    olfactory_family: str | None = None
+    category_id: int | None = None
     notes_top: str | None = None
     notes_heart: str | None = None
     notes_base: str | None = None
@@ -81,6 +83,7 @@ class ProductResponse(ProductBase):
     updated_at: datetime
     images: list[ProductImageResponse] = []
     variants: list[ProductVariantResponse] = []
+    category: CategoryResponse | None = None
 
     model_config = {"from_attributes": True}
 

@@ -16,7 +16,7 @@ class Product(Base):
     name = Column(String, nullable=False)
     house = Column(String, nullable=True)  # casa/marca original del perfume
     description = Column(Text, nullable=False)
-    olfactory_family = Column(String, nullable=True)  # amaderado, floral, cítrico, etc.
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     notes_top = Column(String, nullable=True)
     notes_heart = Column(String, nullable=True)
     notes_base = Column(String, nullable=True)
@@ -48,6 +48,7 @@ class Product(Base):
         order_by="ProductVariant.size_ml",
     )
     order_items = relationship("OrderItem", back_populates="product")
+    category = relationship("Category")
 
 
 class ProductImage(Base):
