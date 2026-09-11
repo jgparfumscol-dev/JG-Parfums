@@ -10,8 +10,9 @@
 <link rel="stylesheet" href="/css/components.css">
 <style>
   .account-header { display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-8); padding-bottom: var(--space-6); border-bottom: 1px solid var(--ink-100); margin-bottom: var(--space-6); }
-  .order-row { padding-top: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--ink-100); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
+  .order-row { padding-top: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--ink-100); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); text-decoration: none; color: inherit; }
   .order-row:last-child { border-bottom: none; }
+  .order-row:hover .order-number { text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; }
   .order-number { font-family: var(--font-display); font-size: 15px; }
 </style>
 </head>
@@ -25,12 +26,22 @@
       <li><a href="/catalogo.html">Catálogo</a></li>
     </ul>
     <div class="nav-actions">
+      <a class="nav-icon-btn" href="/mi-cuenta.html" aria-label="Mi cuenta">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+      </a>
       <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
         <span class="nav-cart-count" data-cart-count hidden>0</span>
       </a>
+      <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </div>
   </div>
+  <nav class="nav-mobile-panel container" id="navMobilePanel">
+    <a href="/catalogo.html">Catálogo</a>
+    <a href="/mi-cuenta.html">Mi cuenta</a>
+  </nav>
 </header>
 
 <main>
@@ -83,6 +94,12 @@
 <script src="/js/api.js"></script>
 <script src="/js/cart.js"></script>
 <script>
+  document.getElementById('navToggle').addEventListener('click', (event) => {
+    const panel = document.getElementById('navMobilePanel');
+    const isOpen = panel.classList.toggle('is-open');
+    event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+  });
+
   const STATUS_LABEL = {
     pending: 'Pago pendiente', paid: 'Pago confirmado', processing: 'En preparación',
     shipped: 'Enviado', completed: 'Entregado', cancelled: 'Cancelado',
@@ -104,7 +121,7 @@
         document.getElementById('noOrders').hidden = false;
       } else {
         document.getElementById('ordersList').innerHTML = orders.map((order) => `
-          <div class="order-row">
+          <a class="order-row" href="/pedido-confirmado.html?order=${encodeURIComponent(order.order_number)}">
             <div>
               <p class="order-number">${order.order_number}</p>
               <p class="text-muted text-small">${new Date(order.created_at).toLocaleDateString('es-CO')}</p>
@@ -113,7 +130,7 @@
               <p class="tabular">${formatCOP(order.total)}</p>
               <p class="text-small text-muted">${STATUS_LABEL[order.status] || order.status}</p>
             </div>
-          </div>
+          </a>
         `).join('');
       }
     } catch (err) {

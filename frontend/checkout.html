@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/css/components.css">
 <style>
   .checkout-layout { display: flex; flex-direction: column; gap: var(--space-12); padding-top: var(--space-8); padding-bottom: var(--space-16); }
+  .checkout-layout[hidden] { display: none; }
   @media (min-width: 1024px) { .checkout-layout { flex-direction: row; align-items: flex-start; } }
   .checkout-form { flex: 1; max-width: 560px; }
   .form-section-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: var(--space-8) 0 var(--space-3); }
@@ -18,6 +19,9 @@
   @media (min-width: 1024px) { .summary { width: 340px; position: sticky; top: 96px; } }
   .summary-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
+  .breadcrumb { padding-top: var(--space-6); }
+  .breadcrumb a { color: var(--text-muted); font-size: 14px; text-decoration: none; }
+  .breadcrumb a:hover { color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -31,7 +35,12 @@
 
 <main>
   <div class="container">
-    <h1 class="h1" style="padding-top: var(--space-8);">Confirmar y pagar</h1>
+    <p class="breadcrumb"><a href="/carrito.html">← Volver al carrito</a></p>
+    <h1 class="h1" style="padding-top: var(--space-3);">Confirmar y pagar</h1>
+    <div class="empty-state" id="emptyCheckout" hidden>
+      <p>Tu carrito está vacío — no hay nada que pagar todavía.</p>
+      <a class="btn btn-primary" href="/catalogo.html">Ver catálogo</a>
+    </div>
     <div class="checkout-layout" id="checkoutLayout">
       <form class="checkout-form" id="checkoutForm">
         <p class="form-error" id="formError" hidden></p>
@@ -99,8 +108,8 @@
   function renderSummary() {
     const summary = document.getElementById('summary');
     if (items.length === 0) {
-      summary.innerHTML = '<p>Tu carrito está vacío. <a class="link" href="/catalogo.html">Ver catálogo</a>.</p>';
-      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('checkoutLayout').hidden = true;
+      document.getElementById('emptyCheckout').hidden = false;
       return;
     }
     const subtotal = getCartTotal();

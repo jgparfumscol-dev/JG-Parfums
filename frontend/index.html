@@ -21,28 +21,6 @@
   .hero-spec-desc { color: #B9B4B0; max-width: 46ch; margin-top: var(--space-4); font-family: var(--font-display); font-style: italic; }
   .hero-spec-copy .btn { margin-top: var(--space-8); }
 
-  .product-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-8) var(--space-6);
-  }
-  @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
-
-  .product-card { text-decoration: none; color: inherit; display: block; }
-  .product-card-media {
-    aspect-ratio: 4 / 5;
-    background: var(--ink-100);
-    position: relative;
-    overflow: hidden;
-  }
-  .product-card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1); }
-  .product-card:hover .product-card-media img { transform: scale(1.035); }
-  .product-card-body { padding-top: var(--space-3); margin-top: var(--space-3); border-top: 1px solid var(--ink-100); }
-  .product-card-name { font-family: var(--font-display); font-size: 16px; margin: 0; }
-  .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
-  .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
-
   /* callout de decants */
   .decant-callout { display: grid; gap: var(--space-8); }
   @media (min-width: 768px) { .decant-callout { grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; } }

@@ -51,6 +51,12 @@
   .qty-control { display: flex; align-items: center; border: 1px solid var(--ink-300); border-radius: var(--radius); }
   .qty-control button { width: 44px; height: 44px; border: none; background: none; font-size: 18px; cursor: pointer; }
   .qty-control span { width: 32px; text-align: center; }
+
+  .breadcrumb { padding-top: var(--space-6); }
+  .breadcrumb a { color: var(--text-muted); font-size: 14px; text-decoration: none; }
+  .breadcrumb a:hover { color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; }
+
+  .related-section { border-top: 1px solid var(--ink-100); }
 </style>
 </head>
 <body>
@@ -79,8 +85,13 @@
 
 <main id="main">
   <div class="container">
+    <p class="breadcrumb"><a href="/catalogo.html">← Volver al catálogo</a></p>
     <div id="productContent" class="product-layout"></div>
     <p class="empty-state" id="notFound" hidden>No encontramos este producto. <a class="link" href="/catalogo.html">Vuelve al catálogo</a>.</p>
+  </div>
+  <div class="container related-section section" id="relatedSection" hidden>
+    <h2 class="h2 section-title">También te puede interesar</h2>
+    <div class="product-grid" id="relatedGrid"></div>
   </div>
 </main>
 
@@ -256,6 +267,50 @@
     applySelection();
   }
 
+  async function loadRelated(product) {
+    const section = document.getElementById('relatedSection');
+    const grid = document.getElementById('relatedGrid');
+    try {
+      // Prioriza la misma familia olfativa; si el catálogo todavía tiene
+      // pocos productos, completa con los más recientes en vez de dejar
+      // la sección vacía o a medias.
+      const byFamily = product.olfactory_family
+        ? await apiFetch(`/products?family=${encodeURIComponent(product.olfactory_family)}&page_size=8`)
+        : { items: [] };
+      let candidates = byFamily.items.filter((p) => p.id !== product.id);
+
+      if (candidates.length < 4) {
+        const recent = await apiFetch('/products?page_size=8');
+        const seen = new Set(candidates.map((p) => p.id));
+        for (const p of recent.items) {
+          if (p.id !== product.id && !seen.has(p.id)) {
+            candidates.push(p);
+            seen.add(p.id);
+          }
+        }
+      }
+
+      const related = candidates.slice(0, 4);
+      if (related.length === 0) return;
+
+      grid.innerHTML = related.map((p) => `
+        <a class="product-card" href="/producto.html?slug=${encodeURIComponent(p.slug)}">
+          <div class="product-card-media">
+            ${p.images[0] ? `<img src="${p.images[0].url}" alt="${p.images[0].alt_text}" loading="lazy">` : ''}
+          </div>
+          <div class="product-card-body">
+            <p class="product-card-name">${p.name}</p>
+            <p class="product-card-meta">${p.house ? `${p.house} · ` : ''}${p.size_ml} ml</p>
+            <p class="product-card-price">${p.variants && p.variants.length ? 'Desde ' : ''}${formatCOP(p.variants && p.variants.length ? Math.min(p.price, ...p.variants.map((v) => v.price)) : p.price)}</p>
+          </div>
+        </a>
+      `).join('');
+      section.hidden = false;
+    } catch (err) {
+      // silencioso: relacionados es una mejora, no algo que deba romper la ficha
+    }
+  }
+
   async function loadProduct() {
     if (!slug) {
       document.getElementById('notFound').hidden = false;
@@ -264,6 +319,7 @@
     try {
       currentProduct = await apiFetch(`/products/${encodeURIComponent(slug)}`);
       renderProduct(currentProduct);
+      loadRelated(currentProduct);
     } catch (err) {
       document.getElementById('notFound').hidden = false;
     }

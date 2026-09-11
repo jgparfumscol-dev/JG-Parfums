@@ -23,11 +23,15 @@
   dialog::backdrop { background: rgba(32,30,31,.5); }
   .dialog-inner { padding: var(--space-8); max-height: 80vh; overflow-y: auto; }
   .dialog-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
-  .status-select { height: 36px; border: 1px solid var(--ink-300); border-radius: var(--radius); font-family: var(--font-body); }
+  .status-select { height: 44px; padding: 0 var(--space-2); border: 1px solid var(--ink-300); border-radius: var(--radius); font-family: var(--font-body); font-size: 14px; color: var(--jg-onyx); background: var(--jg-white); }
+  .status-select:focus { outline: 2px solid var(--gold-600); outline-offset: 1px; border-color: var(--gold-600); }
   .login-gate { max-width: 360px; margin: var(--space-24) auto; padding: var(--space-8); }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--space-4); }
   .image-row { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; margin-bottom: var(--space-2); }
   .image-row img { width: 40px; height: 40px; object-fit: cover; }
+  .order-number-btn { background: none; border: none; padding: 0; color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; cursor: pointer; font-family: var(--font-body); font-size: 14px; }
+  .order-detail-section { margin-bottom: var(--space-6); }
+  .order-detail-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
 </style>
 </head>
 <body>
@@ -108,9 +112,9 @@
       <div id="imageSection" hidden>
         <p class="text-caption" style="margin-bottom: var(--space-2);">Imágenes</p>
         <div id="imageList"></div>
-        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2);">
-          <input id="newImageUrl" placeholder="URL de la imagen" style="flex:1; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
-          <input id="newImageAlt" placeholder="Texto alternativo" style="flex:1; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
+          <input id="newImageUrl" class="input-sm" placeholder="URL de la imagen" style="flex:1; min-width:160px;">
+          <input id="newImageAlt" class="input-sm" placeholder="Texto alternativo" style="flex:1; min-width:160px;">
           <button class="btn btn-secondary" type="button" id="addImageBtn">Agregar</button>
         </div>
       </div>
@@ -120,9 +124,9 @@
         <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Mismo perfume, presentación de prueba. Precio y stock son propios de cada tamaño.</p>
         <div id="variantList"></div>
         <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
-          <input id="newVariantSize" type="number" min="1" placeholder="ml" style="width:70px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
-          <input id="newVariantPrice" type="number" min="1" placeholder="Precio COP" style="width:120px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
-          <input id="newVariantStock" type="number" min="0" placeholder="Stock" style="width:90px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <input id="newVariantSize" type="number" min="1" placeholder="ml" class="input-sm" style="width:70px;">
+          <input id="newVariantPrice" type="number" min="1" placeholder="Precio COP" class="input-sm" style="width:120px;">
+          <input id="newVariantStock" type="number" min="0" placeholder="Stock" class="input-sm" style="width:90px;">
           <button class="btn btn-secondary" type="button" id="addVariantBtn">Agregar</button>
         </div>
       </div>
@@ -132,6 +136,16 @@
         <button class="btn btn-primary" type="submit">Guardar</button>
       </div>
     </form>
+  </div>
+</dialog>
+
+<dialog id="orderDialog">
+  <div class="dialog-inner">
+    <h2 class="h3" style="margin-bottom: var(--space-4);">Detalle del pedido</h2>
+    <div id="orderDetailContent"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" id="closeOrderDialogBtn">Cerrar</button>
+    </div>
   </div>
 </dialog>
 
@@ -198,6 +212,12 @@
   // --- Productos ---
   async function loadProducts() {
     const data = await apiFetch('/products?include_inactive=true&page_size=100');
+    if (data.items.length === 0) {
+      document.getElementById('productsBody').innerHTML = `
+        <tr><td colspan="6" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</td></tr>
+      `;
+      return;
+    }
     document.getElementById('productsBody').innerHTML = data.items.map((p) => `
       <tr>
         <td>${p.name}</td>
@@ -280,9 +300,9 @@
     document.getElementById('variantList').innerHTML = product.variants.map((v) => `
       <div class="image-row">
         <span style="width:48px;">${v.size_ml} ml</span>
-        <input type="number" min="1" value="${v.price}" data-variant-price="${v.id}" style="flex:1; height:32px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
-        <input type="number" min="0" value="${v.stock}" data-variant-stock="${v.id}" style="width:70px; height:32px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
-        <button type="button" data-save-variant="${v.id}" class="btn btn-secondary" style="height:32px; padding:0 var(--space-2);">Guardar</button>
+        <input type="number" min="1" value="${v.price}" data-variant-price="${v.id}" class="input-sm" style="flex:1;" aria-label="Precio del decant de ${v.size_ml}ml">
+        <input type="number" min="0" value="${v.stock}" data-variant-stock="${v.id}" class="input-sm" style="width:70px;" aria-label="Stock del decant de ${v.size_ml}ml">
+        <button type="button" data-save-variant="${v.id}" class="btn btn-secondary" style="height:44px; padding:0 var(--space-3);">Guardar</button>
         <button type="button" data-remove-variant="${v.id}" class="remove-btn">Quitar</button>
       </div>
     `).join('') || '<p class="text-muted text-small">Todavía no hay decants para este producto.</p>';
@@ -366,14 +386,20 @@
 
   async function loadOrders() {
     const orders = await apiFetch('/orders');
+    if (orders.length === 0) {
+      document.getElementById('ordersBody').innerHTML = `
+        <tr><td colspan="6" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay pedidos.</td></tr>
+      `;
+      return;
+    }
     document.getElementById('ordersBody').innerHTML = orders.map((order) => `
       <tr>
-        <td>${order.order_number}</td>
+        <td><button type="button" class="order-number-btn" data-view-order="${order.id}">${order.order_number}</button></td>
         <td>${order.guest_name}<br><span class="text-muted text-small">${order.guest_email}</span></td>
         <td>${formatCOP(order.total)}</td>
         <td class="text-small text-muted">${order.payment_provider || '—'} · ${order.payment_status}</td>
         <td>
-          <select class="status-select" data-order="${order.id}">
+          <select class="status-select" data-order="${order.id}" aria-label="Cambiar estado del pedido ${order.order_number}">
             ${ORDER_STATUSES.map((s) => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`).join('')}
           </select>
         </td>
@@ -389,7 +415,44 @@
         });
       });
     });
+
+    document.querySelectorAll('[data-view-order]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        openOrderDialog(orders.find((o) => o.id === Number(btn.dataset.viewOrder)));
+      });
+    });
   }
+
+  function openOrderDialog(order) {
+    document.getElementById('orderDetailContent').innerHTML = `
+      <div class="order-detail-section">
+        <p class="order-detail-heading">Cliente</p>
+        <p>${order.guest_name}</p>
+        <p class="text-muted text-small">${order.guest_email} · ${order.guest_phone}</p>
+      </div>
+      <div class="order-detail-section">
+        <p class="order-detail-heading">Entrega</p>
+        <p>${order.shipping_address}, ${order.shipping_city}</p>
+        ${order.shipping_notes ? `<p class="text-muted text-small">${order.shipping_notes}</p>` : ''}
+      </div>
+      <div class="order-detail-section">
+        <p class="order-detail-heading">Ítems</p>
+        <dl class="spec-list">
+          ${order.items.map((item) => `
+            <div class="ledger-row text-small"><span>${item.product_name} × ${item.quantity}</span><span>${formatCOP(item.unit_price * item.quantity)}</span></div>
+          `).join('')}
+          <div class="ledger-row ledger-row-total"><span>Total</span><span>${formatCOP(order.total)}</span></div>
+        </dl>
+      </div>
+      <div class="order-detail-section" style="margin-bottom:0;">
+        <p class="order-detail-heading">Pago</p>
+        <p class="text-small text-muted">${order.payment_provider || 'Sin definir'} · ${order.payment_status}</p>
+      </div>
+    `;
+    document.getElementById('orderDialog').showModal();
+  }
+
+  document.getElementById('closeOrderDialogBtn').addEventListener('click', () => document.getElementById('orderDialog').close());
 
   checkAdmin();
 </script>

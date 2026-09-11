@@ -69,11 +69,15 @@
 
   async function loadOrder() {
     const orderNumber = new URLSearchParams(window.location.search).get('order');
+    if (!orderNumber) return;
+    // El email de sessionStorage solo existe recién salido del checkout como
+    // invitado. Si hay sesión iniciada, apiFetch ya manda el JWT y el backend
+    // resuelve el permiso por dueño del pedido — no hace falta el email.
     const email = sessionStorage.getItem('jg_last_order_email');
-    if (!orderNumber || !email) return;
+    const query = email ? `?email=${encodeURIComponent(email)}` : '';
 
     try {
-      const order = await apiFetch(`/orders/${encodeURIComponent(orderNumber)}?email=${encodeURIComponent(email)}`);
+      const order = await apiFetch(`/orders/${encodeURIComponent(orderNumber)}${query}`);
       const status = STATUS_LABEL[order.status] || { text: order.status, cls: 'badge-warning' };
       document.getElementById('confirmContent').innerHTML = `
         <p class="badge ${status.cls} status-badge">${status.text}</p>
