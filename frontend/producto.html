@@ -111,11 +111,37 @@
   const slug = new URLSearchParams(window.location.search).get('slug');
   let quantity = 1;
   let currentProduct = null;
+  let sizes = [];
+  let selectedSizeIndex = 0;
+
+  // El frasco completo siempre es la primera opción; los decants (si existen
+  // y están activos) se agregan detrás, ordenados de menor a mayor tamaño.
+  function buildSizes(product) {
+    const fullBottle = {
+      variant_id: null,
+      size_ml: product.size_ml,
+      label: `${product.size_ml} ml — frasco completo`,
+      price: product.price,
+      stock: product.stock,
+    };
+    const decants = (product.variants || [])
+      .filter((v) => v.is_active)
+      .map((v) => ({
+        variant_id: v.id,
+        size_ml: v.size_ml,
+        label: `Decant ${v.size_ml} ml — prueba antes de llevar el frasco completo`,
+        price: v.price,
+        stock: v.stock,
+      }));
+    return [fullBottle, ...decants];
+  }
 
   function renderProduct(product) {
     document.getElementById('pageTitle').textContent = `${product.name} — JG Parfums`;
     const images = product.images.length ? product.images : [{ url: '', alt_text: product.name }];
-    const lowStock = product.stock > 0 && product.stock <= 3;
+    sizes = buildSizes(product);
+    selectedSizeIndex = 0;
+    const selected = sizes[selectedSizeIndex];
 
     document.getElementById('productContent').innerHTML = `
       <div class="product-gallery">
@@ -129,12 +155,10 @@
       <div class="product-info">
         ${product.house ? `<p class="product-house text-small">${product.house}</p>` : ''}
         <h1 class="h1">${product.name}</h1>
-        <p class="product-price">${formatCOP(product.price)}</p>
+        <p class="product-price" id="selectedPrice">${formatCOP(selected.price)}</p>
         <p class="text-muted product-description">${product.description}</p>
 
-        ${product.stock === 0
-          ? `<p class="badge badge-danger" style="margin-top:var(--space-4);">Agotado</p>`
-          : lowStock ? `<p class="badge badge-warning" style="margin-top:var(--space-4);">Últimas ${product.stock} unidades</p>` : ''}
+        <p class="badge" id="stockBadge" style="margin-top:var(--space-4);"></p>
 
         <div class="product-notes">
           <p class="product-notes-heading">Ficha olfativa</p>
@@ -147,6 +171,24 @@
           </dl>
         </div>
 
+        ${sizes.length > 1 ? `
+          <div class="product-notes">
+            <p class="product-notes-heading">Presentación</p>
+            <p class="text-muted text-small" style="margin-bottom:var(--space-3);">¿No estás seguro? Prueba primero un decant — es el mismo perfume, en frasco de prueba.</p>
+            <div class="option-list" id="sizeOptions">
+              ${sizes.map((size, index) => `
+                <label class="option-row">
+                  <span class="option-row-label">
+                    <input type="radio" name="size" value="${index}" ${index === 0 ? 'checked' : ''} ${size.stock === 0 ? 'disabled' : ''}>
+                    ${size.label}${size.stock === 0 ? ' — agotado' : ''}
+                  </span>
+                  <span class="option-row-price">${formatCOP(size.price)}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <div class="qty-row">
           <div class="qty-control">
             <button type="button" id="qtyMinus" aria-label="Restar cantidad">−</button>
@@ -154,9 +196,7 @@
             <button type="button" id="qtyPlus" aria-label="Sumar cantidad">+</button>
           </div>
         </div>
-        <button class="btn btn-primary btn-block" id="addToCartBtn" ${product.stock === 0 ? 'disabled' : ''}>
-          ${product.stock === 0 ? 'Agotado' : 'Agregar al carrito'}
-        </button>
+        <button class="btn btn-primary btn-block" id="addToCartBtn">Agregar al carrito</button>
       </div>
     `;
 
@@ -166,19 +206,54 @@
       });
     });
 
+    function applySelection() {
+      const size = sizes[selectedSizeIndex];
+      quantity = Math.min(quantity, Math.max(size.stock, 1));
+      document.getElementById('qtyValue').textContent = quantity;
+      document.getElementById('selectedPrice').textContent = formatCOP(size.price);
+
+      const badge = document.getElementById('stockBadge');
+      badge.className = 'badge';
+      if (size.stock === 0) {
+        badge.classList.add('badge-danger');
+        badge.textContent = 'Agotado';
+      } else if (size.stock <= 3) {
+        badge.classList.add('badge-warning');
+        badge.textContent = `Últimas ${size.stock} unidades`;
+      } else {
+        badge.textContent = '';
+      }
+
+      const addBtn = document.getElementById('addToCartBtn');
+      addBtn.disabled = size.stock === 0;
+      addBtn.textContent = size.stock === 0 ? 'Agotado' : 'Agregar al carrito';
+    }
+
+    document.querySelectorAll('#sizeOptions input[name="size"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        selectedSizeIndex = Number(input.value);
+        quantity = 1;
+        applySelection();
+      });
+    });
+
     document.getElementById('qtyMinus').addEventListener('click', () => {
       quantity = Math.max(1, quantity - 1);
       document.getElementById('qtyValue').textContent = quantity;
     });
     document.getElementById('qtyPlus').addEventListener('click', () => {
-      quantity = Math.min(product.stock, quantity + 1);
+      quantity = Math.min(sizes[selectedSizeIndex].stock, quantity + 1);
       document.getElementById('qtyValue').textContent = quantity;
     });
     document.getElementById('addToCartBtn').addEventListener('click', () => {
-      addToCart(product, quantity);
+      const size = sizes[selectedSizeIndex];
+      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, stock: size.stock } : null;
+      addToCart(product, quantity, variant);
       document.getElementById('addToCartBtn').textContent = 'Agregado ✓';
-      setTimeout(() => { document.getElementById('addToCartBtn').textContent = 'Agregar al carrito'; }, 1500);
+      setTimeout(() => applySelection(), 1500);
     });
+
+    applySelection();
   }
 
   async function loadProduct() {

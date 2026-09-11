@@ -17,9 +17,6 @@
   .summary { width: 100%; padding: var(--space-6); }
   @media (min-width: 1024px) { .summary { width: 340px; position: sticky; top: 96px; } }
   .summary-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
-  .payment-options { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); margin-bottom: var(--space-6); }
-  .payment-option { display: flex; align-items: center; gap: var(--space-3); border: 1px solid var(--ink-300); border-radius: var(--radius); padding: var(--space-4); cursor: pointer; }
-  .payment-option:has(input:checked) { border-color: var(--gold-600); }
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 </style>
 </head>
@@ -68,14 +65,12 @@
         </div>
 
         <p class="form-section-heading">Medio de pago</p>
-        <div class="payment-options">
-          <label class="payment-option">
-            <input type="radio" name="provider" value="wompi" checked>
-            <span>Wompi — tarjeta, PSE, Nequi, botón Bancolombia</span>
+        <div class="option-list" style="margin-bottom: var(--space-6);">
+          <label class="option-row">
+            <span class="option-row-label"><input type="radio" name="provider" value="wompi" checked> Wompi — tarjeta, PSE, Nequi, botón Bancolombia</span>
           </label>
-          <label class="payment-option">
-            <input type="radio" name="provider" value="mercadopago">
-            <span>Mercado Pago</span>
+          <label class="option-row">
+            <span class="option-row-label"><input type="radio" name="provider" value="mercadopago"> Mercado Pago</span>
           </label>
         </div>
 
@@ -113,7 +108,7 @@
       <p class="summary-heading">Resumen del pedido</p>
       ${items.map((item) => `
         <div class="ledger-row text-small">
-          <span>${item.name} × ${item.quantity}</span>
+          <span>${item.name} — ${item.size_label} × ${item.quantity}</span>
           <span>${formatCOP(item.price * item.quantity)}</span>
         </div>
       `).join('')}
@@ -138,7 +133,7 @@
       shipping_city: form.get('shipping_city'),
       shipping_address: form.get('shipping_address'),
       shipping_notes: form.get('shipping_notes') || null,
-      items: items.map((item) => ({ product_id: item.product_id, quantity: item.quantity })),
+      items: items.map((item) => ({ product_id: item.product_id, variant_id: item.variant_id, quantity: item.quantity })),
     };
 
     try {

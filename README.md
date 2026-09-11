@@ -4,7 +4,7 @@
 
 **Tienda de perfumes de nicho construida con FastAPI, PostgreSQL y JavaScript vanilla**
 
-Autenticación · Catálogo · Carrito · Checkout (registrado e invitado) · Pagos (Wompi + Mercado Pago) · Panel administrativo
+Autenticación · Catálogo · Decants (5ml/10ml) · Carrito · Checkout (registrado e invitado) · Pagos (Wompi + Mercado Pago) · Panel administrativo
 
 ### 🔗 [jg-parfums.pages.dev](https://jg-parfums.pages.dev) — frontend y backend en línea, en construcción
 
@@ -47,28 +47,28 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 ## Estado actual
 
-**El sitio todavía no está vendiendo.** Todo el pipeline técnico (frontend, backend, base de datos, correos) ya está en línea y probado de punta a punta. Lo que falta es contenido real del cliente y credenciales de pago de producción.
+**El sitio todavía no está vendiendo.** El pipeline técnico completo (frontend, backend, base de datos, correos, pagos) ya está en línea, probado de punta a punta y con credenciales reales de producción. Lo que falta es contenido real del cliente.
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, pedidos, pagos, admin) | ✅ Construido y probado (23 tests, contra Postgres real) |
+| Backend (auth, catálogo, decants, pedidos, pagos, admin) | ✅ Construido y probado (29 tests, contra Postgres real) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
-| Frontend (13 páginas: tienda, cuenta, panel admin) | ✅ Construido |
+| Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
+| Frontend (tienda, cuenta, panel admin) | ✅ Construido — home y catálogo rediseñados sobre un sistema de diseño documentado (`DESIGN.md`) |
 | Frontend desplegado (Cloudflare Pages) | ✅ En línea — [jg-parfums.pages.dev](https://jg-parfums.pages.dev) |
 | CORS frontend ↔ backend | ✅ Verificado con petición real |
 | Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
-| Pago con Wompi | ⏳ Código listo — faltan credenciales reales del comercio |
-| Pago con Mercado Pago | ⏳ Código listo — faltan credenciales reales |
-| Catálogo con productos reales | ⏳ 4 productos de prueba cargados — falta contenido y fotografía real del cliente |
+| Pago con Wompi | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
+| Pago con Mercado Pago | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
+| Catálogo con productos reales | ⏳ Productos de prueba cargados — falta contenido y fotografía real del cliente |
 | Política de tratamiento de datos / términos | ❌ Pendiente (obligatorio en Colombia, Ley 1581 de 2012) |
 | Dominio propio | ❌ Pendiente — usando `*.pages.dev` / `*.up.railway.app` por ahora |
 
 ## Qué falta antes de lanzar
 
 **Bloqueante para vender:**
-- [ ] Credenciales de producción de Wompi y Mercado Pago
-- [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene 4 productos de prueba, sin fotos)
+- [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene productos de prueba, sin fotos)
 - [ ] Página de política de tratamiento de datos personales y términos de compra
 - [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
 
@@ -120,14 +120,14 @@ flowchart LR
 
 ### Frontend
 
-- Home con catálogo destacado
-- Catálogo con filtros (familia olfativa, búsqueda, orden por precio)
-- Ficha de producto: galería, notas olfativas, stock, selector de cantidad
-- Carrito persistido en el navegador (`localStorage`)
+- Home: producto destacado como ficha técnica interactiva (pirámide olfativa tocable), grilla de recién llegados, bloque de decants
+- Catálogo con filtros (familia olfativa, rango de precio, búsqueda, orden por precio, solo con decant disponible)
+- Ficha de producto: galería, notas olfativas, selector de presentación (frasco completo o decant de 5ml/10ml), stock por presentación
+- Carrito persistido en el navegador (`localStorage`), con una línea independiente por presentación
 - Checkout con datos de envío y elección de pasarela de pago
 - Cuentas de usuario opcionales + checkout invitado
 - Historial de pedidos para usuarios registrados
-- Panel administrativo (SPA con tabs): productos y pedidos
+- Panel administrativo (SPA con tabs): productos (con gestión de decants por producto) y pedidos
 
 </td>
 <td valign="top" width="50%">
@@ -137,7 +137,8 @@ flowchart LR
 - API REST con FastAPI y autenticación JWT
 - Registro/login/recuperación de contraseña sin enumeración de cuentas
 - Gestión de productos e imágenes (catálogo)
-- Pedidos con descuento de stock transaccional
+- Decants por producto (5ml/10ml): precio y stock propios, independientes del frasco completo
+- Pedidos con descuento de stock transaccional (respeta la presentación comprada: frasco completo o decant)
 - Integración con Wompi (firma de integridad + verificación de checksum de webhook)
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
@@ -152,6 +153,12 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Credenciales de producción de Wompi y Mercado Pago configuradas en Railway; flujo de pago completo (checkout → webhook → pedido pagado → correo de confirmación) probado de punta a punta con ambas pasarelas.
+- Feature de decants: tabla `product_variants` (precio y stock propios por presentación de 5ml/10ml, independiente del frasco completo), endpoints de admin para gestionarlos, y lógica de checkout que descuenta el stock correcto según la presentación comprada. 6 tests nuevos.
+- Sistema de diseño documentado en `DESIGN.md` (formato estándar, con `.impeccable/design.json` como sidecar de tokens) a partir de la identidad ya implementada en `BRAND.md` — nombrado "El cuaderno del perfumista", con sus componentes de firma (`spec-row`, `scent-diagram`, `ledger-row`) consolidados como vocabulario compartido.
+- Home rediseñada: el producto destacado se muestra como una ficha técnica interactiva (nombre, pirámide olfativa tocable con las notas reales de salida/corazón/fondo), en vez de un hero genérico con eslogan.
+- Catálogo con filtros nuevos (rango de precio, solo productos con decant disponible) y precio "Desde $X" en las tarjetas cuando el perfume tiene decants — el orden por precio usa ese mismo valor.
+- Ficha de producto con selector de presentación (frasco completo / decant 5ml / decant 10ml), cada una con su propio precio y aviso de stock.
 - Backend completo construido desde cero: modelos, rutas, servicios de pago y auth, siguiendo el esqueleto de `ARQUITECTURA_BASE.md`.
 - 23 tests automatizados (pytest + SQLite en memoria) cubriendo auth, productos, pedidos y pagos.
 - Migración inicial de Alembic generada, probada con un ciclo completo `upgrade → downgrade → upgrade` contra Postgres real en Docker — se encontró y corrigió un bug real: los tipos ENUM nativos de Postgres no se borraban en el downgrade, lo que rompía un re-upgrade.
@@ -197,7 +204,8 @@ flowchart LR
 │   └── tests/                   # pytest, SQLite en memoria
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
-└── BRAND.md           # Manual de marca — fuente de verdad de diseño
+├── BRAND.md           # Manual de marca — fuente de verdad de diseño
+└── DESIGN.md          # Sistema de diseño documentado (tokens, componentes, reglas) a partir de BRAND.md
 ```
 
 ## Instalación rápida

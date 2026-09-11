@@ -16,7 +16,7 @@ Tienda online que vende perfumes originales de nicho al mercado colombiano, con 
 
 ## Positioning
 
-Perfumes de nicho 100% originales a un precio más accesible que las boutiques tradicionales — autenticidad de producto más acceso, no descuento vía imitación (decants/inspirados) ni ser la tienda más barata del mercado.
+Perfumes de nicho 100% originales a un precio más accesible que las boutiques tradicionales — autenticidad de producto más acceso, no descuento vía imitación (réplicas/inspirados) ni ser la tienda más barata del mercado. El catálogo también ofrece decants: el mismo frasco original fraccionado en presentaciones de 5ml y 10ml, para quien quiere probar antes de comprar el frasco completo — sigue siendo el producto 100% original, solo en otro tamaño.
 
 ## Operating Context
 
@@ -30,12 +30,14 @@ Perfumes de nicho 100% originales a un precio más accesible que las boutiques t
 
 - Frontend es HTML/CSS/JS vanilla sin framework ni paso de build: cualquier trabajo visual debe seguir funcionando sin bundler.
 - Backend: FastAPI + SQLAlchemy 2.x síncrono + PostgreSQL + Alembic; JWT (python-jose) + bcrypt para auth; rate limiting por IP en login/registro/checkout; sin enumeración de cuentas.
-- 23 tests automatizados (pytest contra SQLite en memoria) cubren auth, productos, pedidos y pagos; no tocan `DATABASE_URL` real ni servicios externos.
-- Catálogo hoy tiene solo 4 productos de prueba sin fotografía real — el contenido real del cliente todavía no existe.
+- 29 tests automatizados (pytest contra SQLite en memoria) cubren auth, productos, decants, pedidos y pagos; no tocan `DATABASE_URL` real ni servicios externos.
+- Catálogo hoy tiene solo productos de prueba sin fotografía real — el contenido real del cliente todavía no existe.
+- Decants: presentaciones de 5ml/10ml por producto, con precio y stock propios (tabla `product_variants`), gestionadas desde el panel admin y seleccionables en la ficha de producto.
+- Credenciales de producción de Wompi y Mercado Pago ya configuradas — flujo de pago completo probado de punta a punta con ambas pasarelas.
 - **Decisión abierta:** costo y política de envío — el checkout hoy solo cobra el subtotal, sin cargo de envío definido.
 - **Decisión abierta:** dominio propio — el sitio corre en `*.pages.dev` / `*.up.railway.app` mientras no se confirme un dominio.
 - **Decisión abierta:** verificación de dominio propio en Resend — hoy los correos salen desde `onboarding@resend.dev`, que solo entrega a la cuenta dueña de la API key, no a clientes reales.
-- Antes de lanzar: eliminar la cuenta admin y los productos de prueba, y obtener credenciales de producción reales de Wompi y Mercado Pago (el código de integración ya está listo).
+- Antes de lanzar: eliminar la cuenta admin y los productos de prueba.
 
 ## Brand Commitments
 
@@ -54,7 +56,7 @@ Perfumes de nicho 100% originales a un precio más accesible que las boutiques t
 
 ## Product Principles
 
-1. Autenticidad de producto es la posición central: nunca diseñar ni escribir copy que sugiera decants, réplicas o "inspirado en".
+1. Autenticidad de producto es la posición central: nunca diseñar ni escribir copy que sugiera réplicas, imitaciones o "inspirado en". El decant es una excepción explícita a esta cautela, no una contradicción: es el mismo frasco original fraccionado, nunca un producto de otro origen — la copy debe dejarlo así de claro (ej. "el mismo perfume, en tamaño de prueba", nunca lenguaje que lo acerque a una imitación).
 2. El checkout propio es el objetivo del sitio, no una alternativa a WhatsApp — el flujo de compra completo importa más que la captación de leads.
 3. Catálogo y checkout van sobre fondo claro por decisión ya tomada (BRAND.md §3.6): las secciones oscuras son para momentos de marca, no para tareas transaccionales.
 4. El sitio es mobile-first por evidencia real de venta, con escritorio como segunda composición completa, nunca un recorte de la versión móvil.

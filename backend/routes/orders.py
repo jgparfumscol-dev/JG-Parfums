@@ -9,6 +9,7 @@ from middleware.auth import get_current_admin, get_optional_user
 from models.order import Order
 from models.order_item import OrderItem
 from models.product import Product
+from models.product_variant import ProductVariant
 from models.user import User
 from schemas.order import OrderCreate, OrderResponse, OrderStatusUpdate
 from services.email_service import email_confirmacion_pedido
@@ -27,28 +28,64 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
     subtotal = 0
 
     # Se valida y descuenta stock en la misma transacción que crea el pedido:
-    # dos checkouts concurrentes sobre el último frasco no deben poder venderlo dos veces.
+    # dos checkouts concurrentes sobre el último frasco (o el último decant) no
+    # deben poder venderlo dos veces.
     for item in payload.items:
         product = db.query(Product).filter(Product.id == item.product_id, Product.is_active.is_(True)).first()
         if product is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=f"Producto {item.product_id} no disponible"
             )
-        if product.stock < item.quantity:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Stock insuficiente para {product.name}",
+
+        if item.variant_id is None:
+            if product.stock < item.quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Stock insuficiente para {product.name}",
+                )
+            product.stock -= item.quantity
+            subtotal += product.price * item.quantity
+            order_items.append(
+                OrderItem(
+                    product_id=product.id,
+                    product_name=product.name,
+                    size_ml=product.size_ml,
+                    unit_price=product.price,
+                    quantity=item.quantity,
+                )
             )
-        product.stock -= item.quantity
-        subtotal += product.price * item.quantity
-        order_items.append(
-            OrderItem(
-                product_id=product.id,
-                product_name=product.name,
-                unit_price=product.price,
-                quantity=item.quantity,
+        else:
+            variant = (
+                db.query(ProductVariant)
+                .filter(
+                    ProductVariant.id == item.variant_id,
+                    ProductVariant.product_id == product.id,
+                    ProductVariant.is_active.is_(True),
+                )
+                .first()
             )
-        )
+            if variant is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Presentación {item.variant_id} no disponible para {product.name}",
+                )
+            if variant.stock < item.quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Stock insuficiente del decant de {variant.size_ml}ml para {product.name}",
+                )
+            variant.stock -= item.quantity
+            subtotal += variant.price * item.quantity
+            order_items.append(
+                OrderItem(
+                    product_id=product.id,
+                    product_variant_id=variant.id,
+                    product_name=f"{product.name} — decant {variant.size_ml}ml",
+                    size_ml=variant.size_ml,
+                    unit_price=variant.price,
+                    quantity=item.quantity,
+                )
+            )
 
     order = Order(
         order_number=_generate_order_number(),

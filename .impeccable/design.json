@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T06:30:00.000Z",
+  "title": "Design System: JG Parfums",
+  "extensions": {
+    "colorMeta": {
+      "onyx": { "role": "neutral", "displayName": "Ónix", "canonical": "#201E1F", "tonalRamp": ["#0E0D0D", "#151314", "#201E1F", "#2C2A2B", "#3A3739", "#6E6A67", "#C9C4BF", "#EDE9E3"] },
+      "gold-jg": { "role": "primary", "displayName": "Oro JG", "canonical": "#D3AE6A", "tonalRamp": ["#6A501F", "#8E6B2A", "#B18534", "#CB9F4E", "#D3AE6A", "#E3CCA1", "#EFE1C8", "#F8F2E7"] },
+      "paper": { "role": "neutral", "displayName": "Marfil", "canonical": "#F7F5F1", "tonalRamp": ["#4A4844", "#6E6A67", "#9A958E", "#C9C4BF", "#EDE9E3", "#F2F0EB", "#F7F5F1", "#FBFAF8"] },
+      "white": { "role": "neutral", "displayName": "Blanco", "canonical": "#FFFFFF", "tonalRamp": ["#D9D9D9", "#E6E6E6", "#F0F0F0", "#F7F7F7", "#FAFAFA", "#FCFCFC", "#FFFFFF", "#FFFFFF"] },
+      "smoke": { "role": "neutral", "displayName": "Humo", "canonical": "#6E6A67", "tonalRamp": ["#201E1F", "#2C2A2B", "#3A3739", "#6E6A67", "#9A958E", "#C9C4BF", "#EDE9E3", "#F7F5F1"] },
+      "success": { "role": "semantic", "displayName": "Verde confirmación", "canonical": "#4E7A52", "tonalRamp": ["#213222", "#345234", "#4E7A52", "#6B9970", "#8FB893", "#B6D5B9", "#DCEEDD", "#F1F8F1"] },
+      "warning": { "role": "semantic", "displayName": "Ámbar de aviso", "canonical": "#B5772A", "tonalRamp": ["#4A2F0F", "#754B18", "#B5772A", "#D89A4E", "#E6B778", "#F0D3A8", "#F8E9D4", "#FCF5EA"] },
+      "danger": { "role": "semantic", "displayName": "Rojo error", "canonical": "#9E3B34", "tonalRamp": ["#3F1815", "#652521", "#9E3B34", "#C25850", "#D98883", "#E9B6B2", "#F5DAD8", "#FBEEED"] },
+      "info": { "role": "semantic", "displayName": "Azul aviso neutro", "canonical": "#3F5D73", "tonalRamp": ["#18242D", "#273A48", "#3F5D73", "#5D8098", "#84A3B6", "#B4C9D4", "#DAE6EC", "#EFF4F7"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero, una vez por página." },
+      "h1": { "displayName": "Título de página", "purpose": "Encabezado principal de cada pantalla." },
+      "h2": { "displayName": "Título de sección", "purpose": "Siempre acompañado del filete dorado de 40px." },
+      "h3": { "displayName": "Subtítulo / nombre de producto", "purpose": "Nombre de producto en tarjeta de catálogo." },
+      "body": { "displayName": "Cuerpo", "purpose": "Texto general, máximo 68 caracteres de línea." },
+      "label": { "displayName": "Etiqueta", "purpose": "Stock, tamaños en ml, metadatos cortos." },
+      "small": { "displayName": "Texto secundario", "purpose": "Campos de formulario, metadatos, texto secundario general (.text-small)." },
+      "meta": { "displayName": "Metadato de tarjeta", "purpose": "Segunda línea bajo el nombre en tarjeta de producto (casa · tamaño)." },
+      "price": { "displayName": "Precio de ficha", "purpose": "Precio grande en la ficha de producto, en Bodoni." },
+      "price-card": { "displayName": "Precio de tarjeta/recibo", "purpose": "Precio en tarjeta de catálogo y total de recibo — Jost, no Bodoni, para no volverse ruido repetido en grilla." },
+      "note-italic": { "displayName": "Nota de ficha técnica", "purpose": "Valores de spec-row y nombres de fase olfativa — única cursiva permitida." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 8px 24px rgba(32, 30, 31, .12)", "purpose": "Único uso permitido: menús desplegables y modales." }
+    ],
+    "motion": [
+      { "name": "ease-reveal", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Zoom sutil de imagen de producto en hover, llenado de la pirámide olfativa." },
+      { "name": "duration-hover", "value": "150ms", "purpose": "Transiciones de borde/color en botones y tarjetas." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "640px" },
+      { "name": "desktop", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal (agregar al carrito, pagar, guardar en admin).",
+      "html": "<button class=\"ds-btn-primary\">Agregar al carrito</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 24px; border-radius: 2px; font-family: 'Jost', sans-serif; font-size: 16px; font-weight: 500; border: 1px solid #201E1F; background: #201E1F; color: #FFFFFF; cursor: pointer; transition: background-color 150ms; } .ds-btn-primary:hover { background: #2C2A2B; } .ds-btn-primary:focus-visible { outline: 2px solid #D3AE6A; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria sobre fondo claro.",
+      "html": "<button class=\"ds-btn-secondary\">Ver notas</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 24px; border-radius: 2px; font-family: 'Jost', sans-serif; font-size: 16px; font-weight: 500; border: 1px solid #C9C4BF; background: transparent; color: #201E1F; cursor: pointer; transition: border-color 150ms; } .ds-btn-secondary:hover { border-color: #B18534; }"
+    },
+    {
+      "name": "Button on Dark",
+      "kind": "button",
+      "refersTo": "button-onDark",
+      "description": "Botón sobre secciones Ónix (hero, footer). Único lugar donde el dorado llena el área, y solo en hover.",
+      "html": "<button class=\"ds-btn-ondark\">Ver catálogo</button>",
+      "css": ".ds-btn-ondark { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 24px; border-radius: 2px; font-family: 'Jost', sans-serif; font-size: 16px; font-weight: 500; border: 1px solid #D3AE6A; background: transparent; color: #D3AE6A; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-btn-ondark:hover { background: #D3AE6A; color: #201E1F; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Tarjeta de catálogo: foto 4:5, borde 1px, sin sombra, hover cambia solo el borde.",
+      "html": "<a class=\"ds-product-card\" href=\"#\"><div class=\"ds-product-card-media\"><img src=\"\" alt=\"\"></div><div class=\"ds-product-card-body\"><p class=\"ds-product-card-name\">Nombre del perfume</p><p class=\"ds-product-card-meta\">Casa · 100 ml</p><p class=\"ds-product-card-price\">$000.000</p></div></a>",
+      "css": ".ds-product-card { display: block; text-decoration: none; color: inherit; } .ds-product-card-media { aspect-ratio: 4/5; background: #EDE9E3; overflow: hidden; } .ds-product-card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms cubic-bezier(0.16,1,0.3,1); } .ds-product-card:hover .ds-product-card-media img { transform: scale(1.035); } .ds-product-card-body { padding-top: 12px; margin-top: 12px; border-top: 1px solid #EDE9E3; } .ds-product-card-name { font-family: 'Bodoni Moda', serif; font-size: 16px; margin: 0; } .ds-product-card-meta { color: #6E6A67; font-size: 13px; margin-top: 2px; } .ds-product-card-price { font-weight: 600; font-size: 15px; margin-top: 8px; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Option Row",
+      "kind": "custom",
+      "refersTo": "option-row",
+      "description": "Selector excluyente en caja: medio de pago en checkout, tamaño/presentación en ficha de producto. Borde dorado cuando está seleccionado, nunca relleno.",
+      "html": "<label class=\"ds-option-row\"><span class=\"ds-option-row-label\"><input type=\"radio\" name=\"size\" checked> 100 ml — frasco completo</span><span class=\"ds-option-row-price\">$350.000</span></label>",
+      "css": ".ds-option-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #C9C4BF; border-radius: 2px; padding: 16px; cursor: pointer; } .ds-option-row:has(input:checked) { border-color: #B18534; } .ds-option-row-label { display: flex; align-items: center; gap: 12px; } .ds-option-row-price { font-weight: 600; font-variant-numeric: tabular-nums; } input[type=radio] { accent-color: #201E1F; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de formulario (checkout, cuenta, admin).",
+      "html": "<div class=\"ds-field\"><label>Correo</label><input type=\"email\" placeholder=\"tu@correo.com\"></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; } .ds-field label { font-size: 14px; color: #6E6A67; } .ds-field input { height: 48px; padding: 0 16px; background: #FFFFFF; border: 1px solid #C9C4BF; border-radius: 2px; font-family: 'Jost', sans-serif; font-size: 16px; color: #201E1F; } .ds-field input:focus-visible { outline: 2px solid #B18534; outline-offset: 1px; border-color: #B18534; }"
+    },
+    {
+      "name": "Spec Row",
+      "kind": "custom",
+      "refersTo": "spec-row",
+      "description": "Firma de marca: fila de ficha técnica (notas, concentración, tamaño) — cuaderno de perfumista, no ícono decorativo.",
+      "html": "<dl class=\"ds-spec-list\"><div class=\"ds-spec-row\"><dt>Familia</dt><dd>Amaderado oriental</dd></div><div class=\"ds-spec-row\"><dt>Notas</dt><dd>Bergamota, oud, ámbar</dd></div></dl>",
+      "css": ".ds-spec-row { display: grid; grid-template-columns: 88px 1fr; gap: 16px; padding-block: 12px; border-bottom: 1px solid #EDE9E3; } .ds-spec-row dt { margin: 0; font-size: 12px; letter-spacing: 0.04em; color: #6E6A67; padding-top: 2px; } .ds-spec-row dd { margin: 0; font-family: 'Bodoni Moda', serif; font-style: italic; font-size: 15px; line-height: 1.4; }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "custom",
+      "refersTo": "ledger-row",
+      "description": "Firma de marca: fila de recibo con números tabulares — carrito, checkout, detalle de pedido.",
+      "html": "<div class=\"ds-ledger-row\"><span>Bleu de Perfumista × 1</span><span>$350.000</span></div><div class=\"ds-ledger-row ds-ledger-total\"><span>Total</span><span>$350.000</span></div>",
+      "css": ".ds-ledger-row { display: flex; justify-content: space-between; gap: 16px; padding-block: 12px; border-bottom: 1px solid #EDE9E3; font-variant-numeric: tabular-nums; } .ds-ledger-total { font-weight: 600; font-size: 17px; border-top: 1px solid #C9C4BF; border-bottom: none; padding-top: 16px; margin-top: 8px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El cuaderno del perfumista",
+    "overview": "JG Parfums no se viste como una tienda de perfumería genérica de negro-y-dorado: se lee como el cuaderno técnico de alguien que conoce el producto. Cada componente distintivo reemplaza el ícono decorativo de e-commerce por notación real: filas de ficha técnica, una pirámide olfativa con barras que se llenan, un recibo con tipografía tabular. El dorado es tinta, nunca pintura: filete, borde o texto sobre oscuro, jamás relleno de área grande. Las superficies claras cargan catálogo y checkout; el Ónix se reserva a momentos de marca.",
+    "keyCharacteristics": [
+      "Notación de perfumista en vez de iconografía de e-commerce.",
+      "Dorado al 10% máximo de superficie, siempre como tinta.",
+      "Radio de 2px en interactivos, 0 en imagen de producto.",
+      "Ónix reservado a momentos de marca; Marfil y Blanco cargan lo transaccional.",
+      "Sin sombras salvo una flotante para menús y modales."
+    ],
+    "rules": [
+      { "name": "La Regla del 10%", "body": "El dorado nunca supera el 10% de la superficie de una pantalla.", "section": "colors" },
+      { "name": "La Regla del Dorado como Tinta", "body": "El dorado nunca es fondo de botón ni relleno de área grande; va como borde, filete, ícono o texto sobre oscuro.", "section": "colors" },
+      { "name": "La Regla de los 28px", "body": "Bodoni Moda solo se usa desde 28px hacia arriba.", "section": "typography" },
+      { "name": "La Regla del Borde, no la Sombra", "body": "Toda separación de tarjeta en reposo se resuelve con borde de 1px; la sombra flotante se reserva a lo que se superpone al contenido.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar spec-row, scent-diagram y ledger-row como vocabulario compartido para cualquier pantalla nueva que muestre hechos de producto o dinero.",
+      "Do mantener el dorado por debajo del 10% de superficie visible.",
+      "Do usar Marfil o Blanco como fondo de cualquier pantalla transaccional.",
+      "Do escribir copy con hechos de producto en vez de adjetivos de relleno."
+    ],
+    "donts": [
+      "Don't usar dorado como fondo de botón o relleno de área grande, ni degradados o efectos metalizados.",
+      "Don't redondear nada a más de 2px, ni usar sombra para separar una tarjeta en reposo.",
+      "Don't escribir frases genéricas de perfumería ni usar mayúsculas sostenidas fuera de PARFUMS en el logo.",
+      "Don't inventar contenido de cliente que el cliente no haya entregado todavía."
+    ]
+  }
+}

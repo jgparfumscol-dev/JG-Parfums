@@ -1,0 +1,62 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/*.html"
+        ],
+        "createdAt": "2026-09-09T01:49:54.271Z",
+        "reason": "BRAND.md §3.2 documents #F7F5F1 'Marfil' as the deliberate default light background (not pure white, to reduce mobile glare) — a confirmed brand token used sitewide as body bg, not an AI reflex cream default."
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "frontend/admin.html"
+        ],
+        "createdAt": "2026-09-11T05:45:35.032Z",
+        "reason": "dialog{padding:0} es preexistente (no tocado esta sesión); su hijo .dialog-inner ya aplica padding var(--space-8), así que el contenido no queda pegado al borde en pantalla — falso positivo del detector."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "frontend/css/components.css"
+        ],
+        "createdAt": "2026-09-11T06:05:39.511Z",
+        "reason": "nav-cart-count: número dentro del badge circular del carrito, preexistente a esta sesión — tamaño de un solo propósito, no parte de la escala tipográfica reutilizable."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "8px",
+        "files": [
+          "frontend/css/components.css"
+        ],
+        "createdAt": "2026-09-11T06:05:39.519Z",
+        "reason": "nav-cart-count: badge circular del contador del carrito, preexistente a esta sesión — necesita ser redondo para leerse como badge, la regla de radio 2px de BRAND.md aplica a botones/campos/tarjetas, no a este indicador puntual."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "files": [
+          "frontend/producto.html"
+        ],
+        "createdAt": "2026-09-11T06:06:12.390Z",
+        "reason": "qty-control button: tamaño del glifo −/+ del contador de cantidad, preexistente a esta sesión — es un ícono tipográfico de un solo uso, no texto corrido de la escala."
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-11T06:06:12.399Z",
+        "reason": "sección 'Frascos originales/Ficha completa/Pago' usa padding-top:0 a propósito porque continúa la sección anterior (mismo fondo blanco) para no duplicar el espacio; el gap real lo da el padding-bottom de la sección previa (var(--space-16)) — confirmado visualmente en captura, no queda pegado al borde."
+      }
+    ]
+  }
+}

@@ -18,6 +18,28 @@ class ProductImageCreate(BaseModel):
     position: int = 0
 
 
+class ProductVariantResponse(BaseModel):
+    id: int
+    size_ml: int
+    price: int
+    stock: int
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class ProductVariantCreate(BaseModel):
+    size_ml: int = Field(gt=0)
+    price: int = Field(gt=0)
+    stock: int = Field(ge=0, default=0)
+
+
+class ProductVariantUpdate(BaseModel):
+    price: int | None = Field(default=None, gt=0)
+    stock: int | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+
 class ProductBase(BaseModel):
     name: str = Field(min_length=1)
     house: str | None = None
@@ -58,6 +80,7 @@ class ProductResponse(ProductBase):
     created_at: datetime
     updated_at: datetime
     images: list[ProductImageResponse] = []
+    variants: list[ProductVariantResponse] = []
 
     model_config = {"from_attributes": True}
 

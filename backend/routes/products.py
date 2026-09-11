@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from middleware.auth import get_current_admin, get_optional_user
 from models.product import Product, ProductImage
+from models.product_variant import ProductVariant
 from models.user import User
 from schemas.product import (
     ProductCreate,
@@ -12,6 +13,9 @@ from schemas.product import (
     ProductListResponse,
     ProductResponse,
     ProductUpdate,
+    ProductVariantCreate,
+    ProductVariantResponse,
+    ProductVariantUpdate,
 )
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -25,6 +29,7 @@ def list_products(
     search: str | None = None,
     min_price: int | None = Query(default=None, ge=0),
     max_price: int | None = Query(default=None, ge=0),
+    has_decant: bool = False,
     include_inactive: bool = False,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=24, ge=1, le=100),
@@ -42,6 +47,8 @@ def list_products(
         query = query.filter(Product.price >= min_price)
     if max_price is not None:
         query = query.filter(Product.price <= max_price)
+    if has_decant:
+        query = query.filter(Product.variants.any(ProductVariant.is_active.is_(True)))
 
     total = query.count()
     items = query.order_by(Product.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
@@ -118,4 +125,56 @@ def delete_product_image(image_id: int, db: Session = Depends(get_db), _admin: U
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imagen no encontrada")
     db.delete(image)
+    db.commit()
+
+
+@router.post(
+    "/{product_id}/variants", response_model=ProductVariantResponse, status_code=status.HTTP_201_CREATED
+)
+def add_product_variant(
+    product_id: int,
+    payload: ProductVariantCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    variant = ProductVariant(product_id=product_id, **payload.model_dump())
+    db.add(variant)
+    db.commit()
+    db.refresh(variant)
+    return variant
+
+
+@router.put("/variants/{variant_id}", response_model=ProductVariantResponse)
+def update_product_variant(
+    variant_id: int,
+    payload: ProductVariantUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    variant = db.query(ProductVariant).filter(ProductVariant.id == variant_id).first()
+    if variant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Presentación no encontrada")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(variant, field, value)
+    db.commit()
+    db.refresh(variant)
+    return variant
+
+
+@router.delete("/variants/{variant_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_variant(
+    variant_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
+    variant = db.query(ProductVariant).filter(ProductVariant.id == variant_id).first()
+    if variant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Presentación no encontrada")
+    # hard delete: a diferencia del producto, una presentación sin pedidos asociados
+    # (order_items.product_variant_id queda en null por ondelete=SET NULL) no necesita
+    # conservarse — el admin la agrega de nuevo si se equivocó.
+    db.delete(variant)
     db.commit()

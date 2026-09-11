@@ -7,6 +7,7 @@ from models.order import OrderStatus, PaymentProvider, PaymentStatus
 
 class OrderItemCreate(BaseModel):
     product_id: int
+    variant_id: int | None = None  # None = frasco completo; si no, decant de 5ml/10ml
     quantity: int = Field(gt=0)
 
 
@@ -25,7 +26,9 @@ class OrderCreate(BaseModel):
 class OrderItemResponse(BaseModel):
     id: int
     product_id: int | None
+    product_variant_id: int | None
     product_name: str
+    size_ml: int | None
     unit_price: int
     quantity: int
 

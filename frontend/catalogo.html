@@ -31,8 +31,10 @@
     border: 1px solid var(--ink-100);
     margin-bottom: var(--space-8);
   }
-  @media (min-width: 640px) { .filters { grid-template-columns: 1.4fr 1fr 1fr; } }
-  .filters select, .filters input {
+  @media (min-width: 640px) { .filters-row-main { grid-template-columns: 1.4fr 1fr 1fr; } }
+  .filters-row-main, .filters-row-secondary { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+  @media (min-width: 640px) { .filters-row-secondary { grid-template-columns: 1fr 1fr 1.4fr; align-items: center; } }
+  .filters select, .filters input[type="search"], .filters input[type="number"] {
     height: 44px;
     padding: 0 var(--space-3);
     border: 1px solid var(--ink-300);
@@ -42,6 +44,7 @@
     font-size: 14px;
     width: 100%;
   }
+  .filters-decant-check { display: flex; align-items: center; gap: var(--space-2); font-size: 14px; }
 
   .product-grid {
     display: grid;
@@ -107,20 +110,30 @@
     </div>
 
     <form class="filters" id="filterForm">
-      <input type="search" name="search" placeholder="Buscar por nombre o casa" aria-label="Buscar por nombre o casa">
-      <select name="family" aria-label="Familia olfativa">
-        <option value="">Toda familia olfativa</option>
-        <option value="amaderado">Amaderado</option>
-        <option value="floral">Floral</option>
-        <option value="citrico">Cítrico</option>
-        <option value="oriental">Oriental</option>
-        <option value="aromatico">Aromático</option>
-      </select>
-      <select name="sort" aria-label="Ordenar por">
-        <option value="">Más recientes</option>
-        <option value="price_asc">Precio: menor a mayor</option>
-        <option value="price_desc">Precio: mayor a menor</option>
-      </select>
+      <div class="filters-row-main">
+        <input type="search" name="search" placeholder="Buscar por nombre o casa" aria-label="Buscar por nombre o casa">
+        <select name="family" aria-label="Familia olfativa">
+          <option value="">Toda familia olfativa</option>
+          <option value="amaderado">Amaderado</option>
+          <option value="floral">Floral</option>
+          <option value="citrico">Cítrico</option>
+          <option value="oriental">Oriental</option>
+          <option value="aromatico">Aromático</option>
+        </select>
+        <select name="sort" aria-label="Ordenar por">
+          <option value="">Más recientes</option>
+          <option value="price_asc">Precio: menor a mayor</option>
+          <option value="price_desc">Precio: mayor a menor</option>
+        </select>
+      </div>
+      <div class="filters-row-secondary">
+        <input type="number" min="0" name="min_price" placeholder="Precio desde" aria-label="Precio desde" inputmode="numeric">
+        <input type="number" min="0" name="max_price" placeholder="Precio hasta" aria-label="Precio hasta" inputmode="numeric">
+        <label class="filters-decant-check">
+          <input type="checkbox" name="has_decant">
+          Solo perfumes con decant disponible
+        </label>
+      </div>
     </form>
 
     <div class="product-grid" id="productGrid" aria-live="polite"></div>
@@ -174,10 +187,21 @@
         <div class="product-card-body">
           <p class="product-card-name">${product.name}</p>
           <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
-          <p class="product-card-price">${formatCOP(product.price)}</p>
+          <p class="product-card-price">${productPriceLabel(product)}</p>
         </div>
       </a>
     `).join('');
+  }
+
+  function effectivePrice(product) {
+    const activeVariants = (product.variants || []).filter((v) => v.is_active);
+    return activeVariants.length === 0 ? product.price : Math.min(product.price, ...activeVariants.map((v) => v.price));
+  }
+
+  function productPriceLabel(product) {
+    const hasDecant = (product.variants || []).some((v) => v.is_active);
+    const price = formatCOP(effectivePrice(product));
+    return hasDecant ? `Desde ${price}` : price;
   }
 
   function renderPagination(total, page) {
@@ -206,13 +230,16 @@
     const params = new URLSearchParams({ page: String(currentPage), page_size: String(PAGE_SIZE) });
     if (form.get('search')) params.set('search', form.get('search'));
     if (form.get('family')) params.set('family', form.get('family'));
+    if (form.get('min_price')) params.set('min_price', form.get('min_price'));
+    if (form.get('max_price')) params.set('max_price', form.get('max_price'));
+    if (form.get('has_decant')) params.set('has_decant', 'true');
 
     try {
       const data = await apiFetch(`/products?${params.toString()}`);
       let items = data.items;
       const sort = form.get('sort');
-      if (sort === 'price_asc') items = [...items].sort((a, b) => a.price - b.price);
-      if (sort === 'price_desc') items = [...items].sort((a, b) => b.price - a.price);
+      if (sort === 'price_asc') items = [...items].sort((a, b) => effectivePrice(a) - effectivePrice(b));
+      if (sort === 'price_desc') items = [...items].sort((a, b) => effectivePrice(b) - effectivePrice(a));
 
       if (items.length === 0) {
         grid.innerHTML = '';

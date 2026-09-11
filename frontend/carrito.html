@@ -104,16 +104,16 @@
         <div class="cart-item-body">
           <div class="cart-item-row">
             <p class="cart-item-name">${item.name}</p>
-            <p class="text-muted text-small">${item.size_ml} ml</p>
+            <p class="text-muted text-small">${item.size_label}</p>
           </div>
           <p class="text-muted text-small">${formatCOP(item.price)} c/u</p>
           <div class="cart-item-row">
             <div class="qty-control">
-              <button type="button" data-minus="${item.product_id}" aria-label="Restar">−</button>
+              <button type="button" data-minus="${item.line_key}" aria-label="Restar">−</button>
               <span>${item.quantity}</span>
-              <button type="button" data-plus="${item.product_id}" aria-label="Sumar" ${item.quantity >= item.stock ? 'disabled' : ''}>+</button>
+              <button type="button" data-plus="${item.line_key}" aria-label="Sumar" ${item.quantity >= item.stock ? 'disabled' : ''}>+</button>
             </div>
-            <button class="remove-btn" data-remove="${item.product_id}">Quitar</button>
+            <button class="remove-btn" data-remove="${item.line_key}">Quitar</button>
           </div>
         </div>
       </div>
@@ -131,17 +131,17 @@
     `;
 
     layout.querySelectorAll('[data-minus]').forEach((btn) => btn.addEventListener('click', () => {
-      const item = items.find((i) => i.product_id === Number(btn.dataset.minus));
-      updateCartItemQuantity(item.product_id, item.quantity - 1);
+      const item = items.find((i) => i.line_key === btn.dataset.minus);
+      updateCartItemQuantity(item.line_key, item.quantity - 1);
       render();
     }));
     layout.querySelectorAll('[data-plus]').forEach((btn) => btn.addEventListener('click', () => {
-      const item = items.find((i) => i.product_id === Number(btn.dataset.plus));
-      updateCartItemQuantity(item.product_id, item.quantity + 1);
+      const item = items.find((i) => i.line_key === btn.dataset.plus);
+      updateCartItemQuantity(item.line_key, item.quantity + 1);
       render();
     }));
     layout.querySelectorAll('[data-remove]').forEach((btn) => btn.addEventListener('click', () => {
-      removeFromCart(Number(btn.dataset.remove));
+      removeFromCart(btn.dataset.remove);
       render();
     }));
   }

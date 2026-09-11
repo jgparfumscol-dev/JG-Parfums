@@ -323,7 +323,9 @@
 }
 
 /* diagrama de pirámide olfativa — reemplaza el ícono decorativo del hero
-   por una notación real: cómo se leen los tiempos de un perfume. */
+   por una notación real: cómo se leen los tiempos de un perfume. Cada fase
+   es un disclosure: si hay notas reales, tocar la fase las revela; si no
+   hay (catálogo vacío, o placeholder genérico), el botón queda inerte. */
 .scent-diagram {
   display: flex;
   flex-direction: column;
@@ -338,18 +340,31 @@
   color: #B9B4B0;
   margin: 0;
 }
-.scent-tier { display: flex; flex-direction: column; gap: var(--space-2); }
-.scent-tier-labels {
+.scent-tier { border-bottom: 1px solid #3A3739; }
+.scent-tier:last-child { border-bottom: none; }
+.scent-tier-toggle {
   display: flex;
+  width: 100%;
   justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: var(--font-body);
   font-size: 14px;
+  cursor: pointer;
+  padding: var(--space-3) 0;
+  text-align: left;
 }
+.scent-tier-toggle:disabled { cursor: default; }
 .scent-tier-name { font-family: var(--font-display); font-style: italic; color: #FFFFFF; }
-.scent-tier-time { color: #B9B4B0; font-size: 12px; align-self: center; }
+.scent-tier-time { color: #B9B4B0; font-size: 12px; flex-shrink: 0; }
 .scent-tier-track {
   position: relative;
   height: 1px;
   background: #3A3739;
+  margin-bottom: var(--space-3);
 }
 .scent-tier-fill {
   position: absolute;
@@ -361,6 +376,14 @@
   transform: scaleX(0);
   animation: scent-fill 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: var(--d, 0ms);
+}
+.scent-tier-notes {
+  color: #B9B4B0;
+  font-size: 14px;
+  font-family: var(--font-display);
+  font-style: italic;
+  padding-bottom: var(--space-3);
+  margin: 0;
 }
 @keyframes scent-fill { to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) {
@@ -380,6 +403,23 @@
   font-weight: 500;
   margin: 0 0 var(--space-2);
 }
+
+/* selector de opciones excluyentes — medio de pago, presentación/tamaño */
+.option-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  cursor: pointer;
+}
+.option-row:has(input:checked) { border-color: var(--gold-600); }
+.option-row:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+.option-row-label { display: flex; align-items: center; gap: var(--space-3); }
+.option-row-price { font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* ficha de acceso — auth (login, registro, recuperar, reset) */
 .access-card {

@@ -4,26 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JG Parfums — Perfumería de nicho en Colombia</title>
-<meta name="description" content="Perfumes originales de nicho. Notas, familia olfativa y duración de cada frasco, sin relleno.">
+<meta name="description" content="Perfumes originales de nicho. Notas, familia olfativa y duración de cada frasco, sin relleno. Ahora también en decant de 5ml y 10ml.">
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .hero-split {
-    display: grid;
-    gap: var(--space-12);
-  }
+  /* hero: la ficha técnica de un perfume real, no un eslogan */
+  .hero-spec-layout { display: grid; gap: var(--space-8); }
   @media (min-width: 1024px) {
-    .hero-split { grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: var(--space-24); }
+    .hero-spec-layout { grid-template-columns: 1fr 1fr; align-items: center; gap: var(--space-24); }
   }
-  .hero-flag { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
-  .hero-flag img { width: 20px; height: 20px; }
-  .hero-flag span { color: #B9B4B0; font-size: 13px; letter-spacing: 0.03em; }
-  .hero-copy h1 { color: #FFFFFF; max-width: 13ch; }
-  .hero-copy p { color: #B9B4B0; max-width: 44ch; margin-top: var(--space-4); }
-  .hero-actions { display: flex; gap: var(--space-3); margin-top: var(--space-8); flex-wrap: wrap; }
+  .hero-spec-house { color: #B9B4B0; margin: 0 0 var(--space-2); }
+  .hero-spec-copy h1 { color: #FFFFFF; max-width: 16ch; }
+  .hero-spec-desc { color: #B9B4B0; max-width: 46ch; margin-top: var(--space-4); font-family: var(--font-display); font-style: italic; }
+  .hero-spec-copy .btn { margin-top: var(--space-8); }
 
   .product-grid {
     display: grid;
@@ -46,6 +42,10 @@
   .product-card-name { font-family: var(--font-display); font-size: 16px; margin: 0; }
   .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
   .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+
+  /* callout de decants */
+  .decant-callout { display: grid; gap: var(--space-8); }
+  @media (min-width: 768px) { .decant-callout { grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; } }
 </style>
 </head>
 <body>
@@ -81,32 +81,16 @@
 
 <main id="main">
   <section class="section section-dark">
-    <div class="container hero-split">
-      <div class="hero-copy">
-        <div class="hero-flag">
-          <img src="/assets/logos/jg-star-blanco.svg" alt="">
-          <span>Perfumería de nicho · Colombia</span>
-        </div>
-        <h1 class="display">Perfumes que se explican con hechos, no con adjetivos</h1>
-        <p>Notas de salida, corazón y fondo, concentración y duración real. Nada de "experiencias sensoriales únicas": cada frasco es el original de la casa que lo produce.</p>
-        <div class="hero-actions">
-          <a class="btn btn-onDark" href="/catalogo.html">Ver catálogo</a>
-        </div>
+    <div class="container hero-spec-layout">
+      <div class="hero-spec-copy">
+        <p class="hero-spec-house text-small" id="heroHouse">Perfumería de nicho · Colombia</p>
+        <h1 class="display" id="heroName">Un perfume se explica con hechos</h1>
+        <p class="hero-spec-desc" id="heroDesc">Toca cada fase de la pirámide para leer las notas reales — de salida, corazón y fondo — de este frasco.</p>
+        <a class="btn btn-onDark" id="heroCta" href="/catalogo.html">Ver catálogo</a>
       </div>
       <div class="scent-diagram">
         <p class="scent-diagram-heading">Así se lee un perfume en JG</p>
-        <div class="scent-tier">
-          <div class="scent-tier-labels"><span class="scent-tier-name">Salida</span><span class="scent-tier-time">0–15 min</span></div>
-          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:28%; --d:0ms;"></div></div>
-        </div>
-        <div class="scent-tier">
-          <div class="scent-tier-labels"><span class="scent-tier-name">Corazón</span><span class="scent-tier-time">15 min – 3 h</span></div>
-          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:62%; --d:150ms;"></div></div>
-        </div>
-        <div class="scent-tier">
-          <div class="scent-tier-labels"><span class="scent-tier-name">Fondo</span><span class="scent-tier-time">3 – 10 h</span></div>
-          <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:100%; --d:300ms;"></div></div>
-        </div>
+        <div id="heroTiers"></div>
       </div>
     </div>
   </section>
@@ -120,10 +104,25 @@
   </section>
 
   <section class="section" style="background: var(--jg-white);">
+    <div class="container decant-callout">
+      <div>
+        <h2 class="h2 section-title">Antes de llevar el frasco completo</h2>
+        <p class="text-muted" style="max-width:46ch; margin-bottom: var(--space-4);">Pide un decant: el mismo perfume original, fraccionado en un frasco de prueba de 5ml o 10ml. Disponible en los perfumes que lo tengan activo en su ficha.</p>
+        <a class="link" href="/catalogo.html">Ver catálogo</a>
+      </div>
+      <dl class="spec-list">
+        <div class="spec-row"><dt>5 ml</dt><dd>Para probar antes de decidir</dd></div>
+        <div class="spec-row"><dt>10 ml</dt><dd>Para llevar contigo sin comprometerte al frasco</dd></div>
+        <div class="spec-row"><dt>Origen</dt><dd>El mismo perfume, nunca una imitación</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" style="background: var(--jg-white); padding-top: 0;">
     <div class="container manifesto-strip">
       <div class="manifesto-item">
         <p class="manifesto-heading">Frascos originales</p>
-        <p class="text-muted text-small">Sin decants, sin imitaciones. Cada frasco es el original de la casa que lo produce.</p>
+        <p class="text-muted text-small">Sin réplicas, sin imitaciones. Cada frasco es el original de la casa que lo produce.</p>
       </div>
       <div class="manifesto-item">
         <p class="manifesto-heading">Ficha completa</p>
@@ -167,16 +166,75 @@
     event.currentTarget.setAttribute('aria-expanded', String(isOpen));
   });
 
+  // Pirámide genérica: se muestra mientras carga el catálogo, y si no hay
+  // ningún producto todavía (catálogo vacío) se queda así — nunca se
+  // inventan notas ni nombre de producto que el cliente no haya entregado.
+  const GENERIC_TIERS = [
+    { name: 'Salida', time: '0–15 min', width: 28, notes: null },
+    { name: 'Corazón', time: '15 min – 3 h', width: 62, notes: null },
+    { name: 'Fondo', time: '3 – 10 h', width: 100, notes: null },
+  ];
+
+  function renderHeroTiers(tiers) {
+    const container = document.getElementById('heroTiers');
+    container.innerHTML = tiers.map((tier, index) => `
+      <div class="scent-tier">
+        <button type="button" class="scent-tier-toggle" data-tier="${index}" aria-expanded="false" ${tier.notes ? '' : 'disabled'}>
+          <span class="scent-tier-name">${tier.name}</span>
+          <span class="scent-tier-time">${tier.time}</span>
+        </button>
+        <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:${tier.width}%; --d:${index * 150}ms;"></div></div>
+        ${tier.notes ? `<p class="scent-tier-notes" data-tier-notes="${index}" hidden>${tier.notes}</p>` : ''}
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.scent-tier-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const notesEl = container.querySelector(`[data-tier-notes="${btn.dataset.tier}"]`);
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+        notesEl.hidden = expanded;
+      });
+    });
+  }
+
+  function renderHeroProduct(product) {
+    const hasNotes = Boolean(product.notes_top || product.notes_heart || product.notes_base);
+    document.getElementById('heroHouse').textContent = product.house ? `${product.house} · ${product.olfactory_family || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
+    document.getElementById('heroName').textContent = product.name;
+    document.getElementById('heroDesc').textContent = hasNotes
+      ? `${product.concentration || 'Original'} · ${product.size_ml} ml — toca cada fase para leer sus notas reales.`
+      : `${product.concentration || 'Original'} · ${product.size_ml} ml.`;
+    document.getElementById('heroCta').textContent = 'Ver ficha completa';
+    document.getElementById('heroCta').href = `/producto.html?slug=${encodeURIComponent(product.slug)}`;
+
+    renderHeroTiers([
+      { name: 'Salida', time: '0–15 min', width: 28, notes: product.notes_top },
+      { name: 'Corazón', time: '15 min – 3 h', width: 62, notes: product.notes_heart },
+      { name: 'Fondo', time: '3 – 10 h', width: 100, notes: product.notes_base },
+    ]);
+  }
+
   async function loadFeatured() {
     const grid = document.getElementById('featuredGrid');
     const empty = document.getElementById('featuredEmpty');
     try {
-      const data = await apiFetch('/products?page_size=8');
+      const data = await apiFetch('/products?page_size=9');
       if (data.items.length === 0) {
         empty.hidden = false;
+        renderHeroTiers(GENERIC_TIERS);
         return;
       }
-      grid.innerHTML = data.items.map((product) => `
+
+      // El destacado debe poder demostrar la interacción del hero: se prefiere
+      // el más reciente que ya tenga notas cargadas, y solo se cae al más
+      // reciente sin notas si ninguno las tiene todavía.
+      const featured = data.items.find((p) => p.notes_top || p.notes_heart || p.notes_base) || data.items[0];
+      renderHeroProduct(featured);
+
+      const rest = data.items.filter((p) => p.id !== featured.id);
+      const gridItems = rest.length > 0 ? rest : [featured];
+      grid.innerHTML = gridItems.map((product) => `
         <a class="product-card" href="/producto.html?slug=${encodeURIComponent(product.slug)}">
           <div class="product-card-media">
             ${product.images[0]
@@ -186,15 +244,18 @@
           <div class="product-card-body">
             <p class="product-card-name">${product.name}</p>
             <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
-            <p class="product-card-price">${formatCOP(product.price)}</p>
+            <p class="product-card-price">${product.variants && product.variants.length ? 'Desde ' : ''}${formatCOP(product.variants && product.variants.length ? Math.min(product.price, ...product.variants.map((v) => v.price)) : product.price)}</p>
           </div>
         </a>
       `).join('');
     } catch (err) {
       empty.hidden = false;
       empty.textContent = 'No pudimos cargar el catálogo. Intenta de nuevo en un momento.';
+      renderHeroTiers(GENERIC_TIERS);
     }
   }
+
+  renderHeroTiers(GENERIC_TIERS);
   loadFeatured();
 </script>
 </body>

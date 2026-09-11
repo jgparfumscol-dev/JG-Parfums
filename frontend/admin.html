@@ -115,6 +115,18 @@
         </div>
       </div>
 
+      <div id="variantSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--ink-100);">
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Decants (5ml / 10ml)</p>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Mismo perfume, presentación de prueba. Precio y stock son propios de cada tamaño.</p>
+        <div id="variantList"></div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
+          <input id="newVariantSize" type="number" min="1" placeholder="ml" style="width:70px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <input id="newVariantPrice" type="number" min="1" placeholder="Precio COP" style="width:120px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <input id="newVariantStock" type="number" min="0" placeholder="Stock" style="width:90px; height:36px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+          <button class="btn btn-secondary" type="button" id="addVariantBtn">Agregar</button>
+        </div>
+      </div>
+
       <div class="dialog-actions">
         <button class="btn btn-secondary" type="button" id="cancelDialogBtn">Cancelar</button>
         <button class="btn btn-primary" type="submit">Guardar</button>
@@ -226,9 +238,12 @@
       form.is_active.value = String(product.is_active);
       document.getElementById('imageSection').hidden = false;
       renderImages(product);
+      document.getElementById('variantSection').hidden = false;
+      renderVariants(product);
     } else {
       form.slug.disabled = false;
       document.getElementById('imageSection').hidden = true;
+      document.getElementById('variantSection').hidden = true;
     }
     document.getElementById('productDialog').showModal();
   }
@@ -259,6 +274,53 @@
     const slug = document.getElementById('p_slug').value;
     const updated = await apiFetch(`/products/${slug}`);
     renderImages(updated);
+  });
+
+  function renderVariants(product) {
+    document.getElementById('variantList').innerHTML = product.variants.map((v) => `
+      <div class="image-row">
+        <span style="width:48px;">${v.size_ml} ml</span>
+        <input type="number" min="1" value="${v.price}" data-variant-price="${v.id}" style="flex:1; height:32px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+        <input type="number" min="0" value="${v.stock}" data-variant-stock="${v.id}" style="width:70px; height:32px; border:1px solid var(--ink-300); border-radius:var(--radius); padding:0 var(--space-2);">
+        <button type="button" data-save-variant="${v.id}" class="btn btn-secondary" style="height:32px; padding:0 var(--space-2);">Guardar</button>
+        <button type="button" data-remove-variant="${v.id}" class="remove-btn">Quitar</button>
+      </div>
+    `).join('') || '<p class="text-muted text-small">Todavía no hay decants para este producto.</p>';
+
+    document.querySelectorAll('[data-save-variant]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.saveVariant;
+        const price = Number(document.querySelector(`[data-variant-price="${id}"]`).value);
+        const stock = Number(document.querySelector(`[data-variant-stock="${id}"]`).value);
+        await apiFetch(`/products/variants/${id}`, { method: 'PUT', body: JSON.stringify({ price, stock }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderVariants(updated);
+      });
+    });
+    document.querySelectorAll('[data-remove-variant]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/variants/${btn.dataset.removeVariant}`, { method: 'DELETE' });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderVariants(updated);
+      });
+    });
+  }
+
+  document.getElementById('addVariantBtn').addEventListener('click', async () => {
+    const size_ml = Number(document.getElementById('newVariantSize').value);
+    const price = Number(document.getElementById('newVariantPrice').value);
+    const stock = Number(document.getElementById('newVariantStock').value) || 0;
+    if (!size_ml || !price || !editingProductId) return;
+    await apiFetch(`/products/${editingProductId}/variants`, {
+      method: 'POST',
+      body: JSON.stringify({ size_ml, price, stock }),
+    });
+    document.getElementById('newVariantSize').value = '';
+    document.getElementById('newVariantPrice').value = '';
+    document.getElementById('newVariantStock').value = '';
+    const slug = document.getElementById('p_slug').value;
+    const updated = await apiFetch(`/products/${slug}`);
+    renderVariants(updated);
   });
 
   document.getElementById('newProductBtn').addEventListener('click', () => openProductDialog(null));
