@@ -2,7 +2,19 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-SectionType = Literal["banner", "testimonials", "counters", "custom_html"]
+SectionType = Literal[
+    "banner",
+    "testimonials",
+    "counters",
+    "custom_html",
+    "announcement",
+    "header",
+    "products",
+    "text",
+    "categories",
+    "image",
+    "footer",
+]
 
 
 class PageSectionResponse(BaseModel):

@@ -79,6 +79,25 @@ def test_move_page_section_swaps_position_with_neighbor(client, admin_headers):
     assert no_op.json()["position"] == 0
 
 
+def test_create_page_section_accepts_new_block_types(client, admin_headers):
+    for section_type, content in [
+        ("announcement", {"text": "Envío gratis desde $200.000"}),
+        ("header", {"title": "Nuestra historia"}),
+        ("products", {"heading": "Lo más vendido", "limit": 8}),
+        ("text", {"heading": "Sobre nosotros", "body": "Texto libre."}),
+        ("categories", {"heading": "Explora por familia"}),
+        ("image", {"image_url": "https://example.com/foto.jpg"}),
+        ("footer", {"heading": "Últimas unidades"}),
+    ]:
+        response = client.post(
+            "/page-sections",
+            json={"page": "home", "type": section_type, "content": content},
+            headers=admin_headers,
+        )
+        assert response.status_code == 201, f"{section_type} -> {response.text}"
+        assert response.json()["type"] == section_type
+
+
 def test_delete_page_section(client, admin_headers):
     section = client.post(
         "/page-sections", json={"page": "home", "type": "testimonials", "content": {"items": []}}, headers=admin_headers
