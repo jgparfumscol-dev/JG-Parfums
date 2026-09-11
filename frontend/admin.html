@@ -9,67 +9,155 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .admin-header { display: flex; justify-content: space-between; align-items: center; padding-block: var(--space-6); border-bottom: 1px solid var(--ink-100); }
-  .admin-logo { height: 24px; }
-  .tabs { display: flex; gap: var(--space-6); border-bottom: 1px solid var(--ink-100); margin-bottom: var(--space-6); }
-  .tab-btn { background: none; border: none; padding: var(--space-3) 0; font-family: var(--font-body); font-size: 15px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
-  .tab-btn.is-active { color: var(--jg-onyx); border-bottom-color: var(--gold-600); }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+
+  /* ---- login gate (sin cambios de fondo) ---- */
+  .login-gate { max-width: 360px; margin: var(--space-24) auto; padding: var(--space-8); }
+
+  /* ---- shell ---- */
+  #appShell { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); }
+  #appShell[hidden] { display: none; }
+
+  #topbar {
+    height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: var(--space-6);
+    padding-inline: var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .topbar-logo { height: 22px; width: auto; flex-shrink: 0; }
+  .topbar-nav { display: flex; gap: var(--space-1); overflow-x: auto; flex: 1; min-width: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: var(--space-2); height: 36px; padding-inline: var(--space-3);
+    border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted);
+    font-family: var(--font-body); font-size: 14px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .nav-item svg { flex-shrink: 0; }
+  .nav-item.is-active { color: var(--text); border-bottom-color: var(--accent); }
+  .topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+  .topbar-btn { height: 36px; padding-inline: var(--space-3); font-size: 14px; gap: var(--space-2); }
+  .topbar-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  #editorShell { flex: 1; display: flex; min-height: 0; overflow: hidden; position: relative; }
+
+  #panelLeft, #panelRight { flex-shrink: 0; overflow-y: auto; background: var(--surface); }
+  #panelLeft { width: 300px; border-right: 1px solid var(--border); padding: var(--space-4); }
+  #panelRight { width: 280px; border-left: 1px solid var(--border); padding: var(--space-4); }
+
+  .panel-subtabs { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--border); margin-bottom: var(--space-4); }
+  .subtab-btn {
+    background: none; border: none; border-bottom: 2px solid transparent; padding: var(--space-2) 0;
+    font-family: var(--font-body); font-size: 13px; color: var(--text-muted); cursor: pointer;
+  }
+  .subtab-btn.is-active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .addsec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3); }
+  .addsec-card {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+    color: var(--text); font-family: var(--font-body); font-size: 13px; cursor: pointer; padding: var(--space-2);
+    transition: border-color 150ms;
+  }
+  .addsec-card:hover { border-color: var(--gold-600); }
+  .addsec-card-wide {
+    width: 100%; aspect-ratio: auto; height: 56px; flex-direction: row; justify-content: flex-start;
+    padding-inline: var(--space-4); gap: var(--space-3);
+  }
+
+  .empty-state-inline { color: var(--text-muted); font-size: 14px; text-align: center; padding-block: var(--space-12); }
+
+  #centerArea { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .center-view { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: var(--space-6); }
+  .center-view[hidden] { display: none; }
+  #centerEditor { padding: 0; }
+  .center-placeholder { align-items: center; justify-content: center; }
+
+  .canvas-toolbar {
+    height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: var(--space-4);
+    padding-inline: var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .viewport-switch { display: flex; gap: 2px; border: 1px solid var(--border); border-radius: var(--radius); padding: 2px; }
+  .viewport-switch button {
+    width: 32px; height: 28px; border: 1px solid transparent; border-radius: var(--radius); background: none;
+    color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .viewport-switch button.is-active { background: var(--bg); color: var(--text); border-color: var(--border); }
+  .canvas-status { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+
+  .canvas-scroll { flex: 1; overflow: auto; padding: var(--space-8); background: var(--bg); }
+  .canvas-frame { margin-inline: auto; height: 100%; background: var(--surface); border: 1px solid var(--border); }
+  .canvas-frame.vp-desktop { width: 100%; }
+  .canvas-frame.vp-tablet { width: 768px; max-width: 100%; }
+  .canvas-frame.vp-mobile { width: 390px; max-width: 100%; }
+  .canvas-frame iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  .panel-right-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); color: var(--text-muted); }
+  .panel-right-header p { margin: 0; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+  .right-list-row {
+    display: flex; align-items: center; gap: var(--space-3); width: 100%; padding-block: var(--space-2);
+    border: none; border-bottom: 1px solid var(--border); background: none; cursor: pointer; text-align: left;
+  }
+  .right-list-row:last-child { border-bottom: none; }
+  .right-list-thumb { width: 36px; height: 36px; background: var(--bg); flex-shrink: 0; overflow: hidden; }
+  .right-list-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .right-list-body { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+  .right-list-name { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .right-list-price { font-size: 12px; color: var(--text-muted); }
+
+  /* ---- listas / tablas heredadas ---- */
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--ink-100); vertical-align: middle; }
-  th { color: var(--text-muted); font-weight: 500; font-size: 12px; text-transform: none; }
+  th, td { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
   .table-wrap { overflow-x: auto; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3); }
   dialog { border: none; border-radius: var(--radius); padding: 0; max-width: 520px; width: 90vw; }
   dialog::backdrop { background: rgba(32,30,31,.5); }
   .dialog-inner { padding: var(--space-8); max-height: 80vh; overflow-y: auto; }
   .dialog-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
-  .status-select { height: 44px; padding: 0 var(--space-2); border: 1px solid var(--ink-300); border-radius: var(--radius); font-family: var(--font-body); font-size: 14px; color: var(--jg-onyx); background: var(--jg-white); }
+  .status-select { height: 44px; padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--font-body); font-size: 14px; color: var(--text); background: var(--surface); }
   .status-select:focus { outline: 2px solid var(--gold-600); outline-offset: 1px; border-color: var(--gold-600); }
-  .login-gate { max-width: 360px; margin: var(--space-24) auto; padding: var(--space-8); }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--space-4); }
   .image-row { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; margin-bottom: var(--space-2); }
   .image-row img { width: 40px; height: 40px; object-fit: cover; }
-  .order-number-btn { background: none; border: none; padding: 0; color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; cursor: pointer; font-family: var(--font-body); font-size: 14px; }
+  .order-number-btn { background: none; border: none; padding: 0; color: var(--text); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; cursor: pointer; font-family: var(--font-body); font-size: 14px; }
   .order-detail-section { margin-bottom: var(--space-6); }
   .order-detail-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
-  .stats-kpis { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-bottom: var(--space-8); padding-bottom: var(--space-6); border-bottom: 1px solid var(--ink-100); }
-  .stats-kpi-value { font-family: var(--font-body); font-size: 32px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
-  .stats-kpi-label { color: var(--text-muted); font-size: 13px; margin: var(--space-1) 0 0; }
-  .stats-section { margin-bottom: var(--space-8); }
-  .stats-columns { display: grid; grid-template-columns: 1fr; gap: var(--space-8); margin-bottom: var(--space-8); }
-  @media (min-width: 768px) { .stats-columns { grid-template-columns: 1fr 1fr; } }
-  .stats-bar-row { display: flex; align-items: center; gap: var(--space-3); padding-block: var(--space-2); font-size: 13px; }
-  .stats-bar-label { width: 90px; flex-shrink: 0; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .stats-bar-track { flex: 1; height: 8px; background: var(--ink-100); position: relative; }
-  .stats-bar-fill { position: absolute; inset-block: 0; left: 0; background: var(--gold-400); }
-  .stats-bar-count { width: 32px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
-  /* editor de tienda en vivo */
-  .editor-layout { display: flex; flex-direction: column; gap: var(--space-6); }
-  @media (min-width: 1024px) { .editor-layout { flex-direction: row; align-items: stretch; } }
-  .editor-sidebar { width: 100%; }
-  @media (min-width: 1024px) { .editor-sidebar { width: 360px; flex-shrink: 0; } }
-  .editor-preview { flex: 1; min-height: 500px; border: 1px solid var(--ink-100); }
-  .editor-preview iframe { width: 100%; height: 100%; min-height: 500px; border: none; display: block; }
-  .editor-section-row { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--ink-100); }
+  /* ---- editor de secciones (sub-tab "Secciones") ---- */
+  .editor-section-row { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
   .editor-section-row.is-inactive { opacity: .5; }
   .editor-section-type { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
-  .editor-section-label { flex: 1; font-size: 14px; margin: 2px 0 0; }
+  .editor-section-label { flex: 1; font-size: 13px; margin: 2px 0 0; }
   .editor-icon-btn {
-    background: none; border: 1px solid var(--ink-300); border-radius: var(--radius);
-    width: 30px; height: 30px; cursor: pointer; font-size: 13px; line-height: 1; flex-shrink: 0;
+    background: none; border: 1px solid var(--border); border-radius: var(--radius);
+    width: 28px; height: 28px; cursor: pointer; font-size: 12px; line-height: 1; flex-shrink: 0;
   }
   .editor-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
   .editor-add-row { display: flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; }
 
-  /* pantalla "solo en computador" para móvil */
-  .desktop-only-gate {
-    position: fixed; inset: 0; z-index: 50; background: var(--jg-paper);
-    display: flex; align-items: center; justify-content: center; padding: var(--space-8);
+  /* ---- drawers responsive ---- */
+  .drawer-toggle {
+    display: none; position: fixed; top: 64px; z-index: 41; width: 36px; height: 36px;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    cursor: pointer; align-items: center; justify-content: center; color: var(--text);
   }
-  .desktop-only-gate[hidden] { display: none; }
-  .desktop-only-gate-inner { text-align: center; max-width: 360px; }
-  .desktop-only-gate-inner img { width: 32px; margin-inline: auto; margin-bottom: var(--space-6); }
+  .drawer-toggle-left { left: var(--space-3); }
+  .drawer-toggle-right { right: var(--space-3); }
+  .drawer-backdrop { position: fixed; inset: 56px 0 0 0; background: rgba(32,30,31,.5); z-index: 39; }
+
+  @media (max-width: 1279px) {
+    .drawer-toggle-right { display: flex; }
+    #panelRight {
+      position: fixed; top: 56px; right: 0; bottom: 0; z-index: 40;
+      transform: translateX(100%); transition: transform 200ms; box-shadow: var(--shadow-float);
+    }
+    #panelRight.is-open { transform: translateX(0); }
+  }
+  @media (max-width: 1023px) {
+    .drawer-toggle-left { display: flex; }
+    #panelLeft {
+      position: fixed; top: 56px; left: 0; bottom: 0; z-index: 40;
+      transform: translateX(-100%); transition: transform 200ms; box-shadow: var(--shadow-float);
+    }
+    #panelLeft.is-open { transform: translateX(0); }
+  }
 </style>
 </head>
 <body>
@@ -83,123 +171,197 @@
   </form>
 </div>
 
-<div id="adminApp" hidden>
-  <header class="admin-header container">
-    <img class="admin-logo" src="/assets/logos/jg-parfums-onyx.svg" alt="JG Parfums">
-    <div style="display:flex; gap: var(--space-3);">
-      <a class="btn btn-secondary" href="/index.html">Ver tienda</a>
-      <button class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+<div id="appShell" hidden>
+  <header id="topbar">
+    <img class="topbar-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+
+    <nav class="topbar-nav" id="topbarNav">
+      <button class="nav-item is-active" data-nav="editor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg>
+        Editor
+      </button>
+      <button class="nav-item" data-nav="products">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="10" y="3" width="4" height="3"/><path d="M9 7h6l1 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10z"/></svg>
+        Productos
+      </button>
+      <button class="nav-item" data-nav="orders">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+        Pedidos
+      </button>
+      <button class="nav-item" data-nav="metrics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="20" x2="5" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="19" y1="20" x2="19" y2="4"/></svg>
+        Métricas
+      </button>
+      <button class="nav-item" data-nav="categories">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12l-8 8-9-9V4h7z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
+        Categorías
+      </button>
+      <button class="nav-item" data-nav="settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="1.6"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="1.6"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="1.6"/></svg>
+        Ajustes
+      </button>
+    </nav>
+
+    <div class="topbar-actions">
+      <a class="btn btn-secondary topbar-btn" href="/index.html" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6"/><line x1="20" y1="4" x2="11" y2="13"/><path d="M20 14v6H4V4h6"/></svg>
+        Ver tienda
+      </a>
+      <button class="btn btn-secondary topbar-btn" id="historyBtn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15.5" y2="14"/></svg>
+        Historial
+      </button>
+      <button class="btn btn-primary topbar-btn" id="saveChangesBtn">Guardar cambios</button>
+      <button class="btn btn-secondary topbar-btn" id="logoutBtn">Cerrar sesión</button>
     </div>
   </header>
 
-  <main class="container" style="padding-block: var(--space-6) var(--space-16);">
-    <div class="tabs">
-      <button class="tab-btn is-active" data-tab="products">Productos</button>
-      <button class="tab-btn" data-tab="orders">Pedidos</button>
-      <button class="tab-btn" data-tab="categories">Categorías</button>
-      <button class="tab-btn" data-tab="stats">Estadísticas</button>
-      <button class="tab-btn" data-tab="editor">Tienda en vivo</button>
-    </div>
+  <div id="editorShell">
+    <button id="toggleLeftPanelBtn" class="drawer-toggle drawer-toggle-left" aria-label="Abrir panel izquierdo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
 
-    <section id="tabProducts">
-      <div class="toolbar">
-        <h2 class="h3">Productos</h2>
-        <button class="btn btn-primary" id="newProductBtn">+ Nuevo producto</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nombre</th><th>Casa</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="productsBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section id="tabOrders" hidden>
-      <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>N.° pedido</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Estado</th><th>Fecha</th></tr></thead>
-          <tbody id="ordersBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section id="tabCategories" hidden>
-      <h2 class="h3" style="margin-bottom: var(--space-2);">Categorías</h2>
-      <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Las que crees acá son las que aparecen en el filtro del catálogo y en la ficha de cada producto.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nombre</th><th></th></tr></thead>
-          <tbody id="categoriesBody"></tbody>
-        </table>
-      </div>
-      <div style="display:flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap;">
-        <input id="newCategoryName" class="input-sm" placeholder="Nombre de la categoría" style="flex:1; min-width:200px;">
-        <button class="btn btn-primary" type="button" id="addCategoryBtn">+ Agregar categoría</button>
-      </div>
-    </section>
-
-    <section id="tabStats" hidden>
-      <h2 class="h3" style="margin-bottom: var(--space-2);">Estadísticas</h2>
-      <p class="text-muted text-small" style="margin-bottom: var(--space-6);">Visitas propias del sitio (sin cookies) y resumen de ventas.</p>
-
-      <div class="stats-kpis" id="statsKpis"></div>
-
-      <div class="stats-section">
-        <p class="order-detail-heading">Visitas por día (últimos 14 días)</p>
-        <div id="statsViewsByDay"></div>
+    <aside id="panelLeft">
+      <div class="panel-subtabs">
+        <button class="subtab-btn is-active" data-subtab="add">Añadir</button>
+        <button class="subtab-btn" data-subtab="sections">Secciones</button>
+        <button class="subtab-btn" data-subtab="adjust">Ajustar</button>
       </div>
 
-      <div class="stats-columns">
-        <div>
-          <p class="order-detail-heading">Páginas más visitadas (30 días)</p>
-          <div id="statsTopPages"></div>
+      <div id="subtabAdd">
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Elige un tipo de sección para agregarla a la página.</p>
+        <div class="addsec-grid">
+          <button type="button" class="addsec-card" data-addsec="announcement">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="3" x2="5" y2="21"/><path d="M5 4h13l-3 4 3 4H5z"/></svg>
+            <span>Anuncio</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="banner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="10"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+            <span>Banner</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16"/><line x1="3" y1="8" x2="21" y2="8"/></svg>
+            <span>Encabezado</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="products">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span>Productos</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="text">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>
+            <span>Texto</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="categories">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12l-8 8-9-9V4h7z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
+            <span>Categorías</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="image">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16"/><circle cx="8.5" cy="9.5" r="1.4"/><path d="M4 17l5-5 3 3 4-5 4 6"/></svg>
+            <span>Imagen</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="footer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
+            <span>Footer</span>
+          </button>
         </div>
-        <div>
-          <p class="order-detail-heading">Productos más vendidos</p>
-          <div id="statsTopProducts"></div>
+        <button type="button" class="addsec-card addsec-card-wide" data-addsec="custom">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="9 6 4 12 9 18"/><polyline points="15 6 20 12 15 18"/></svg>
+          <span>Sección personalizada (HTML / CSS)</span>
+        </button>
+      </div>
+
+      <div id="subtabSections" hidden>
+        <div id="editorSectionsList"></div>
+        <div class="editor-add-row">
+          <select id="newSectionType" class="input-sm" aria-label="Tipo de sección nueva">
+            <option value="banner">Banner</option>
+            <option value="testimonials">Testimonios</option>
+            <option value="counters">Contadores</option>
+            <option value="custom_html">Código HTML/CSS</option>
+          </select>
+          <button class="btn btn-primary" type="button" id="addSectionBtn">+ Agregar sección</button>
         </div>
       </div>
 
-      <div class="stats-section">
-        <p class="order-detail-heading">Pedidos por estado</p>
-        <div id="statsOrderStatus"></div>
+      <div id="subtabAdjust" hidden>
+        <p class="empty-state-inline">En construcción.</p>
       </div>
-    </section>
+    </aside>
 
-    <section id="tabEditor" hidden>
-      <div class="toolbar">
-        <h2 class="h3">Tienda en vivo</h2>
-        <select id="editorPageSelect" class="input-sm" aria-label="Página a editar"></select>
-      </div>
-      <p class="text-muted text-small" style="margin-bottom: var(--space-6);">Los cambios quedan publicados de inmediato en la web real — no hay borradores.</p>
-      <div class="editor-layout">
-        <div class="editor-sidebar">
-          <div id="editorSectionsList"></div>
-          <div class="editor-add-row">
-            <select id="newSectionType" class="input-sm" aria-label="Tipo de sección nueva">
-              <option value="banner">Banner</option>
-              <option value="testimonials">Testimonios</option>
-              <option value="counters">Contadores</option>
-              <option value="custom_html">Código HTML/CSS</option>
-            </select>
-            <button class="btn btn-primary" type="button" id="addSectionBtn">+ Agregar sección</button>
+    <div id="centerArea">
+      <div id="centerEditor" class="center-view">
+        <div class="canvas-toolbar">
+          <div class="viewport-switch" role="group" aria-label="Tamaño de vista previa">
+            <button type="button" class="is-active" data-viewport="desktop" aria-label="Escritorio">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="12" rx="1"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/></svg>
+            </button>
+            <button type="button" data-viewport="tablet" aria-label="Tablet">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="3" width="12" height="18" rx="1.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>
+            </button>
+            <button type="button" data-viewport="mobile" aria-label="Móvil">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="8" y="2" width="8" height="20" rx="1.5"/><line x1="11" y1="19" x2="13" y2="19"/></svg>
+            </button>
+          </div>
+          <select id="editorPageSelect" class="input-sm" aria-label="Página a editar"></select>
+          <p class="canvas-status">Vista previa en tiempo real</p>
+        </div>
+        <div class="canvas-scroll">
+          <div class="canvas-frame vp-desktop" id="canvasFrame">
+            <iframe id="editorPreview" title="Vista previa del sitio en vivo"></iframe>
           </div>
         </div>
-        <div class="editor-preview">
-          <iframe id="editorPreview" title="Vista previa del sitio en vivo"></iframe>
+      </div>
+
+      <div id="centerProducts" class="center-view" hidden>
+        <div class="toolbar">
+          <h2 class="h3">Productos</h2>
+          <button class="btn btn-primary" id="newProductBtn">+ Nuevo producto</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Casa</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
         </div>
       </div>
-    </section>
-  </main>
-</div>
 
-<div id="desktopOnlyGate" class="desktop-only-gate" hidden>
-  <div class="desktop-only-gate-inner">
-    <img src="/assets/logos/jg-star.svg" alt="">
-    <h1 class="h2" style="margin-bottom: var(--space-4);">Solo disponible en computador</h1>
-    <p class="text-muted" style="margin-bottom: var(--space-8);">Esta sección del panel administrativo todavía no está pensada para celular.</p>
-    <button class="btn btn-primary" id="backToProductsBtn">Volver a Productos</button>
+      <div id="centerOrders" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>N.° pedido</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Estado</th><th>Fecha</th></tr></thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="centerPlaceholder" class="center-view center-placeholder" hidden>
+        <p id="centerPlaceholderText" class="text-muted">En construcción.</p>
+      </div>
+    </div>
+
+    <button id="toggleRightPanelBtn" class="drawer-toggle drawer-toggle-right" aria-label="Abrir panel derecho">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="10" y="3" width="4" height="3"/><path d="M9 7h6l1 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10z"/></svg>
+    </button>
+
+    <aside id="panelRight">
+      <div class="panel-right-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="10" y="3" width="4" height="3"/><path d="M9 7h6l1 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10z"/></svg>
+        <p id="rightPanelTitle">Productos</p>
+      </div>
+      <div id="rightPanelProducts">
+        <button class="btn btn-primary btn-block" id="rightNewProductBtn" style="margin-bottom: var(--space-4);">+ Nuevo producto</button>
+        <div id="rightProductsList"></div>
+      </div>
+      <div id="rightPanelOrders" hidden>
+        <div id="rightOrdersList"></div>
+      </div>
+      <div id="rightPanelPlaceholder" hidden>
+        <p class="empty-state-inline">En construcción.</p>
+      </div>
+    </aside>
+
+    <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
   </div>
 </div>
 
@@ -242,7 +404,7 @@
         </div>
       </div>
 
-      <div id="variantSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--ink-100);">
+      <div id="variantSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
         <p class="text-caption" style="margin-bottom: var(--space-2);">Decants (5ml / 10ml)</p>
         <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Mismo perfume, presentación de prueba. Precio y stock son propios de cada tamaño.</p>
         <div id="variantList"></div>
@@ -321,61 +483,18 @@
     try {
       const me = await apiFetch('/auth/me');
       if (!me.is_admin) return showLoginGate('Esta cuenta no tiene permisos de administrador');
-      document.getElementById('adminApp').hidden = false;
+      document.getElementById('appShell').hidden = false;
       await loadCategories();
-      loadProducts();
-      loadOrders();
-      loadStats();
       initEditorPageSelect();
+      setActiveNav('editor');
     } catch (err) {
       showLoginGate();
     }
   }
 
-  // --- Gate móvil: en celular, el panel solo sirve para crear/quitar
-  // producto. Cualquier otra pestaña muestra esta pantalla en vez de su
-  // contenido — no tiene sentido intentar hacer responsive Pedidos,
-  // Categorías, Estadísticas o el editor de tienda en pantalla chica.
-  function isMobileViewport() {
-    return window.matchMedia('(max-width: 767px)').matches;
-  }
-
-  function showDesktopOnlyGate() {
-    document.getElementById('desktopOnlyGate').hidden = false;
-  }
-
-  function hideDesktopOnlyGate() {
-    document.getElementById('desktopOnlyGate').hidden = true;
-  }
-
-  function activateTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tabName));
-    document.getElementById('tabProducts').hidden = tabName !== 'products';
-    document.getElementById('tabOrders').hidden = tabName !== 'orders';
-    document.getElementById('tabCategories').hidden = tabName !== 'categories';
-    document.getElementById('tabStats').hidden = tabName !== 'stats';
-    document.getElementById('tabEditor').hidden = tabName !== 'editor';
-    if (tabName === 'editor') loadEditorPage();
-    if (tabName === 'products') loadProducts();
-  }
-
-  document.getElementById('backToProductsBtn').addEventListener('click', () => {
-    hideDesktopOnlyGate();
-    activateTab('products');
-  });
-
-  function debounce(fn, ms) {
-    let timer;
-    return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
-  }
-
-  window.addEventListener('resize', debounce(() => {
-    if (!isMobileViewport()) hideDesktopOnlyGate();
-  }, 200));
-
   function showLoginGate(message) {
     document.getElementById('loginGate').hidden = false;
-    document.getElementById('adminApp').hidden = true;
+    document.getElementById('appShell').hidden = true;
     if (message) {
       const errorEl = document.getElementById('loginError');
       errorEl.textContent = message;
@@ -407,57 +526,90 @@
     window.location.reload();
   });
 
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
+  // --- Navegación primaria + drawers responsive ---
+  const NAV_PLACEHOLDER_LABEL = { metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
+  const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
+
+  function setActiveNav(navName) {
+    document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.nav === navName));
+
+    document.getElementById('centerEditor').hidden = navName !== 'editor';
+    document.getElementById('centerProducts').hidden = navName !== 'products';
+    document.getElementById('centerOrders').hidden = navName !== 'orders';
+    const isPlaceholder = navName in NAV_PLACEHOLDER_LABEL;
+    document.getElementById('centerPlaceholder').hidden = !isPlaceholder;
+    if (isPlaceholder) {
+      document.getElementById('centerPlaceholderText').textContent = `${NAV_PLACEHOLDER_LABEL[navName]} — en construcción.`;
+    }
+
+    const showRightProducts = navName === 'products' || navName === 'editor';
+    document.getElementById('rightPanelProducts').hidden = !showRightProducts;
+    document.getElementById('rightPanelOrders').hidden = navName !== 'orders';
+    document.getElementById('rightPanelPlaceholder').hidden = !isPlaceholder;
+    document.getElementById('rightPanelTitle').textContent = RIGHT_PANEL_TITLE[navName] || 'Productos';
+
+    if (navName === 'editor') loadEditorPage();
+    if (navName === 'products') loadProducts();
+    if (navName === 'orders') loadOrders();
+    if (showRightProducts) loadRightProducts();
+    if (navName === 'orders') loadRightOrders();
+
+    closeDrawers();
+  }
+
+  document.querySelectorAll('.nav-item').forEach((btn) => {
+    btn.addEventListener('click', () => setActiveNav(btn.dataset.nav));
+  });
+
+  document.querySelectorAll('.subtab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      if (isMobileViewport() && btn.dataset.tab !== 'products') {
-        showDesktopOnlyGate();
-        return;
-      }
-      activateTab(btn.dataset.tab);
+      document.querySelectorAll('.subtab-btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+      document.getElementById('subtabAdd').hidden = btn.dataset.subtab !== 'add';
+      document.getElementById('subtabSections').hidden = btn.dataset.subtab !== 'sections';
+      document.getElementById('subtabAdjust').hidden = btn.dataset.subtab !== 'adjust';
     });
   });
 
-  // --- Categorías ---
+  document.querySelectorAll('.addsec-card').forEach((card) => {
+    card.addEventListener('click', () => alert('Esta sección estará disponible próximamente.'));
+  });
+
+  document.getElementById('saveChangesBtn').addEventListener('click', () => {
+    alert('No hay cambios pendientes por guardar.');
+  });
+
+  function openDrawer(which) {
+    document.getElementById(which === 'left' ? 'panelLeft' : 'panelRight').classList.add('is-open');
+    document.getElementById('drawerBackdrop').hidden = false;
+  }
+  function closeDrawers() {
+    document.getElementById('panelLeft').classList.remove('is-open');
+    document.getElementById('panelRight').classList.remove('is-open');
+    document.getElementById('drawerBackdrop').hidden = true;
+  }
+  document.getElementById('toggleLeftPanelBtn').addEventListener('click', () => openDrawer('left'));
+  document.getElementById('toggleRightPanelBtn').addEventListener('click', () => openDrawer('right'));
+  document.getElementById('drawerBackdrop').addEventListener('click', closeDrawers);
+
+  document.querySelectorAll('.viewport-switch button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.viewport-switch button').forEach((b) => b.classList.toggle('is-active', b === btn));
+      const frame = document.getElementById('canvasFrame');
+      frame.classList.remove('vp-desktop', 'vp-tablet', 'vp-mobile');
+      frame.classList.add(`vp-${btn.dataset.viewport}`);
+    });
+  });
+
+  // --- Categorías: solo alimenta el <select> del formulario de producto.
+  // La tabla de categorías administrables queda sin UI hasta que "Categorías"
+  // en la nav deje de ser un placeholder.
   let categoriesCache = [];
 
   async function loadCategories() {
     categoriesCache = await apiFetch('/categories');
     const select = document.getElementById('p_category');
     select.innerHTML = '<option value="">Sin categoría</option>' + categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-
-    const body = document.getElementById('categoriesBody');
-    if (categoriesCache.length === 0) {
-      body.innerHTML = `<tr><td colspan="2" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay categorías.</td></tr>`;
-      return;
-    }
-    body.innerHTML = categoriesCache.map((c) => `
-      <tr>
-        <td>${c.name}</td>
-        <td><button type="button" class="remove-btn" data-remove-category="${c.id}">Quitar</button></td>
-      </tr>
-    `).join('');
-    document.querySelectorAll('[data-remove-category]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        await apiFetch(`/categories/${btn.dataset.removeCategory}`, { method: 'DELETE' });
-        loadCategories();
-      });
-    });
   }
-
-  function slugify(text) {
-    return text.toLowerCase().trim()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '') // quita tildes
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  }
-
-  document.getElementById('addCategoryBtn').addEventListener('click', async () => {
-    const input = document.getElementById('newCategoryName');
-    const name = input.value.trim();
-    if (!name) return;
-    await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, slug: slugify(name) }) });
-    input.value = '';
-    loadCategories();
-  });
 
   // --- Productos ---
   async function loadProducts() {
@@ -468,7 +620,6 @@
       `;
       return;
     }
-    const mobile = isMobileViewport();
     document.getElementById('productsBody').innerHTML = data.items.map((p) => `
       <tr>
         <td>${p.name}</td>
@@ -477,7 +628,7 @@
         <td>${p.stock}</td>
         <td>${p.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge text-muted">Inactivo</span>'}</td>
         <td style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
-          ${mobile ? '' : `<button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button>`}
+          <button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button>
           <button class="remove-btn" data-remove-product="${p.id}">Quitar</button>
         </td>
       </tr>
@@ -491,9 +642,33 @@
         if (!confirm('¿Quitar este producto de la tienda?')) return;
         await apiFetch(`/products/${btn.dataset.removeProduct}`, { method: 'DELETE' });
         loadProducts();
+        loadRightProducts();
       });
     });
   }
+
+  async function loadRightProducts() {
+    const data = await apiFetch('/products?include_inactive=true&page_size=50');
+    const list = document.getElementById('rightProductsList');
+    if (data.items.length === 0) {
+      list.innerHTML = '<p class="text-muted text-small">Todavía no hay productos.</p>';
+      return;
+    }
+    list.innerHTML = data.items.map((p) => `
+      <button type="button" class="right-list-row" data-right-edit="${p.id}">
+        <span class="right-list-thumb">${p.images[0] ? `<img src="${p.images[0].url}" alt="">` : ''}</span>
+        <span class="right-list-body">
+          <span class="right-list-name">${p.name}</span>
+          <span class="right-list-price">${formatCOP(p.price)}</span>
+        </span>
+      </button>
+    `).join('');
+    list.querySelectorAll('[data-right-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => openProductDialog(data.items.find((p) => p.id === Number(btn.dataset.rightEdit))));
+    });
+  }
+
+  document.getElementById('rightNewProductBtn').addEventListener('click', () => openProductDialog(null));
 
   function openProductDialog(product) {
     editingProductId = product ? product.id : null;
@@ -635,6 +810,7 @@
       }
       document.getElementById('productDialog').close();
       loadProducts();
+      loadRightProducts();
     } catch (err) {
       errorEl.textContent = err.message;
       errorEl.hidden = false;
@@ -674,6 +850,7 @@
           method: 'PATCH',
           body: JSON.stringify({ status: select.value }),
         });
+        loadRightOrders();
       });
     });
 
@@ -681,6 +858,26 @@
       btn.addEventListener('click', () => {
         openOrderDialog(orders.find((o) => o.id === Number(btn.dataset.viewOrder)));
       });
+    });
+  }
+
+  async function loadRightOrders() {
+    const orders = await apiFetch('/orders');
+    const list = document.getElementById('rightOrdersList');
+    if (orders.length === 0) {
+      list.innerHTML = '<p class="text-muted text-small">Todavía no hay pedidos.</p>';
+      return;
+    }
+    list.innerHTML = orders.slice(0, 20).map((o) => `
+      <button type="button" class="right-list-row" data-right-order="${o.id}">
+        <span class="right-list-body">
+          <span class="right-list-name">${o.order_number}</span>
+          <span class="right-list-price">${formatCOP(o.total)}</span>
+        </span>
+      </button>
+    `).join('');
+    list.querySelectorAll('[data-right-order]').forEach((btn) => {
+      btn.addEventListener('click', () => openOrderDialog(orders.find((o) => o.id === Number(btn.dataset.rightOrder))));
     });
   }
 
@@ -715,52 +912,7 @@
 
   document.getElementById('closeOrderDialogBtn').addEventListener('click', () => document.getElementById('orderDialog').close());
 
-  // --- Estadísticas ---
-  function barRow(label, count, max, labelWidth) {
-    const pct = max > 0 ? (count / max) * 100 : 0;
-    return `
-      <div class="stats-bar-row">
-        <span class="stats-bar-label" style="width:${labelWidth}px;" title="${label}">${label}</span>
-        <span class="stats-bar-track"><span class="stats-bar-fill" style="width:${pct}%"></span></span>
-        <span class="stats-bar-count">${count}</span>
-      </div>
-    `;
-  }
-
-  async function loadStats() {
-    const data = await apiFetch('/stats/summary');
-
-    document.getElementById('statsKpis').innerHTML = `
-      <div><p class="stats-kpi-value">${data.views_7d}</p><p class="stats-kpi-label">Visitas · 7 días</p></div>
-      <div><p class="stats-kpi-value">${data.views_30d}</p><p class="stats-kpi-label">Visitas · 30 días</p></div>
-      <div><p class="stats-kpi-value">${data.total_orders}</p><p class="stats-kpi-label">Pedidos totales</p></div>
-      <div><p class="stats-kpi-value">${formatCOP(data.total_revenue)}</p><p class="stats-kpi-label">Ingresos confirmados</p></div>
-    `;
-
-    const maxDayCount = Math.max(0, ...data.views_by_day.map((d) => d.count));
-    document.getElementById('statsViewsByDay').innerHTML = data.views_by_day.length
-      ? data.views_by_day.map((d) => barRow(
-          new Date(`${d.date}T00:00:00`).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
-          d.count, maxDayCount, 90,
-        )).join('')
-      : '<p class="text-muted text-small">Todavía no hay visitas registradas.</p>';
-
-    const maxPageCount = Math.max(0, ...data.top_pages.map((p) => p.count));
-    document.getElementById('statsTopPages').innerHTML = data.top_pages.length
-      ? data.top_pages.map((p) => barRow(p.path, p.count, maxPageCount, 140)).join('')
-      : '<p class="text-muted text-small">Sin datos todavía.</p>';
-
-    document.getElementById('statsTopProducts').innerHTML = data.top_products.length
-      ? data.top_products.map((p) => `<div class="ledger-row text-small"><span>${p.name}</span><span>${p.quantity} und.</span></div>`).join('')
-      : '<p class="text-muted text-small">Todavía no hay ventas.</p>';
-
-    const statusEntries = Object.entries(data.orders_by_status);
-    document.getElementById('statsOrderStatus').innerHTML = statusEntries.length
-      ? statusEntries.map(([s, count]) => `<div class="ledger-row text-small"><span>${STATUS_LABEL[s] || s}</span><span>${count}</span></div>`).join('')
-      : '<p class="text-muted text-small">Todavía no hay pedidos.</p>';
-  }
-
-  // --- Tienda en vivo ---
+  // --- Editor de secciones (sub-tab "Secciones" + canvas del nav "Editor") ---
   const PAGE_LABELS = {
     home: 'Inicio', catalogo: 'Catálogo', producto: 'Ficha de producto', carrito: 'Carrito',
     checkout: 'Checkout', 'mi-cuenta': 'Mi cuenta', login: 'Iniciar sesión', registro: 'Registro',
