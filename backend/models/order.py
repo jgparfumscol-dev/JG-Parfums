@@ -45,6 +45,7 @@ class Order(Base):
     shipping_notes = Column(String, nullable=True)
 
     subtotal = Column(Integer, nullable=False)
+    shipping_cost = Column(Integer, nullable=False, default=0)
     total = Column(Integer, nullable=False)
 
     status = Column(SQLEnum(OrderStatus), nullable=False, default=OrderStatus.pending)

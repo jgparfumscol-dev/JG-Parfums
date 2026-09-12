@@ -44,7 +44,7 @@ app.add_middleware(
 
 # Los routers se importan después de crear `limiter`: varios hacen
 # `from main import limiter` para decorar sus endpoints con @limiter.limit(...).
-from routes import auth, categories, orders, page_sections, payments, products, stats  # noqa: E402
+from routes import auth, categories, orders, page_sections, payments, products, settings, stats  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(categories.router)
@@ -53,6 +53,7 @@ app.include_router(orders.router)
 app.include_router(payments.router)
 app.include_router(stats.router)
 app.include_router(page_sections.router)
+app.include_router(settings.router)
 
 
 @app.get("/")

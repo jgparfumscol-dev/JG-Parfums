@@ -102,13 +102,14 @@
 </form>
 
 <script src="/js/api.js"></script>
+<script src="/js/site-settings.js"></script>
 <script src="/js/cart.js"></script>
 <script src="/js/sections.js"></script>
 <script>
   renderPageSections('checkout');
   const items = getCart();
 
-  function renderSummary() {
+  async function renderSummary() {
     const summary = document.getElementById('summary');
     if (items.length === 0) {
       document.getElementById('checkoutLayout').hidden = true;
@@ -116,6 +117,8 @@
       return;
     }
     const subtotal = getCartTotal();
+    const settings = await getSiteSettings();
+    const shipping = settings.shipping_cost || 0;
     summary.innerHTML = `
       <p class="summary-heading">Resumen del pedido</p>
       ${items.map((item) => `
@@ -124,7 +127,8 @@
           <span>${formatCOP(item.price * item.quantity)}</span>
         </div>
       `).join('')}
-      <div class="ledger-row ledger-row-total"><span>Total</span><span>${formatCOP(subtotal)}</span></div>
+      <div class="ledger-row text-small"><span>Envío</span><span>${shipping > 0 ? formatCOP(shipping) : 'Gratis'}</span></div>
+      <div class="ledger-row ledger-row-total"><span>Total</span><span>${formatCOP(subtotal + shipping)}</span></div>
     `;
   }
   renderSummary();

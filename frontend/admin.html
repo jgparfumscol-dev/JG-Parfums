@@ -67,7 +67,6 @@
   .center-view { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: var(--space-6); }
   .center-view[hidden] { display: none; }
   #centerEditor { padding: 0; }
-  .center-placeholder { align-items: center; justify-content: center; }
 
   .canvas-toolbar {
     height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: var(--space-4);
@@ -125,6 +124,19 @@
   .order-number-btn { background: none; border: none; padding: 0; color: var(--text); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; cursor: pointer; font-family: var(--font-body); font-size: 14px; }
   .order-detail-section { margin-bottom: var(--space-6); }
   .order-detail-heading { font-size: 12px; letter-spacing: 0.03em; color: var(--text-muted); margin: 0 0 var(--space-2); }
+
+  /* ---- métricas ---- */
+  .stats-kpis { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-bottom: var(--space-8); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+  .stats-kpi-value { font-family: var(--font-body); font-size: 32px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
+  .stats-kpi-label { color: var(--text-muted); font-size: 13px; margin: var(--space-1) 0 0; }
+  .stats-section { margin-bottom: var(--space-8); }
+  .stats-columns { display: grid; grid-template-columns: 1fr; gap: var(--space-8); margin-bottom: var(--space-8); }
+  @media (min-width: 900px) { .stats-columns { grid-template-columns: 1fr 1fr; } }
+  .stats-bar-row { display: flex; align-items: center; gap: var(--space-3); padding-block: var(--space-2); font-size: 13px; }
+  .stats-bar-label { width: 90px; flex-shrink: 0; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-bar-track { flex: 1; height: 8px; background: var(--border); position: relative; }
+  .stats-bar-fill { position: absolute; inset-block: 0; left: 0; background: var(--gold-400); }
+  .stats-bar-count { width: 32px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
   /* ---- editor de secciones (sub-tab "Secciones") ---- */
   .editor-section-row { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
@@ -350,8 +362,90 @@
         </div>
       </div>
 
-      <div id="centerPlaceholder" class="center-view center-placeholder" hidden>
-        <p id="centerPlaceholderText" class="text-muted">En construcción.</p>
+      <div id="centerCategories" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Categorías</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Las que crees acá son las que aparecen en el filtro del catálogo, en la ficha de cada producto y al armar una sección de "Productos" en el editor.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th></th></tr></thead>
+            <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap;">
+          <input id="newCategoryName" class="input-sm" placeholder="Nombre de la categoría" style="flex:1; min-width:200px;">
+          <button class="btn btn-primary" type="button" id="addCategoryBtn">+ Agregar categoría</button>
+        </div>
+      </div>
+
+      <div id="centerMetrics" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Métricas</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-6);">Visitas propias del sitio (sin cookies) y resumen de ventas.</p>
+
+        <div class="stats-kpis" id="statsKpis"></div>
+
+        <div class="stats-section">
+          <p class="order-detail-heading">Visitas por día (últimos 14 días)</p>
+          <div id="statsViewsByDay"></div>
+        </div>
+
+        <div class="stats-columns">
+          <div>
+            <p class="order-detail-heading">Páginas más visitadas (30 días)</p>
+            <div id="statsTopPages"></div>
+          </div>
+          <div>
+            <p class="order-detail-heading">Productos más vendidos</p>
+            <div id="statsTopProducts"></div>
+          </div>
+        </div>
+
+        <div class="stats-section">
+          <p class="order-detail-heading">Pedidos por estado</p>
+          <div id="statsOrderStatus"></div>
+        </div>
+      </div>
+
+      <div id="centerSettings" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Ajustes</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-6);">Identidad de la tienda y datos del sitio público. Los cambios se publican de inmediato.</p>
+
+        <form id="settingsForm" style="max-width: 480px;">
+          <p class="form-error" id="settingsFormError" style="color:var(--danger);" hidden></p>
+          <p class="text-small" id="settingsSavedNote" style="color:var(--success);" hidden>Guardado.</p>
+
+          <div class="field"><label for="set_store_name">Nombre de la tienda</label><input id="set_store_name"></div>
+
+          <div class="grid-2">
+            <div class="field"><label for="set_accent_color">Color primario</label>
+              <input id="set_accent_color" type="color" style="padding:4px; height:48px;">
+            </div>
+            <div class="field"><label for="set_accent_color_hex">Código de color</label>
+              <input id="set_accent_color_hex" placeholder="#D3AE6A">
+            </div>
+          </div>
+
+          <div class="field"><label for="set_font_pairing">Tipografía</label>
+            <select id="set_font_pairing">
+              <option value="classic">Clásico — Bodoni Moda + Jost</option>
+              <option value="warm">Cálido — Newsreader + Hanken Grotesk</option>
+              <option value="elegant">Elegante — Cormorant Garamond + Manrope</option>
+              <option value="minimal">Minimalista — Libre Baskerville + Karla</option>
+              <option value="editorial">Editorial — Prata + Outfit</option>
+            </select>
+          </div>
+
+          <p class="text-caption" style="margin-top: var(--space-6); margin-bottom: var(--space-2);">Contacto y redes</p>
+          <div class="field"><label for="set_whatsapp">WhatsApp (con código de país, solo números)</label><input id="set_whatsapp" placeholder="573001234567"></div>
+          <div class="field"><label for="set_instagram">Instagram (link completo)</label><input id="set_instagram" placeholder="https://instagram.com/..."></div>
+          <div class="field"><label for="set_tiktok">TikTok (link completo)</label><input id="set_tiktok" placeholder="https://tiktok.com/@..."></div>
+          <div class="field"><label for="set_contact_email">Correo de contacto</label><input id="set_contact_email" type="email"></div>
+          <div class="field"><label for="set_contact_phone">Teléfono de contacto</label><input id="set_contact_phone"></div>
+
+          <p class="text-caption" style="margin-top: var(--space-6); margin-bottom: var(--space-2);">Envío</p>
+          <div class="field"><label for="set_shipping_cost">Costo de envío (COP)</label><input id="set_shipping_cost" type="number" min="0"></div>
+
+          <button class="btn btn-primary" type="submit">Guardar ajustes</button>
+        </form>
       </div>
     </div>
 
@@ -372,7 +466,7 @@
         <div id="rightOrdersList"></div>
       </div>
       <div id="rightPanelPlaceholder" hidden>
-        <p class="empty-state-inline">En construcción.</p>
+        <p class="empty-state-inline">Sin panel adicional para esta sección.</p>
       </div>
     </aside>
 
@@ -584,7 +678,6 @@
   });
 
   // --- Navegación primaria + drawers responsive ---
-  const NAV_PLACEHOLDER_LABEL = { metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
   const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
 
   function setActiveNav(navName) {
@@ -599,23 +692,25 @@
     document.getElementById('centerEditor').hidden = navName !== 'editor';
     document.getElementById('centerProducts').hidden = navName !== 'products';
     document.getElementById('centerOrders').hidden = navName !== 'orders';
-    const isPlaceholder = navName in NAV_PLACEHOLDER_LABEL;
-    document.getElementById('centerPlaceholder').hidden = !isPlaceholder;
-    if (isPlaceholder) {
-      document.getElementById('centerPlaceholderText').textContent = `${NAV_PLACEHOLDER_LABEL[navName]} — en construcción.`;
-    }
+    document.getElementById('centerCategories').hidden = navName !== 'categories';
+    document.getElementById('centerMetrics').hidden = navName !== 'metrics';
+    document.getElementById('centerSettings').hidden = navName !== 'settings';
 
     const showRightProducts = navName === 'products' || navName === 'editor';
+    const showRightOrders = navName === 'orders';
     document.getElementById('rightPanelProducts').hidden = !showRightProducts;
-    document.getElementById('rightPanelOrders').hidden = navName !== 'orders';
-    document.getElementById('rightPanelPlaceholder').hidden = !isPlaceholder;
+    document.getElementById('rightPanelOrders').hidden = !showRightOrders;
+    document.getElementById('rightPanelPlaceholder').hidden = showRightProducts || showRightOrders;
     document.getElementById('rightPanelTitle').textContent = RIGHT_PANEL_TITLE[navName] || 'Productos';
 
     if (navName === 'editor') loadEditorPage();
     if (navName === 'products') loadProducts();
     if (navName === 'orders') loadOrders();
+    if (navName === 'categories') loadCategories();
+    if (navName === 'metrics') loadStats();
+    if (navName === 'settings') loadSettingsForm();
     if (showRightProducts) loadRightProducts();
-    if (navName === 'orders') loadRightOrders();
+    if (showRightOrders) loadRightOrders();
 
     closeDrawers();
   }
@@ -669,9 +764,7 @@
     });
   });
 
-  // --- Categorías: solo alimenta el <select> del formulario de producto.
-  // La tabla de categorías administrables queda sin UI hasta que "Categorías"
-  // en la nav deje de ser un placeholder.
+  // --- Categorías ---
   let categoriesCache = [];
 
   async function loadCategories() {
@@ -679,7 +772,40 @@
     const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('p_category').innerHTML = '<option value="">Sin categoría</option>' + options;
     document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
+
+    const body = document.getElementById('categoriesBody');
+    if (categoriesCache.length === 0) {
+      body.innerHTML = `<tr><td colspan="2" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay categorías.</td></tr>`;
+      return;
+    }
+    body.innerHTML = categoriesCache.map((c) => `
+      <tr>
+        <td>${c.name}</td>
+        <td><button type="button" class="remove-btn" data-remove-category="${c.id}">Quitar</button></td>
+      </tr>
+    `).join('');
+    document.querySelectorAll('[data-remove-category]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/categories/${btn.dataset.removeCategory}`, { method: 'DELETE' });
+        loadCategories();
+      });
+    });
   }
+
+  function slugify(text) {
+    return text.toLowerCase().trim()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '') // quita tildes
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
+  document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+    const input = document.getElementById('newCategoryName');
+    const name = input.value.trim();
+    if (!name) return;
+    await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, slug: slugify(name) }) });
+    input.value = '';
+    loadCategories();
+  });
 
   // --- Productos ---
   async function loadProducts() {
@@ -983,6 +1109,103 @@
   }
 
   document.getElementById('closeOrderDialogBtn').addEventListener('click', () => document.getElementById('orderDialog').close());
+
+  // --- Métricas ---
+  function barRow(label, count, max, labelWidth) {
+    const pct = max > 0 ? (count / max) * 100 : 0;
+    return `
+      <div class="stats-bar-row">
+        <span class="stats-bar-label" style="width:${labelWidth}px;" title="${label}">${label}</span>
+        <span class="stats-bar-track"><span class="stats-bar-fill" style="width:${pct}%"></span></span>
+        <span class="stats-bar-count">${count}</span>
+      </div>
+    `;
+  }
+
+  async function loadStats() {
+    const data = await apiFetch('/stats/summary');
+
+    document.getElementById('statsKpis').innerHTML = `
+      <div><p class="stats-kpi-value">${data.views_7d}</p><p class="stats-kpi-label">Visitas · 7 días</p></div>
+      <div><p class="stats-kpi-value">${data.views_30d}</p><p class="stats-kpi-label">Visitas · 30 días</p></div>
+      <div><p class="stats-kpi-value">${data.total_orders}</p><p class="stats-kpi-label">Pedidos totales</p></div>
+      <div><p class="stats-kpi-value">${formatCOP(data.total_revenue)}</p><p class="stats-kpi-label">Ingresos confirmados</p></div>
+    `;
+
+    const maxDayCount = Math.max(0, ...data.views_by_day.map((d) => d.count));
+    document.getElementById('statsViewsByDay').innerHTML = data.views_by_day.length
+      ? data.views_by_day.map((d) => barRow(
+          new Date(`${d.date}T00:00:00`).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+          d.count, maxDayCount, 90,
+        )).join('')
+      : '<p class="text-muted text-small">Todavía no hay visitas registradas.</p>';
+
+    const maxPageCount = Math.max(0, ...data.top_pages.map((p) => p.count));
+    document.getElementById('statsTopPages').innerHTML = data.top_pages.length
+      ? data.top_pages.map((p) => barRow(p.path, p.count, maxPageCount, 140)).join('')
+      : '<p class="text-muted text-small">Sin datos todavía.</p>';
+
+    document.getElementById('statsTopProducts').innerHTML = data.top_products.length
+      ? data.top_products.map((p) => `<div class="ledger-row text-small"><span>${p.name}</span><span>${p.quantity} und.</span></div>`).join('')
+      : '<p class="text-muted text-small">Todavía no hay ventas.</p>';
+
+    const statusEntries = Object.entries(data.orders_by_status);
+    document.getElementById('statsOrderStatus').innerHTML = statusEntries.length
+      ? statusEntries.map(([s, count]) => `<div class="ledger-row text-small"><span>${STATUS_LABEL[s] || s}</span><span>${count}</span></div>`).join('')
+      : '<p class="text-muted text-small">Todavía no hay pedidos.</p>';
+  }
+
+  // --- Ajustes ---
+  async function loadSettingsForm() {
+    const s = await apiFetch('/settings');
+    document.getElementById('set_store_name').value = s.store_name || '';
+    document.getElementById('set_accent_color').value = s.accent_color || '#D3AE6A';
+    document.getElementById('set_accent_color_hex').value = s.accent_color || '#D3AE6A';
+    document.getElementById('set_font_pairing').value = s.font_pairing || 'classic';
+    document.getElementById('set_whatsapp').value = s.whatsapp_number || '';
+    document.getElementById('set_instagram').value = s.instagram_url || '';
+    document.getElementById('set_tiktok').value = s.tiktok_url || '';
+    document.getElementById('set_contact_email').value = s.contact_email || '';
+    document.getElementById('set_contact_phone').value = s.contact_phone || '';
+    document.getElementById('set_shipping_cost').value = s.shipping_cost || 0;
+  }
+
+  document.getElementById('set_accent_color').addEventListener('input', (event) => {
+    document.getElementById('set_accent_color_hex').value = event.target.value;
+  });
+  document.getElementById('set_accent_color_hex').addEventListener('input', (event) => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(event.target.value)) {
+      document.getElementById('set_accent_color').value = event.target.value;
+    }
+  });
+
+  document.getElementById('settingsForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('settingsFormError');
+    const savedEl = document.getElementById('settingsSavedNote');
+    errorEl.hidden = true;
+    savedEl.hidden = true;
+
+    const payload = {
+      store_name: document.getElementById('set_store_name').value.trim(),
+      accent_color: document.getElementById('set_accent_color_hex').value.trim(),
+      font_pairing: document.getElementById('set_font_pairing').value,
+      whatsapp_number: document.getElementById('set_whatsapp').value.trim() || null,
+      instagram_url: document.getElementById('set_instagram').value.trim() || null,
+      tiktok_url: document.getElementById('set_tiktok').value.trim() || null,
+      contact_email: document.getElementById('set_contact_email').value.trim() || null,
+      contact_phone: document.getElementById('set_contact_phone').value.trim() || null,
+      shipping_cost: Number(document.getElementById('set_shipping_cost').value) || 0,
+    };
+
+    try {
+      await apiFetch('/settings', { method: 'PUT', body: JSON.stringify(payload) });
+      savedEl.hidden = false;
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
 
   // --- Editor de secciones (sub-tab "Secciones" + canvas del nav "Editor") ---
   const PAGE_LABELS = {

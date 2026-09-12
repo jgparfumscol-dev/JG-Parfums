@@ -35,6 +35,18 @@ def test_create_order_decrements_stock(client, admin_headers):
     assert updated_product["stock"] == 3
 
 
+def test_create_order_includes_configured_shipping_cost(client, admin_headers):
+    client.put("/settings", json={"shipping_cost": 15000}, headers=admin_headers)
+    product = _create_product(client, admin_headers, stock=5, price=100000)
+
+    response = client.post("/orders", json=_checkout_payload(product["id"], quantity=1))
+    assert response.status_code == 201
+    body = response.json()
+    assert body["subtotal"] == 100000
+    assert body["shipping_cost"] == 15000
+    assert body["total"] == 115000
+
+
 def test_create_order_insufficient_stock_rejected(client, admin_headers):
     product = _create_product(client, admin_headers, stock=1)
 

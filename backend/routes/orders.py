@@ -10,6 +10,7 @@ from models.order import Order
 from models.order_item import OrderItem
 from models.product import Product
 from models.product_variant import ProductVariant
+from models.site_settings import SiteSettings
 from models.user import User
 from schemas.order import OrderCreate, OrderResponse, OrderStatusUpdate
 from services.email_service import email_confirmacion_pedido
@@ -87,6 +88,9 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
                 )
             )
 
+    settings = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
+    shipping_cost = settings.shipping_cost if settings else 0
+
     order = Order(
         order_number=_generate_order_number(),
         user_id=user.id if user else None,
@@ -97,7 +101,8 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
         shipping_city=payload.shipping_city,
         shipping_notes=payload.shipping_notes,
         subtotal=subtotal,
-        total=subtotal,
+        shipping_cost=shipping_cost,
+        total=subtotal + shipping_cost,
         items=order_items,
     )
     db.add(order)

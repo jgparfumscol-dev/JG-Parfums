@@ -45,6 +45,7 @@ class OrderResponse(BaseModel):
     shipping_city: str
     shipping_notes: str | None
     subtotal: int
+    shipping_cost: int
     total: int
     status: OrderStatus
     payment_provider: PaymentProvider | None

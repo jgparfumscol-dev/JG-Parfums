@@ -56,6 +56,66 @@
         ],
         "createdAt": "2026-09-11T06:06:12.399Z",
         "reason": "sección 'Frascos originales/Ficha completa/Pago' usa padding-top:0 a propósito porque continúa la sección anterior (mismo fondo blanco) para no duplicar el espacio; el gap real lo da el padding-bottom de la sección previa (var(--space-16)) — confirmado visualmente en captura, no queda pegado al borde."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "fraunces",
+        "createdAt": "2026-09-12T01:52:35.956Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "inter",
+        "createdAt": "2026-09-12T01:52:35.965Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "cormorant garamond",
+        "createdAt": "2026-09-12T01:52:35.973Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "manrope",
+        "createdAt": "2026-09-12T01:52:35.980Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "libre baskerville",
+        "createdAt": "2026-09-12T01:52:35.987Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "karla",
+        "createdAt": "2026-09-12T01:52:35.994Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "prata",
+        "createdAt": "2026-09-12T01:52:36.001Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "outfit",
+        "createdAt": "2026-09-12T01:52:36.009Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "newsreader",
+        "createdAt": "2026-09-12T02:00:39.443Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "hanken grotesk",
+        "createdAt": "2026-09-12T02:00:39.452Z",
+        "reason": "user requested a curated list of alternate font pairings selectable from the new admin Ajustes settings page, as an explicit site-configurable feature"
       }
     ]
   }
