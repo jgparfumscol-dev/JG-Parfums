@@ -135,6 +135,23 @@
 
   // El frasco completo siempre es la primera opción; los decants (si existen
   // y están activos) se agregan detrás, ordenados de menor a mayor tamaño.
+  // Escalera de notas: cada nota es un paso con su propio color, ancho
+  // creciente de arriba a abajo — la última nota es la más fuerte.
+  function renderNotesStaircase(notes) {
+    if (!notes || notes.length === 0) return '';
+    const total = notes.length;
+    return `
+      <div class="notes-staircase">
+        ${notes.map((n, i) => `
+          <div class="notes-step">
+            <span class="notes-step-name" style="color:${n.color};">${n.name}</span>
+            <span class="notes-step-track"><span class="notes-step-fill" style="width:${Math.round(((i + 1) / total) * 100)}%; background:${n.color};"></span></span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   function buildSizes(product) {
     const fullBottle = {
       variant_id: null,
@@ -180,11 +197,9 @@
         <p class="badge" id="stockBadge" style="margin-top:var(--space-4);"></p>
 
         <div class="product-notes">
-          <p class="product-notes-heading">Ficha olfativa</p>
+          <p class="product-notes-heading">Notas</p>
+          ${renderNotesStaircase(product.notes)}
           <dl class="spec-list">
-            ${product.notes_top ? `<div class="spec-row"><dt>Salida</dt><dd>${product.notes_top}</dd></div>` : ''}
-            ${product.notes_heart ? `<div class="spec-row"><dt>Corazón</dt><dd>${product.notes_heart}</dd></div>` : ''}
-            ${product.notes_base ? `<div class="spec-row"><dt>Fondo</dt><dd>${product.notes_base}</dd></div>` : ''}
             ${product.concentration ? `<div class="spec-row"><dt>Concentración</dt><dd>${product.concentration}</dd></div>` : ''}
             <div class="spec-row"><dt>Tamaño</dt><dd>${product.size_ml} ml</dd></div>
           </dl>

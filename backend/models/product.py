@@ -17,9 +17,6 @@ class Product(Base):
     house = Column(String, nullable=True)  # casa/marca original del perfume
     description = Column(Text, nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
-    notes_top = Column(String, nullable=True)
-    notes_heart = Column(String, nullable=True)
-    notes_base = Column(String, nullable=True)
     concentration = Column(String, nullable=True)  # EDP, EDT, extrait de parfum
     size_ml = Column(Integer, nullable=False)
     price = Column(Integer, nullable=False)  # COP, pesos enteros (sin centavos)
@@ -46,6 +43,11 @@ class Product(Base):
         back_populates="product",
         cascade="all, delete-orphan",
         order_by="ProductVariant.size_ml",
+    )
+    notes = relationship(
+        "ProductNote",
+        cascade="all, delete-orphan",
+        order_by="ProductNote.position",
     )
     order_items = relationship("OrderItem", back_populates="product")
     category = relationship("Category")

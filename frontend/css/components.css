@@ -322,10 +322,8 @@
   margin-top: var(--space-2);
 }
 
-/* diagrama de pirámide olfativa — reemplaza el ícono decorativo del hero
-   por una notación real: cómo se leen los tiempos de un perfume. Cada fase
-   es un disclosure: si hay notas reales, tocar la fase las revela; si no
-   hay (catálogo vacío, o placeholder genérico), el botón queda inerte. */
+/* marco del diagrama del hero — reemplaza el ícono decorativo por una
+   notación real: la escalera de notas vive adentro (ver .notes-staircase). */
 .scent-diagram {
   display: flex;
   flex-direction: column;
@@ -340,54 +338,25 @@
   color: #B9B4B0;
   margin: 0;
 }
-.scent-tier { border-bottom: 1px solid #3A3739; }
-.scent-tier:last-child { border-bottom: none; }
-.scent-tier-toggle {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-  background: none;
-  border: none;
-  color: inherit;
-  font-family: var(--font-body);
-  font-size: 14px;
-  cursor: pointer;
-  padding: var(--space-3) 0;
-  text-align: left;
-}
-.scent-tier-toggle:disabled { cursor: default; }
-.scent-tier-name { font-family: var(--font-display); font-style: italic; color: #FFFFFF; }
-.scent-tier-time { color: #B9B4B0; font-size: 12px; flex-shrink: 0; }
-.scent-tier-track {
-  position: relative;
-  height: 1px;
-  background: #3A3739;
-  margin-bottom: var(--space-3);
-}
-.scent-tier-fill {
+
+/* escalera de notas — nombre y color libres por nota (elegidos por el
+   admin), ordenadas de la más suave (arriba, barra corta) a la más fuerte
+   (abajo, barra completa). Usada en la ficha de producto y en el hero. */
+.notes-staircase { display: flex; flex-direction: column; gap: var(--space-3); }
+.notes-step { display: flex; align-items: center; gap: var(--space-4); }
+.notes-step-name { font-family: var(--font-display); font-style: italic; font-size: 15px; width: 110px; flex-shrink: 0; }
+.notes-step-track { flex: 1; height: 8px; background: var(--border); position: relative; overflow: hidden; }
+.notes-step-fill {
   position: absolute;
   inset-block: 0;
   left: 0;
-  width: var(--w, 30%);
-  background: var(--gold-400);
   transform-origin: left;
   transform: scaleX(0);
-  animation: scent-fill 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--d, 0ms);
+  animation: notes-fill 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.scent-tier-notes {
-  color: #B9B4B0;
-  font-size: 14px;
-  font-family: var(--font-display);
-  font-style: italic;
-  padding-bottom: var(--space-3);
-  margin: 0;
-}
-@keyframes scent-fill { to { transform: scaleX(1); } }
+@keyframes notes-fill { to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) {
-  .scent-tier-fill { animation: none; transform: scaleX(1); }
+  .notes-step-fill { animation: none; transform: scaleX(1); }
 }
 
 /* tira de manifiesto — reemplaza la grilla de tarjetas ícono+texto */

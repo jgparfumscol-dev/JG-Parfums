@@ -489,9 +489,6 @@
         </div>
         <div class="field"><label for="p_concentration">Concentración</label><input id="p_concentration" name="concentration" placeholder="EDP"></div>
       </div>
-      <div class="field"><label for="p_notes_top">Notas de salida</label><input id="p_notes_top" name="notes_top"></div>
-      <div class="field"><label for="p_notes_heart">Notas de corazón</label><input id="p_notes_heart" name="notes_heart"></div>
-      <div class="field"><label for="p_notes_base">Notas de fondo</label><input id="p_notes_base" name="notes_base"></div>
       <div class="grid-2">
         <div class="field"><label for="p_size_ml">Tamaño (ml)</label><input id="p_size_ml" name="size_ml" type="number" min="1" required></div>
         <div class="field"><label for="p_price">Precio (COP)</label><input id="p_price" name="price" type="number" min="1" required></div>
@@ -510,6 +507,17 @@
           <input id="newImageUrl" class="input-sm" placeholder="URL de la imagen" style="flex:1; min-width:160px;">
           <input id="newImageAlt" class="input-sm" placeholder="Texto alternativo" style="flex:1; min-width:160px;">
           <button class="btn btn-secondary" type="button" id="addImageBtn">Agregar</button>
+        </div>
+      </div>
+
+      <div id="noteSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Notas olfativas</p>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">El orden importa: la última nota es la más fuerte y se muestra abajo en la escalera de la ficha.</p>
+        <div id="noteList"></div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
+          <input id="newNoteName" placeholder="Nombre de la nota (ej. Bergamota)" class="input-sm" style="flex:1; min-width:160px;">
+          <input id="newNoteColor" type="color" value="#D3AE6A" class="input-sm" style="width:52px; padding:2px;">
+          <button class="btn btn-secondary" type="button" id="addNoteBtn">Agregar</button>
         </div>
       </div>
 
@@ -881,20 +889,20 @@
       form.description.value = product.description;
       form.category_id.value = product.category_id || '';
       form.concentration.value = product.concentration || '';
-      form.notes_top.value = product.notes_top || '';
-      form.notes_heart.value = product.notes_heart || '';
-      form.notes_base.value = product.notes_base || '';
       form.size_ml.value = product.size_ml;
       form.price.value = product.price;
       form.stock.value = product.stock;
       form.is_active.value = String(product.is_active);
       document.getElementById('imageSection').hidden = false;
       renderImages(product);
+      document.getElementById('noteSection').hidden = false;
+      renderNotes(product);
       document.getElementById('variantSection').hidden = false;
       renderVariants(product);
     } else {
       form.slug.disabled = false;
       document.getElementById('imageSection').hidden = true;
+      document.getElementById('noteSection').hidden = true;
       document.getElementById('variantSection').hidden = true;
     }
     document.getElementById('productDialog').showModal();
@@ -926,6 +934,63 @@
     const slug = document.getElementById('p_slug').value;
     const updated = await apiFetch(`/products/${slug}`);
     renderImages(updated);
+  });
+
+  function renderNotes(product) {
+    document.getElementById('noteList').innerHTML = product.notes.map((n, index) => `
+      <div class="image-row">
+        <input type="color" value="${n.color}" data-note-color="${n.id}" style="width:36px; height:36px; padding:2px; flex-shrink:0;" aria-label="Color de ${n.name}">
+        <input value="${n.name}" data-note-name="${n.id}" class="input-sm" style="flex:1;" aria-label="Nombre de la nota">
+        <button type="button" data-note-save="${n.id}" class="btn btn-secondary" style="height:44px; padding:0 var(--space-3);">Guardar</button>
+        <button type="button" data-note-up="${n.id}" class="editor-icon-btn" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
+        <button type="button" data-note-down="${n.id}" class="editor-icon-btn" ${index === product.notes.length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
+        <button type="button" data-note-remove="${n.id}" class="remove-btn">Quitar</button>
+      </div>
+    `).join('') || '<p class="text-muted text-small">Todavía no hay notas para este producto.</p>';
+
+    document.querySelectorAll('[data-note-save]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.noteSave;
+        const name = document.querySelector(`[data-note-name="${id}"]`).value.trim();
+        const color = document.querySelector(`[data-note-color="${id}"]`).value;
+        if (!name) return;
+        await apiFetch(`/products/notes/${id}`, { method: 'PUT', body: JSON.stringify({ name, color }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderNotes(updated);
+      });
+    });
+    document.querySelectorAll('[data-note-up]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/notes/${btn.dataset.noteUp}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'up' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderNotes(updated);
+      });
+    });
+    document.querySelectorAll('[data-note-down]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/notes/${btn.dataset.noteDown}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'down' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderNotes(updated);
+      });
+    });
+    document.querySelectorAll('[data-note-remove]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/notes/${btn.dataset.noteRemove}`, { method: 'DELETE' });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderNotes(updated);
+      });
+    });
+  }
+
+  document.getElementById('addNoteBtn').addEventListener('click', async () => {
+    const name = document.getElementById('newNoteName').value.trim();
+    const color = document.getElementById('newNoteColor').value;
+    if (!name || !editingProductId) return;
+    await apiFetch(`/products/${editingProductId}/notes`, { method: 'POST', body: JSON.stringify({ name, color }) });
+    document.getElementById('newNoteName').value = '';
+    const slug = document.getElementById('p_slug').value;
+    const updated = await apiFetch(`/products/${slug}`);
+    renderNotes(updated);
   });
 
   function renderVariants(product) {
@@ -989,9 +1054,6 @@
       description: form.get('description'),
       category_id: form.get('category_id') ? Number(form.get('category_id')) : null,
       concentration: form.get('concentration') || null,
-      notes_top: form.get('notes_top') || null,
-      notes_heart: form.get('notes_heart') || null,
-      notes_base: form.get('notes_base') || null,
       size_ml: Number(form.get('size_ml')),
       price: Number(form.get('price')),
       stock: Number(form.get('stock')),

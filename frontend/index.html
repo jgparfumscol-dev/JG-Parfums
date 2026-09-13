@@ -153,53 +153,45 @@
     event.currentTarget.setAttribute('aria-expanded', String(isOpen));
   });
 
-  // Pirámide genérica: se muestra mientras carga el catálogo, y si no hay
+  // Escalera genérica: se muestra mientras carga el catálogo, y si no hay
   // ningún producto todavía (catálogo vacío) se queda así — nunca se
   // inventan notas ni nombre de producto que el cliente no haya entregado.
-  const GENERIC_TIERS = [
-    { name: 'Salida', time: '0–15 min', width: 28, notes: null },
-    { name: 'Corazón', time: '15 min – 3 h', width: 62, notes: null },
-    { name: 'Fondo', time: '3 – 10 h', width: 100, notes: null },
+  const GENERIC_NOTES = [
+    { name: 'Salida', color: '#E3CCA1' },
+    { name: 'Corazón', color: '#CB9F4E' },
+    { name: 'Fondo', color: '#6A501F' },
   ];
 
-  function renderHeroTiers(tiers) {
+  // Misma escalera que la ficha de producto, pero con el nombre siempre en
+  // blanco: el hero es de fondo oscuro y el color de una nota puede ser
+  // oscuro también (ilegible como texto ahí) — el color de marca se expresa
+  // en la barra, no en la letra.
+  function renderHeroNotes(notes) {
     const container = document.getElementById('heroTiers');
-    container.innerHTML = tiers.map((tier, index) => `
-      <div class="scent-tier">
-        <button type="button" class="scent-tier-toggle" data-tier="${index}" aria-expanded="false" ${tier.notes ? '' : 'disabled'}>
-          <span class="scent-tier-name">${tier.name}</span>
-          <span class="scent-tier-time">${tier.time}</span>
-        </button>
-        <div class="scent-tier-track"><div class="scent-tier-fill" style="--w:${tier.width}%; --d:${index * 150}ms;"></div></div>
-        ${tier.notes ? `<p class="scent-tier-notes" data-tier-notes="${index}" hidden>${tier.notes}</p>` : ''}
+    if (!notes || notes.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    const total = notes.length;
+    container.innerHTML = notes.map((n, i) => `
+      <div class="notes-step">
+        <span class="notes-step-name" style="color:#FFFFFF;">${n.name}</span>
+        <span class="notes-step-track" style="background:#3A3739;"><span class="notes-step-fill" style="width:${Math.round(((i + 1) / total) * 100)}%; background:${n.color};"></span></span>
       </div>
     `).join('');
-
-    container.querySelectorAll('.scent-tier-toggle').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const notesEl = container.querySelector(`[data-tier-notes="${btn.dataset.tier}"]`);
-        const expanded = btn.getAttribute('aria-expanded') === 'true';
-        btn.setAttribute('aria-expanded', String(!expanded));
-        notesEl.hidden = expanded;
-      });
-    });
   }
 
   function renderHeroProduct(product) {
-    const hasNotes = Boolean(product.notes_top || product.notes_heart || product.notes_base);
+    const hasNotes = Boolean(product.notes && product.notes.length > 0);
     document.getElementById('heroHouse').textContent = product.house ? `${product.house} · ${product.category?.name || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
     document.getElementById('heroName').textContent = product.name;
     document.getElementById('heroDesc').textContent = hasNotes
-      ? `${product.concentration || 'Original'} · ${product.size_ml} ml — toca cada fase para leer sus notas reales.`
+      ? `${product.concentration || 'Original'} · ${product.size_ml} ml — notas reales de este frasco.`
       : `${product.concentration || 'Original'} · ${product.size_ml} ml.`;
     document.getElementById('heroCta').textContent = 'Ver ficha completa';
     document.getElementById('heroCta').href = `/producto.html?slug=${encodeURIComponent(product.slug)}`;
 
-    renderHeroTiers([
-      { name: 'Salida', time: '0–15 min', width: 28, notes: product.notes_top },
-      { name: 'Corazón', time: '15 min – 3 h', width: 62, notes: product.notes_heart },
-      { name: 'Fondo', time: '3 – 10 h', width: 100, notes: product.notes_base },
-    ]);
+    renderHeroNotes(hasNotes ? product.notes : GENERIC_NOTES);
   }
 
   async function loadFeatured() {
@@ -209,14 +201,14 @@
       const data = await apiFetch('/products?page_size=9');
       if (data.items.length === 0) {
         empty.hidden = false;
-        renderHeroTiers(GENERIC_TIERS);
+        renderHeroNotes(GENERIC_NOTES);
         return;
       }
 
-      // El destacado debe poder demostrar la interacción del hero: se prefiere
+      // El destacado debe poder demostrar la escalera de notas: se prefiere
       // el más reciente que ya tenga notas cargadas, y solo se cae al más
       // reciente sin notas si ninguno las tiene todavía.
-      const featured = data.items.find((p) => p.notes_top || p.notes_heart || p.notes_base) || data.items[0];
+      const featured = data.items.find((p) => p.notes && p.notes.length > 0) || data.items[0];
       renderHeroProduct(featured);
 
       const rest = data.items.filter((p) => p.id !== featured.id);
@@ -238,11 +230,11 @@
     } catch (err) {
       empty.hidden = false;
       empty.textContent = 'No pudimos cargar el catálogo. Intenta de nuevo en un momento.';
-      renderHeroTiers(GENERIC_TIERS);
+      renderHeroNotes(GENERIC_NOTES);
     }
   }
 
-  renderHeroTiers(GENERIC_TIERS);
+  renderHeroNotes(GENERIC_NOTES);
   loadFeatured();
 </script>
 </body>

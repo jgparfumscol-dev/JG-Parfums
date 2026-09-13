@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -42,14 +43,34 @@ class ProductVariantUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class ProductNoteResponse(BaseModel):
+    id: int
+    name: str
+    color: str
+    position: int
+
+    model_config = {"from_attributes": True}
+
+
+class ProductNoteCreate(BaseModel):
+    name: str = Field(min_length=1)
+    color: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
+
+
+class ProductNoteUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+
+
+class ProductNoteMove(BaseModel):
+    direction: Literal["up", "down"]
+
+
 class ProductBase(BaseModel):
     name: str = Field(min_length=1)
     house: str | None = None
     description: str = Field(min_length=1)
     category_id: int | None = None
-    notes_top: str | None = None
-    notes_heart: str | None = None
-    notes_base: str | None = None
     concentration: str | None = None
     size_ml: int = Field(gt=0)
     price: int = Field(gt=0)
@@ -66,9 +87,6 @@ class ProductUpdate(BaseModel):
     house: str | None = None
     description: str | None = None
     category_id: int | None = None
-    notes_top: str | None = None
-    notes_heart: str | None = None
-    notes_base: str | None = None
     concentration: str | None = None
     size_ml: int | None = Field(default=None, gt=0)
     price: int | None = Field(default=None, gt=0)
@@ -83,6 +101,7 @@ class ProductResponse(ProductBase):
     updated_at: datetime
     images: list[ProductImageResponse] = []
     variants: list[ProductVariantResponse] = []
+    notes: list[ProductNoteResponse] = []
     category: CategoryResponse | None = None
 
     model_config = {"from_attributes": True}

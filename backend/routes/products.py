@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from middleware.auth import get_current_admin, get_optional_user
 from models.product import Product, ProductImage
+from models.product_note import ProductNote
 from models.product_variant import ProductVariant
 from models.user import User
 from schemas.product import (
@@ -11,6 +12,10 @@ from schemas.product import (
     ProductImageCreate,
     ProductImageResponse,
     ProductListResponse,
+    ProductNoteCreate,
+    ProductNoteMove,
+    ProductNoteResponse,
+    ProductNoteUpdate,
     ProductResponse,
     ProductUpdate,
     ProductVariantCreate,
@@ -177,4 +182,79 @@ def delete_product_variant(
     # (order_items.product_variant_id queda en null por ondelete=SET NULL) no necesita
     # conservarse — el admin la agrega de nuevo si se equivocó.
     db.delete(variant)
+    db.commit()
+
+
+@router.post("/{product_id}/notes", response_model=ProductNoteResponse, status_code=status.HTTP_201_CREATED)
+def add_product_note(
+    product_id: int,
+    payload: ProductNoteCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    max_position = (
+        db.query(ProductNote.position)
+        .filter(ProductNote.product_id == product_id)
+        .order_by(ProductNote.position.desc())
+        .first()
+    )
+    next_position = (max_position[0] + 1) if max_position else 0
+
+    note = ProductNote(product_id=product_id, position=next_position, **payload.model_dump())
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return note
+
+
+@router.put("/notes/{note_id}", response_model=ProductNoteResponse)
+def update_product_note(
+    note_id: int, payload: ProductNoteUpdate, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
+    note = db.query(ProductNote).filter(ProductNote.id == note_id).first()
+    if note is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nota no encontrada")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(note, field, value)
+    db.commit()
+    db.refresh(note)
+    return note
+
+
+@router.put("/notes/{note_id}/move", response_model=ProductNoteResponse)
+def move_product_note(
+    note_id: int, payload: ProductNoteMove, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
+    note = db.query(ProductNote).filter(ProductNote.id == note_id).first()
+    if note is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nota no encontrada")
+
+    siblings = (
+        db.query(ProductNote)
+        .filter(ProductNote.product_id == note.product_id)
+        .order_by(ProductNote.position)
+        .all()
+    )
+    index = next(i for i, n in enumerate(siblings) if n.id == note.id)
+    neighbor_index = index - 1 if payload.direction == "up" else index + 1
+    if 0 <= neighbor_index < len(siblings):
+        neighbor = siblings[neighbor_index]
+        note.position, neighbor.position = neighbor.position, note.position
+        db.commit()
+        db.refresh(note)
+    return note
+
+
+@router.delete("/notes/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_note(note_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    note = db.query(ProductNote).filter(ProductNote.id == note_id).first()
+    if note is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nota no encontrada")
+    # hard delete: igual que las presentaciones, sin pedidos que referencien la nota.
+    db.delete(note)
     db.commit()
