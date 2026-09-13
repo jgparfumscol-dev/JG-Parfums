@@ -141,6 +141,17 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
   background: var(--gold-400);
 }
 
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 46px;
+  bottom: -3px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--gold-400);
+  border-radius: 50%;
+}
+
 .section-dark {
   background: var(--ink-900);
   color: #FFFFFF;

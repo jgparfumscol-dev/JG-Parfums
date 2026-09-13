@@ -330,6 +330,7 @@
   gap: var(--space-6);
   padding: var(--space-8);
   border: 1px solid #3A3739;
+  clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%);
 }
 .scent-diagram-heading {
   font-family: var(--font-body);
@@ -371,6 +372,21 @@
   font-size: 20px;
   font-weight: 500;
   margin: 0 0 var(--space-2);
+}
+
+.manifesto-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gold-400);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--gold-700);
+  margin-bottom: var(--space-3);
 }
 
 /* grilla de tarjetas de producto — home, catálogo, relacionados en ficha */
