@@ -109,6 +109,33 @@ function applyFontPairing(key) {
   document.documentElement.style.setProperty('--font-body', pairing.body);
 }
 
+// Íconos genéricos (no los logotipos oficiales) — currentColor para heredar
+// el blanco del footer; el círculo que los envuelve viene de .footer-social-icon.
+const SOCIAL_ICONS = {
+  whatsapp: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a9 9 0 0 0-7.75 13.5L3 21l4.5-1.25A9 9 0 1 0 12 3z"/><path d="M8.5 9.5c.3 2.5 2.5 4.7 5 5" stroke-linecap="round"/></svg>',
+  instagram: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  tiktok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 4v9.5a3.5 3.5 0 1 1-3.5-3.5c.35 0 .68.04 1 .12" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 4c.6 2 2.2 3.4 4 3.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
+// Fila de íconos redondos en el footer — usa exactamente los mismos links
+// de Ajustes > Contacto y redes que ya alimentan applyStoreExtras, así que
+// solo aparece el ícono de la red que el admin haya configurado.
+function applyFooterSocial(s) {
+  const el = document.getElementById('footerSocial');
+  if (!el) return;
+
+  const links = [];
+  if (s.whatsapp_number) links.push({ href: `https://wa.me/${encodeURIComponent(s.whatsapp_number)}`, key: 'whatsapp', label: 'WhatsApp' });
+  if (s.instagram_url) links.push({ href: s.instagram_url, key: 'instagram', label: 'Instagram' });
+  if (s.tiktok_url) links.push({ href: s.tiktok_url, key: 'tiktok', label: 'TikTok' });
+
+  if (links.length === 0) return;
+  el.innerHTML = links
+    .map((l) => `<a class="footer-social-icon" href="${l.href}" target="_blank" rel="noopener" aria-label="${l.label}">${SOCIAL_ICONS[l.key]}</a>`)
+    .join('');
+  el.hidden = false;
+}
+
 function applyStoreExtras(s) {
   const extras = document.getElementById('storeExtras');
   const list = document.getElementById('storeExtrasList');
@@ -133,6 +160,7 @@ async function applySiteBranding() {
   if (s.font_pairing) applyFontPairing(s.font_pairing);
   if (s.store_name) document.title = document.title.replace('JG Parfums', s.store_name);
   applyStoreExtras(s);
+  applyFooterSocial(s);
 }
 
 applySiteBranding();

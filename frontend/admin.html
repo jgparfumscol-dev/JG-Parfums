@@ -833,7 +833,8 @@
         <td>${p.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge text-muted">Inactivo</span>'}</td>
         <td style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
           <button class="btn btn-secondary" data-edit="${p.id}" style="height:36px;padding:0 var(--space-3);">Editar</button>
-          <button class="remove-btn" data-remove-product="${p.id}">Quitar</button>
+          <button class="remove-btn" data-deactivate-product="${p.id}">${p.is_active ? 'Desactivar' : 'Activar'}</button>
+          <button class="remove-btn" data-delete-product="${p.id}" style="color:var(--danger);">Eliminar</button>
         </td>
       </tr>
     `).join('');
@@ -841,10 +842,20 @@
     document.querySelectorAll('[data-edit]').forEach((btn) => {
       btn.addEventListener('click', () => openProductDialog(data.items.find((p) => p.id === Number(btn.dataset.edit))));
     });
-    document.querySelectorAll('[data-remove-product]').forEach((btn) => {
+    document.querySelectorAll('[data-deactivate-product]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        if (!confirm('¿Quitar este producto de la tienda?')) return;
-        await apiFetch(`/products/${btn.dataset.removeProduct}`, { method: 'DELETE' });
+        const product = data.items.find((p) => p.id === Number(btn.dataset.deactivateProduct));
+        const activating = !product.is_active;
+        if (!activating && !confirm('¿Desactivar este producto? Deja de verse en la tienda, pero se puede reactivar después.')) return;
+        await apiFetch(`/products/${btn.dataset.deactivateProduct}`, { method: 'PUT', body: JSON.stringify({ is_active: activating }) });
+        loadProducts();
+        loadRightProducts();
+      });
+    });
+    document.querySelectorAll('[data-delete-product]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar este producto permanentemente? Esta acción no se puede deshacer.')) return;
+        await apiFetch(`/products/${btn.dataset.deleteProduct}?hard=true`, { method: 'DELETE' });
         loadProducts();
         loadRightProducts();
       });

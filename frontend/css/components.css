@@ -251,6 +251,23 @@
 
 .trust-strip img { height: 20px; width: auto; }
 
+/* redes sociales del footer — solo se llenan si el admin configuró el link
+   correspondiente en Ajustes > Contacto y redes (ver applyFooterSocial en
+   site-settings.js); por eso arrancan vacíos y ocultos. */
+.footer-social { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
+.footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #3A3739;
+  border-radius: 50%;
+  color: #FFFFFF;
+  transition: border-color 150ms, color 150ms;
+}
+.footer-social-icon:hover { border-color: var(--gold-400); color: var(--gold-400); }
+
 /* estados de carga / vacío */
 .empty-state {
   text-align: center;

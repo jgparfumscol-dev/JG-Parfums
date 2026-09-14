@@ -64,3 +64,46 @@ def test_update_product_partial(client, admin_headers):
     assert response.status_code == 200
     assert response.json()["price"] == 400000
     assert response.json()["name"] == "Oud Royal"
+
+
+def test_hard_delete_removes_product_permanently(client, admin_headers):
+    client.post("/products", json=_product_payload(), headers=admin_headers)
+    product = client.get("/products/oud-royal").json()
+
+    response = client.delete(f"/products/{product['id']}?hard=true", headers=admin_headers)
+    assert response.status_code == 204
+
+    as_admin = client.get("/products?include_inactive=true", headers=admin_headers)
+    assert as_admin.json()["total"] == 0
+
+
+def test_hard_delete_requires_admin(client, admin_headers):
+    client.post("/products", json=_product_payload(), headers=admin_headers)
+    product = client.get("/products/oud-royal").json()
+
+    response = client.delete(f"/products/{product['id']}?hard=true")
+    assert response.status_code == 401
+
+
+def test_hard_delete_keeps_order_history(client, admin_headers):
+    client.post("/products", json=_product_payload(), headers=admin_headers)
+    product = client.get("/products/oud-royal").json()
+    order = client.post(
+        "/orders",
+        json={
+            "guest_email": "comprador@example.com",
+            "guest_name": "Comprador Test",
+            "guest_phone": "3001234567",
+            "shipping_address": "Calle 1 # 2-3",
+            "shipping_city": "Bogotá",
+            "items": [{"product_id": product["id"], "quantity": 1}],
+        },
+    ).json()
+
+    client.delete(f"/products/{product['id']}?hard=true", headers=admin_headers)
+
+    fetched = client.get(f"/orders/{order['order_number']}", headers=admin_headers)
+    assert fetched.status_code == 200
+    item = fetched.json()["items"][0]
+    assert item["product_name"] == "Oud Royal"
+    assert item["product_id"] is None

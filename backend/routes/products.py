@@ -97,12 +97,21 @@ def update_product(
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(product_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+def delete_product(
+    product_id: int, hard: bool = False, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
     product = db.query(Product).filter(Product.id == product_id).first()
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
-    # soft delete: un producto vendido antes no debe desaparecer de pedidos históricos
-    product.is_active = False
+    if hard:
+        # Eliminación permanente: los pedidos históricos no dependen de esta fila,
+        # OrderItem guarda su propio snapshot (product_name, unit_price, size_ml) y
+        # su product_id cae a NULL (ondelete=SET NULL) — el recibo no se pierde.
+        db.delete(product)
+    else:
+        # soft delete (default): un producto vendido antes no debe desaparecer de
+        # pedidos históricos sin que el admin lo pida explícitamente.
+        product.is_active = False
     db.commit()
 
 
