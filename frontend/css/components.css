@@ -239,14 +239,15 @@
   gap: var(--space-2);
 }
 
-/* franja de confianza (logos de pasarelas) */
+/* franja de confianza (logos de pasarelas) — los SVG ya traen su propio
+   color claro (#B9B4B0) porque un <img> con SVG externo no hereda
+   currentColor de la página: quedaría negro e ilegible sobre el footer
+   oscuro si dependiera del CSS de acá. */
 .trust-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-6);
-  filter: grayscale(1);
-  opacity: 0.6;
 }
 
 .trust-strip img { height: 20px; width: auto; }

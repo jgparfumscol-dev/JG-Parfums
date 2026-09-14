@@ -847,17 +847,25 @@
         const product = data.items.find((p) => p.id === Number(btn.dataset.deactivateProduct));
         const activating = !product.is_active;
         if (!activating && !confirm('¿Desactivar este producto? Deja de verse en la tienda, pero se puede reactivar después.')) return;
-        await apiFetch(`/products/${btn.dataset.deactivateProduct}`, { method: 'PUT', body: JSON.stringify({ is_active: activating }) });
-        loadProducts();
-        loadRightProducts();
+        try {
+          await apiFetch(`/products/${btn.dataset.deactivateProduct}`, { method: 'PUT', body: JSON.stringify({ is_active: activating }) });
+          loadProducts();
+          loadRightProducts();
+        } catch (err) {
+          alert(`No se pudo ${activating ? 'activar' : 'desactivar'} el producto: ${err.message}`);
+        }
       });
     });
     document.querySelectorAll('[data-delete-product]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('¿Eliminar este producto permanentemente? Esta acción no se puede deshacer.')) return;
-        await apiFetch(`/products/${btn.dataset.deleteProduct}?hard=true`, { method: 'DELETE' });
-        loadProducts();
-        loadRightProducts();
+        try {
+          await apiFetch(`/products/${btn.dataset.deleteProduct}?hard=true`, { method: 'DELETE' });
+          loadProducts();
+          loadRightProducts();
+        } catch (err) {
+          alert(`No se pudo eliminar el producto: ${err.message}`);
+        }
       });
     });
   }
