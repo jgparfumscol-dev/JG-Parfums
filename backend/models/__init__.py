@@ -5,6 +5,7 @@ from models.category import Category  # noqa: F401
 from models.order import Order, OrderStatus, PaymentProvider, PaymentStatus  # noqa: F401
 from models.order_item import OrderItem  # noqa: F401
 from models.page_section import PageSection  # noqa: F401
+from models.page_section_history import PageSectionHistory  # noqa: F401
 from models.page_view import PageView  # noqa: F401
 from models.password_reset import PasswordResetToken  # noqa: F401
 from models.product import Product, ProductImage  # noqa: F401

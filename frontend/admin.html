@@ -227,7 +227,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6"/><line x1="20" y1="4" x2="11" y2="13"/><path d="M20 14v6H4V4h6"/></svg>
         Ver tienda
       </a>
-      <button class="btn btn-secondary topbar-btn" id="historyBtn" disabled>
+      <button class="btn btn-secondary topbar-btn" id="historyBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15.5" y2="14"/></svg>
         Historial
       </button>
@@ -625,11 +625,42 @@
         <p class="text-muted text-small">Se inserta tal cual en la página en vivo — con cuidado.</p>
       </div>
 
+      <div id="sectionFieldsSectionHeading" hidden>
+        <div class="field"><label for="s_heading_title">Título</label><input id="s_heading_title"></div>
+      </div>
+
+      <div id="sectionFieldsDecantCallout" hidden>
+        <div class="field"><label for="s_decant_heading">Título</label><input id="s_decant_heading"></div>
+        <div class="field"><label for="s_decant_body">Texto</label><textarea id="s_decant_body" rows="3"></textarea></div>
+        <div class="field"><label for="s_decant_cta_label">Texto del botón (opcional)</label><input id="s_decant_cta_label" placeholder="Ver catálogo"></div>
+        <div class="field"><label for="s_decant_cta_link">Enlace del botón (opcional)</label><input id="s_decant_cta_link" placeholder="/catalogo.html"></div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Filas de ficha (ej. 5 ml / 10 ml / Origen)</p>
+        <div id="decantRowList"></div>
+        <button class="btn btn-secondary" type="button" id="addDecantRowBtn" style="margin-top:var(--space-2);">+ Agregar fila</button>
+      </div>
+
+      <div id="sectionFieldsManifesto" hidden>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Columnas del manifiesto</p>
+        <div id="manifestoItemList"></div>
+        <button class="btn btn-secondary" type="button" id="addManifestoItemBtn" style="margin-top:var(--space-2);">+ Agregar columna</button>
+      </div>
+
       <div class="dialog-actions">
         <button class="btn btn-secondary" type="button" id="cancelSectionDialogBtn">Cancelar</button>
         <button class="btn btn-primary" type="submit">Guardar</button>
       </div>
     </form>
+  </div>
+</dialog>
+
+<dialog id="historyDialog">
+  <div class="dialog-inner">
+    <h2 class="h3" style="margin-bottom: var(--space-4);">Historial — <span id="historyDialogPage"></span></h2>
+    <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Cada cambio guardado queda acá. Restaurar una versión no borra las demás — siempre podés volver atrás.</p>
+    <div id="historyList"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" id="closeHistoryDialogBtn">Cerrar</button>
+    </div>
   </div>
 </dialog>
 
@@ -1305,23 +1336,7 @@
     announcement: 'Anuncio', banner: 'Banner', header: 'Encabezado', products: 'Productos', text: 'Texto',
     categories: 'Categorías', image: 'Imagen', testimonials: 'Testimonios', counters: 'Contadores',
     footer: 'Footer', custom_html: 'Código HTML/CSS',
-  };
-
-  // Estructura propia de cada página (hero, grillas, formularios...) — no vive
-  // en page_sections todavía, pero se muestra igual en la lista para que el
-  // admin vea de un vistazo todo lo que tiene la página, no solo lo agregado.
-  const PAGE_BUILTIN_SECTIONS = {
-    home: ['Hero — ficha destacada', 'Recién llegados', 'Antes de llevar el frasco completo', 'Manifiesto de marca'],
-    catalogo: ['Encabezado y filtros', 'Grilla de productos'],
-    producto: ['Galería e información del producto', 'Productos relacionados'],
-    carrito: ['Resumen del carrito'],
-    checkout: ['Datos de contacto, entrega y pago'],
-    'mi-cuenta': ['Historial de pedidos'],
-    login: ['Formulario de acceso'],
-    registro: ['Formulario de registro'],
-    'recuperar-password': ['Formulario de recuperación'],
-    'reset-password': ['Formulario de nueva contraseña'],
-    'pedido-confirmado': ['Confirmación de pedido'],
+    section_heading: 'Título de sección', decant_callout: 'Bloque de decants', manifesto: 'Manifiesto de marca',
   };
 
   let editingSectionId = null;
@@ -1366,42 +1381,51 @@
       case 'testimonials': return `${(c.items || []).length} testimonio(s)`;
       case 'counters': return `${(c.items || []).length} contador(es)`;
       case 'footer': return c.heading || '(sin título)';
+      case 'section_heading': return c.heading || '(sin título)';
+      case 'decant_callout': return c.heading || '(sin título)';
+      case 'manifesto': return `${(c.items || []).length} columna(s)`;
       default: return 'Código personalizado';
     }
   }
 
-  function renderBuiltinSectionRows(pageKey) {
-    return (PAGE_BUILTIN_SECTIONS[pageKey] || []).map((name) => `
-      <div class="editor-section-row is-builtin">
+  // Secciones fijas de la página (hero, encabezados, etc.) ya convertidas a
+  // editables: viven en editorSectionsCache igual que las libres, marcadas
+  // con is_builtin. No tienen mover arriba/abajo (su lugar en la página es
+  // fijo) pero sí Editar/Ocultar/Eliminar, igual que cualquier sección.
+  function renderBuiltinSectionRows() {
+    return editorSectionsCache.filter((s) => s.is_builtin).map((s) => `
+      <div class="editor-section-row ${s.is_active ? '' : 'is-inactive'} is-builtin">
         <div style="flex:1; min-width:0;">
-          <p class="editor-section-type">HTML — parte fija de la página</p>
-          <p class="editor-section-label">${name}</p>
+          <p class="editor-section-type">Sección fija — ${SECTION_TYPE_LABEL[s.type] || s.type}</p>
+          <p class="editor-section-label">${sectionPreviewLabel(s)}</p>
         </div>
+        <button type="button" class="editor-icon-btn" data-toggle-active="${s.id}" aria-label="${s.is_active ? 'Ocultar' : 'Mostrar'}">${s.is_active ? '👁' : '🚫'}</button>
+        <button type="button" class="editor-icon-btn" data-edit-section="${s.id}" aria-label="Editar">✎</button>
+        <button type="button" class="editor-icon-btn" data-delete-section="${s.id}" aria-label="Eliminar">✕</button>
       </div>
     `).join('');
   }
 
   function renderEditorSections() {
     const list = document.getElementById('editorSectionsList');
-    const pageKey = document.getElementById('editorPageSelect').value;
-    const builtinHtml = renderBuiltinSectionRows(pageKey);
-    if (editorSectionsCache.length === 0) {
-      list.innerHTML = builtinHtml + '<p class="text-muted text-small" style="margin-top:var(--space-3);">Todavía no agregaste secciones nuevas a esta página.</p>';
-      return;
-    }
-    list.innerHTML = builtinHtml + editorSectionsCache.map((s, index) => `
+    const builtinHtml = renderBuiltinSectionRows();
+    const freeform = editorSectionsCache.filter((s) => !s.is_builtin);
+    const freeformHtml = freeform.length === 0
+      ? '<p class="text-muted text-small" style="margin-top:var(--space-3);">Todavía no agregaste secciones nuevas a esta página.</p>'
+      : freeform.map((s, index) => `
       <div class="editor-section-row ${s.is_active ? '' : 'is-inactive'}">
         <div style="flex:1; min-width:0;">
           <p class="editor-section-type">${SECTION_TYPE_LABEL[s.type]}</p>
           <p class="editor-section-label">${sectionPreviewLabel(s)}</p>
         </div>
         <button type="button" class="editor-icon-btn" data-move-up="${s.id}" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
-        <button type="button" class="editor-icon-btn" data-move-down="${s.id}" ${index === editorSectionsCache.length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
+        <button type="button" class="editor-icon-btn" data-move-down="${s.id}" ${index === freeform.length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
         <button type="button" class="editor-icon-btn" data-toggle-active="${s.id}" aria-label="${s.is_active ? 'Ocultar' : 'Mostrar'}">${s.is_active ? '👁' : '🚫'}</button>
         <button type="button" class="editor-icon-btn" data-edit-section="${s.id}" aria-label="Editar">✎</button>
         <button type="button" class="editor-icon-btn" data-delete-section="${s.id}" aria-label="Eliminar">✕</button>
       </div>
     `).join('');
+    list.innerHTML = builtinHtml + freeformHtml;
 
     list.querySelectorAll('[data-move-up]').forEach((btn) => btn.addEventListener('click', () => moveSection(btn.dataset.moveUp, 'up')));
     list.querySelectorAll('[data-move-down]').forEach((btn) => btn.addEventListener('click', () => moveSection(btn.dataset.moveDown, 'down')));
@@ -1418,23 +1442,97 @@
 
   async function toggleSectionActive(id) {
     const section = editorSectionsCache.find((s) => s.id === Number(id));
-    await apiFetch(`/page-sections/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: !section.is_active }) });
-    await loadEditorPage();
-    reloadPreview();
+    try {
+      await apiFetch(`/page-sections/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: !section.is_active }) });
+      await loadEditorPage();
+      reloadPreview();
+    } catch (err) {
+      alert(`No se pudo ${section.is_active ? 'ocultar' : 'mostrar'} la sección: ${err.message}`);
+    }
   }
 
   async function deleteSection(id) {
-    if (!confirm('¿Eliminar esta sección?')) return;
-    await apiFetch(`/page-sections/${id}`, { method: 'DELETE' });
-    await loadEditorPage();
-    reloadPreview();
+    const section = editorSectionsCache.find((s) => s.id === Number(id));
+    const warning = section && section.is_builtin
+      ? '¿Eliminar esta sección fija permanentemente? Podés restaurarla después desde Historial.'
+      : '¿Eliminar esta sección?';
+    if (!confirm(warning)) return;
+    try {
+      await apiFetch(`/page-sections/${id}`, { method: 'DELETE' });
+      await loadEditorPage();
+      reloadPreview();
+    } catch (err) {
+      alert(`No se pudo eliminar la sección: ${err.message}`);
+    }
   }
+
+  function timeAgo(dateStr) {
+    const minutes = Math.round((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (minutes < 1) return 'ahora mismo';
+    if (minutes < 60) return `hace ${minutes} min`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    return `hace ${Math.round(hours / 24)} d`;
+  }
+
+  const HISTORY_ACTION_LABEL = { created: 'Se creó', updated: 'Se editó', deleted: 'Se eliminó', restored: 'Se restauró' };
+
+  async function openHistoryDialog() {
+    const pageKey = document.getElementById('editorPageSelect').value;
+    document.getElementById('historyDialogPage').textContent = PAGE_LABELS[pageKey] || pageKey;
+    const list = document.getElementById('historyList');
+    list.innerHTML = '<p class="text-muted text-small">Cargando…</p>';
+    document.getElementById('historyDialog').showModal();
+    try {
+      const entries = await apiFetch(`/page-sections/history?page=${encodeURIComponent(pageKey)}`);
+      renderHistoryList(entries);
+    } catch (err) {
+      list.innerHTML = `<p class="form-error" style="color:var(--danger);">No se pudo cargar el historial: ${err.message}</p>`;
+    }
+  }
+
+  function renderHistoryList(entries) {
+    const list = document.getElementById('historyList');
+    if (entries.length === 0) {
+      list.innerHTML = '<p class="text-muted text-small">Todavía no hay cambios registrados en esta página.</p>';
+      return;
+    }
+    list.innerHTML = entries.map((h) => `
+      <div class="editor-section-row">
+        <div style="flex:1; min-width:0;">
+          <p class="editor-section-type">${HISTORY_ACTION_LABEL[h.action] || h.action} — ${SECTION_TYPE_LABEL[h.type] || h.type}</p>
+          <p class="editor-section-label">${sectionPreviewLabel(h)} · ${timeAgo(h.created_at)}</p>
+        </div>
+        <button type="button" class="btn btn-secondary" style="height:36px; padding:0 var(--space-3);" data-restore-history="${h.id}">Restaurar</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('[data-restore-history]').forEach((btn) => {
+      btn.addEventListener('click', () => restoreHistoryEntry(btn.dataset.restoreHistory));
+    });
+  }
+
+  async function restoreHistoryEntry(historyId) {
+    if (!confirm('¿Restaurar esta versión? Queda registrada como un cambio nuevo, así que siempre podés volver atrás.')) return;
+    try {
+      await apiFetch(`/page-sections/history/${historyId}/restore`, { method: 'POST' });
+      await loadEditorPage();
+      reloadPreview();
+      await openHistoryDialog();
+    } catch (err) {
+      alert(`No se pudo restaurar: ${err.message}`);
+    }
+  }
+
+  document.getElementById('historyBtn').addEventListener('click', openHistoryDialog);
+  document.getElementById('closeHistoryDialogBtn').addEventListener('click', () => document.getElementById('historyDialog').close());
 
   const SECTION_FIELD_IDS = {
     announcement: 'sectionFieldsAnnouncement', banner: 'sectionFieldsBanner', header: 'sectionFieldsHeader',
     products: 'sectionFieldsProducts', text: 'sectionFieldsText', categories: 'sectionFieldsCategories',
     image: 'sectionFieldsImage', testimonials: 'sectionFieldsTestimonials', counters: 'sectionFieldsCounters',
     footer: 'sectionFieldsFooter', custom_html: 'sectionFieldsCustomHtml',
+    section_heading: 'sectionFieldsSectionHeading', decant_callout: 'sectionFieldsDecantCallout',
+    manifesto: 'sectionFieldsManifesto',
   };
 
   function showSectionTypeFields(type) {
@@ -1466,6 +1564,42 @@
     `;
   }
 
+  function decantRowHtml(r = {}) {
+    return `
+      <div class="image-row decant-row">
+        <input class="input-sm" placeholder="Etiqueta (ej. 5 ml)" data-dr-label value="${r.label || ''}" style="width:140px;">
+        <input class="input-sm" placeholder="Valor" data-dr-value value="${r.value || ''}" style="flex:1;">
+        <button type="button" class="remove-btn" data-remove-row>Quitar</button>
+      </div>
+    `;
+  }
+
+  function collectDecantRows() {
+    return Array.from(document.querySelectorAll('#decantRowList .decant-row')).map((row) => ({
+      label: row.querySelector('[data-dr-label]').value.trim(),
+      value: row.querySelector('[data-dr-value]').value.trim(),
+    })).filter((r) => r.label && r.value);
+  }
+
+  function manifestoItemRowHtml(m = {}) {
+    return `
+      <div class="image-row manifesto-item-row" style="align-items:flex-start;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:var(--space-2);">
+          <input class="input-sm" placeholder="Título" data-m-heading value="${m.heading || ''}">
+          <textarea class="input-sm" placeholder="Texto" data-m-text style="min-height:50px;">${m.text || ''}</textarea>
+        </div>
+        <button type="button" class="remove-btn" data-remove-row>Quitar</button>
+      </div>
+    `;
+  }
+
+  function collectManifestoItems() {
+    return Array.from(document.querySelectorAll('#manifestoItemList .manifesto-item-row')).map((row) => ({
+      heading: row.querySelector('[data-m-heading]').value.trim(),
+      text: row.querySelector('[data-m-text]').value.trim(),
+    })).filter((m) => m.heading || m.text);
+  }
+
   function bindRemoveRowButtons(containerId) {
     document.getElementById(containerId).querySelectorAll('[data-remove-row]').forEach((btn) => {
       btn.addEventListener('click', () => btn.closest('.image-row').remove());
@@ -1475,6 +1609,14 @@
   document.getElementById('addTestimonialBtn').addEventListener('click', () => {
     document.getElementById('testimonialList').insertAdjacentHTML('beforeend', testimonialRowHtml());
     bindRemoveRowButtons('testimonialList');
+  });
+  document.getElementById('addDecantRowBtn').addEventListener('click', () => {
+    document.getElementById('decantRowList').insertAdjacentHTML('beforeend', decantRowHtml());
+    bindRemoveRowButtons('decantRowList');
+  });
+  document.getElementById('addManifestoItemBtn').addEventListener('click', () => {
+    document.getElementById('manifestoItemList').insertAdjacentHTML('beforeend', manifestoItemRowHtml());
+    bindRemoveRowButtons('manifestoItemList');
   });
   document.getElementById('addCounterBtn').addEventListener('click', () => {
     document.getElementById('counterList').insertAdjacentHTML('beforeend', counterRowHtml());
@@ -1532,6 +1674,18 @@
     } else if (type === 'custom_html') {
       document.getElementById('s_custom_html').value = c.html || '';
       document.getElementById('s_custom_css').value = c.css || '';
+    } else if (type === 'section_heading') {
+      document.getElementById('s_heading_title').value = c.heading || '';
+    } else if (type === 'decant_callout') {
+      document.getElementById('s_decant_heading').value = c.heading || '';
+      document.getElementById('s_decant_body').value = c.body || '';
+      document.getElementById('s_decant_cta_label').value = c.cta_label || '';
+      document.getElementById('s_decant_cta_link').value = c.cta_link || '';
+      document.getElementById('decantRowList').innerHTML = (c.rows && c.rows.length ? c.rows : [{}, {}, {}]).map(decantRowHtml).join('');
+      bindRemoveRowButtons('decantRowList');
+    } else if (type === 'manifesto') {
+      document.getElementById('manifestoItemList').innerHTML = (c.items && c.items.length ? c.items : [{}, {}, {}]).map(manifestoItemRowHtml).join('');
+      bindRemoveRowButtons('manifestoItemList');
     }
     document.getElementById('sectionDialog').showModal();
   }
@@ -1611,6 +1765,18 @@
         cta_label: document.getElementById('s_footer_cta_label').value.trim() || null,
         cta_link: document.getElementById('s_footer_cta_link').value.trim() || null,
       };
+    } else if (type === 'section_heading') {
+      content = { heading: document.getElementById('s_heading_title').value.trim() || null };
+    } else if (type === 'decant_callout') {
+      content = {
+        heading: document.getElementById('s_decant_heading').value.trim() || null,
+        body: document.getElementById('s_decant_body').value.trim() || null,
+        cta_label: document.getElementById('s_decant_cta_label').value.trim() || null,
+        cta_link: document.getElementById('s_decant_cta_link').value.trim() || null,
+        rows: collectDecantRows(),
+      };
+    } else if (type === 'manifesto') {
+      content = { items: collectManifestoItems() };
     } else {
       content = {
         html: document.getElementById('s_custom_html').value,

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -14,6 +15,9 @@ SectionType = Literal[
     "categories",
     "image",
     "footer",
+    "section_heading",
+    "decant_callout",
+    "manifesto",
 ]
 
 
@@ -24,6 +28,23 @@ class PageSectionResponse(BaseModel):
     position: int
     is_active: bool
     content: dict
+    key: str | None
+    is_builtin: bool
+
+    model_config = {"from_attributes": True}
+
+
+class PageSectionHistoryResponse(BaseModel):
+    id: int
+    section_id: int | None
+    page: str
+    key: str | None
+    type: str
+    content: dict
+    is_active: bool
+    position: int
+    action: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 

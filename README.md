@@ -41,7 +41,7 @@ Autenticación · Catálogo · Categorías · Decants (5ml/10ml) · Carrito · C
 
 ## Sobre el proyecto
 
-**JG Parfums** es una tienda online de perfumes originales de nicho para el mercado colombiano. El sitio se construyó siguiendo un manual de marca real (`BRAND.md`) — paleta Ónix/Oro/Marfil, tipografía Bodoni Moda + Jost, reglas explícitas de uso del dorado — en vez de un estilo genérico de e-commerce.
+**JG Parfums** es una tienda online de perfumes originales de nicho para el mercado colombiano. El sitio se construyó siguiendo un manual de marca real (`BRAND.md`) — paleta Ónix/Oro/Marfil, tipografía Newsreader + Jost, reglas explícitas de uso del dorado — en vez de un estilo genérico de e-commerce.
 
 El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 2.x, patrón síncrono), y el frontend es **HTML, CSS y JavaScript vanilla**, sin frameworks ni paso de build.
 
@@ -51,14 +51,15 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, decants, notas, pedidos, pagos, ajustes, admin) | ✅ Construido y probado (60 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, decants, notas, pedidos, pagos, ajustes, admin) | ✅ Construido y probado (65 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
 | Notas de producto libres (nombre + color por nota, escalera con la más fuerte abajo) | ✅ Backend, panel admin y ficha de producto/hero construidos y probados |
 | Categorías y estadísticas propias de tráfico (sin cookies ni datos personales) | ✅ Backend, panel admin y filtro de catálogo construidos y probados |
 | Panel admin: tienda en vivo editable (secciones de página: banner, anuncio, testimonios, contadores, etc.) y Ajustes de marca (nombre, color, tipografía, contacto/redes, envío) | ✅ Construido y probado |
-| Frontend (tienda, cuenta, panel admin) | ✅ Construido — sistema de diseño documentado (`DESIGN.md`), con acentos circulares para romper la retícula sin tocar el radio duro de botones/tarjetas |
+| Secciones fijas de cada página (hero, encabezados, bloque de decants, manifiesto) editables desde el panel, con historial de versiones y restauración | ✅ Backend, panel admin y sitio público construidos y probados |
+| Frontend (tienda, cuenta, panel admin) | ✅ Construido — sistema de diseño documentado (`DESIGN.md`), tipografía de títulos Newsreader (legible en cualquier densidad de pantalla), acentos circulares para romper la retícula sin tocar el radio duro de botones/tarjetas |
 | Frontend desplegado (Cloudflare Pages) | ✅ En línea — [jg-parfums.pages.dev](https://jg-parfums.pages.dev) |
 | CORS frontend ↔ backend | ✅ Verificado con petición real |
 | Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
@@ -132,6 +133,7 @@ flowchart LR
 - Historial de pedidos para usuarios registrados
 - Footer con iconos de métodos de pago y, si el admin los configura en Ajustes, iconos de WhatsApp/Instagram/TikTok que enlazan directo a esas cuentas
 - Panel administrativo (SPA de 3 columnas): editor de "tienda en vivo" (secciones de página administrables — banner, anuncio, testimonios, contadores, categorías, footer — con vista previa en vivo por dispositivo), productos (notas, decants, desactivar/eliminar), pedidos, categorías, métricas propias y ajustes de marca (nombre, color de acento, tipografía, contacto/redes, envío)
+- Las secciones fijas de cada página (hero, "Recién llegados", bloque de decants, manifiesto de marca, encabezados) también son editables/ocultables/eliminables desde el mismo panel, con historial de versiones y restauración de un clic
 
 </td>
 <td valign="top" width="50%">
@@ -142,7 +144,8 @@ flowchart LR
 - Registro/login/recuperación de contraseña sin enumeración de cuentas
 - Gestión de productos, imágenes y notas olfativas (nombre + color libres por nota, ordenables)
 - Categorías de producto, con filtro en catálogo
-- Secciones de página administrables desde el panel (`page_sections`), para editar partes de la tienda en vivo sin tocar código
+- Secciones de página administrables desde el panel (`page_sections`), tanto agregadas libremente como las partes fijas originales de cada página (hero, encabezados, decants, manifiesto) — mismo mecanismo para las dos
+- Historial de versiones (`page_section_history`): cada creación/edición/borrado queda guardado con una copia completa del contenido y se puede restaurar, incluso si la sección ya fue borrada
 - Ajustes de marca en una fila única (`site_settings`): color de acento (regenera toda la escala dorada), tipografía, datos de contacto/redes y costo de envío
 - Estadísticas propias de tráfico (sin cookies, IP ni user-agent) para el panel de Métricas
 - Decants por producto (5ml/10ml): precio y stock propios, independientes del frasco completo
@@ -152,7 +155,7 @@ flowchart LR
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout)
-- Suite de tests (60) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (65) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -162,6 +165,8 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Secciones fijas de cada página (hero de home, "Recién llegados", bloque de decants, manifiesto de marca, encabezado de catálogo, "También te puede interesar" en ficha de producto) convertidas en editables desde el panel — antes eran HTML fijo, ahora se pueden editar, ocultar o eliminar sin tocar código, igual que las secciones agregadas libremente. Se suma un historial de versiones (`page_section_history`): cada cambio queda guardado con una copia completa del contenido y se puede restaurar con un clic, incluso si la sección ya fue borrada — se conecta al botón "Historial" del panel, que ya existía en la interfaz pero estaba deshabilitado. Encontrado y corregido en el camino un bug real: cuando una página no tenía secciones agregadas libremente, los botones de las secciones fijas quedaban sin funcionar (el código cortaba antes de conectar los clics). 5 tests nuevos.
+- Título de la tienda de Bodoni Moda a Newsreader: verificado en producción que un didone de contraste tan alto como Bodoni Moda perdía legibilidad contra fondos claros en monitores de escritorio de densidad estándar, incluso en tamaños grandes — el problema no era el tamaño, era el diseño de la tipografía. Se reemplaza por Newsreader (serif editorial de contraste moderado) en todo el sitio vía la variable `--font-display`, y se corrige el nombre de producto en tarjeta (que ya debía ir en Jost según `DESIGN.md` pero estaba implementado en Bodoni a 16px, muy por debajo del piso de legibilidad).
 - Botón "Eliminar" de producto: corregido para que borre de verdad (antes solo desactivaba) — `DELETE /products/{id}?hard=true`, seguro porque `order_items` guarda su propio snapshot de nombre/precio y no depende de la fila del producto. Se separó del botón "Desactivar" existente y se agregó manejo de errores visible (antes una falla quedaba completamente silenciosa).
 - Footer con iconos de métodos de pago (Visa, Mastercard, Nequi, PSE, Bancolombia, Mercado Pago) e iconos circulares de WhatsApp/Instagram/TikTok que solo aparecen si el admin configuró esa red en Ajustes — corregido un bug real donde los iconos de pago quedaban casi invisibles: un SVG cargado con `<img>` no hereda `currentColor` de la página, así que caían a negro por defecto sobre el fondo oscuro del footer.
 - Pase de formas para romper la retícula del home sin tocar el radio duro de botones/tarjetas/campos (regla de marca explícita en `DESIGN.md`): corte diagonal en la esquina del diagrama de notas del hero, numerales en anillo dorado en la tira de manifiesto, punto hueco al final del filete de cada título de sección.
@@ -211,12 +216,12 @@ flowchart LR
 .
 ├── backend/
 │   ├── routes/          # auth, products, categories, orders, payments, settings, stats, page_sections
-│   ├── models/           # Modelos SQLAlchemy (incluye product_note, product_variant, site_settings, page_section)
+│   ├── models/           # Modelos SQLAlchemy (incluye product_note, product_variant, site_settings, page_section, page_section_history)
 │   ├── schemas/           # Esquemas Pydantic
 │   ├── services/           # Wompi, Mercado Pago, email
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (60 tests)
+│   └── tests/                   # pytest, SQLite en memoria (65 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño

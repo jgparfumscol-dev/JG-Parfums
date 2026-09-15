@@ -184,6 +184,52 @@ function renderCustomHtml(section) {
   return `${c.css ? `<style>${c.css}</style>` : ''}${c.html || ''}`;
 }
 
+/* --- Secciones "fijas" de la página, convertidas en editables ---
+   A diferencia de las de arriba, no se agregan libremente: cada una tiene
+   una `key` fija y un `<div id="pgs-{key}">` ya puesto en el HTML de la
+   página, en el lugar exacto donde vivía el contenido hardcodeado que
+   reemplaza. Si la sección está inactiva o fue borrada, ese div
+   simplemente queda vacío — no hay contenido de respaldo hardcodeado. */
+
+function renderSectionHeading(section) {
+  const c = section.content || {};
+  if (!c.heading) return '';
+  if (section.key === 'catalogo_header') return `<h1 class="h1">${c.heading}</h1>`;
+  return `<h2 class="h2 section-title">${c.heading}</h2>`;
+}
+
+function renderDecantCallout(section) {
+  const c = section.content || {};
+  if (!c.heading) return '';
+  const rows = (c.rows || [])
+    .map((r) => `<div class="spec-row"><dt>${r.label || ''}</dt><dd>${r.value || ''}</dd></div>`)
+    .join('');
+  return `
+    <div>
+      <h2 class="h2 section-title">${c.heading}</h2>
+      ${c.body ? `<p class="text-muted" style="max-width:46ch; margin-bottom: var(--space-4);">${c.body}</p>` : ''}
+      ${c.cta_link ? `<a class="link" href="${c.cta_link}">${c.cta_label || 'Ver más'}</a>` : ''}
+    </div>
+    <dl class="spec-list">${rows}</dl>
+  `;
+}
+
+function renderManifesto(section) {
+  const items = (section.content && section.content.items) || [];
+  if (items.length === 0) return '';
+  return items
+    .map(
+      (item, i) => `
+        <div class="manifesto-item">
+          <span class="manifesto-mark">${String(i + 1).padStart(2, '0')}</span>
+          <p class="manifesto-heading">${item.heading || ''}</p>
+          <p class="text-muted text-small">${item.text || ''}</p>
+        </div>
+      `
+    )
+    .join('');
+}
+
 const SECTION_RENDERERS = {
   announcement: renderAnnouncement,
   banner: renderBanner,
@@ -196,15 +242,33 @@ const SECTION_RENDERERS = {
   counters: renderCounters,
   footer: renderFooterBlock,
   custom_html: renderCustomHtml,
+  section_heading: renderSectionHeading,
+  decant_callout: renderDecantCallout,
+  manifesto: renderManifesto,
 };
 
 async function renderPageSections(pageKey, mountId = 'dynamicSections') {
   const mount = document.getElementById(mountId);
-  if (!mount) return;
   try {
     const sections = await apiFetch(`/page-sections?page=${encodeURIComponent(pageKey)}`);
-    const rendered = await Promise.all(sections.map((s) => (SECTION_RENDERERS[s.type] ? SECTION_RENDERERS[s.type](s) : '')));
-    mount.innerHTML = rendered.join('');
+    const freeform = [];
+    for (const section of sections) {
+      if (!section.key) {
+        freeform.push(section);
+        continue;
+      }
+      // Sección fija: se monta en su propio lugar, no en el mount genérico.
+      const target = document.getElementById(`pgs-${section.key}`);
+      if (!target) continue;
+      const renderer = SECTION_RENDERERS[section.type];
+      target.innerHTML = renderer ? await renderer(section) : '';
+    }
+    if (mount) {
+      const rendered = await Promise.all(
+        freeform.map((s) => (SECTION_RENDERERS[s.type] ? SECTION_RENDERERS[s.type](s) : ''))
+      );
+      mount.innerHTML = rendered.join('');
+    }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.
   }

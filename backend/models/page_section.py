@@ -19,6 +19,10 @@ class PageSection(Base):
     position = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     content = Column(JSON, nullable=False)
+    # identifica una sección "fija" de la página (ej. "home_recent_heading");
+    # null = sección libre agregada por el admin desde "+ Añadir sección".
+    key = Column(String, nullable=True, index=True)
+    is_builtin = Column(Boolean, nullable=False, default=False)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
