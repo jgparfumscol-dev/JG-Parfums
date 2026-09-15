@@ -180,6 +180,30 @@ function initMobileNavToggle() {
   });
 }
 
+// El header arranca sólido y pasa a vidrio esmerilado (ver .nav.is-scrolled
+// en components.css) apenas se hace scroll, en vez de quedarse como una
+// franja plana pegada arriba todo el tiempo.
+function initNavScrollState() {
+  const nav = document.querySelector('header.nav');
+  if (!nav) return;
+  const THRESHOLD = 24;
+  let ticking = false;
+  function update() {
+    nav.classList.toggle('is-scrolled', window.scrollY > THRESHOLD);
+    ticking = false;
+  }
+  update();
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    },
+    { passive: true }
+  );
+}
+
 // Las "clases" del header son las categorías ya creadas en el panel admin
 // (Mujer, Hombre, Ocasiones...) — mismo listado que alimenta el filtro del
 // catálogo, solo que acá cada una linkea directo con el filtro aplicado.
@@ -214,3 +238,4 @@ function initNavSearch() {
 initMobileNavToggle();
 initNavClasses();
 initNavSearch();
+initNavScrollState();
