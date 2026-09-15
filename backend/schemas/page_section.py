@@ -19,6 +19,7 @@ SectionType = Literal[
     "section_heading",
     "decant_callout",
     "manifesto",
+    "hero_product",
 ]
 
 

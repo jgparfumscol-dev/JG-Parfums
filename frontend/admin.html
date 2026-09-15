@@ -716,6 +716,16 @@
         <button class="btn btn-secondary" type="button" id="addManifestoItemBtn" style="margin-top:var(--space-2);">+ Agregar columna</button>
       </div>
 
+      <div id="sectionFieldsHeroProduct" hidden>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Este texto es el respaldo: en cuanto haya productos publicados, se reemplaza automáticamente por el nombre, casa y notas del más reciente. Si el catálogo está vacío, se queda con lo que pongas acá.</p>
+        <div class="field"><label for="s_hero_eyebrow">Texto pequeño (encima del título)</label><input id="s_hero_eyebrow" placeholder="Perfumería de nicho · Colombia"></div>
+        <div class="field"><label for="s_hero_heading">Título</label><input id="s_hero_heading" placeholder="Un perfume se explica con hechos"></div>
+        <div class="field"><label for="s_hero_description">Descripción</label><textarea id="s_hero_description" rows="3"></textarea></div>
+        <div class="field"><label for="s_hero_cta_label">Texto del botón</label><input id="s_hero_cta_label" placeholder="Ver catálogo"></div>
+        <div class="field"><label for="s_hero_cta_link">Enlace del botón</label><input id="s_hero_cta_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_hero_diagram_heading">Título de la pirámide de notas</label><input id="s_hero_diagram_heading" placeholder="Así se lee un perfume en JG"></div>
+      </div>
+
       <div class="dialog-actions">
         <button class="btn btn-secondary" type="button" id="cancelSectionDialogBtn">Cancelar</button>
         <button class="btn btn-primary" type="submit">Guardar</button>
@@ -1434,8 +1444,13 @@
     'recuperar-password': '/recuperar-password.html', 'reset-password': '/reset-password.html',
     'pedido-confirmado': '/pedido-confirmado.html',
   };
+  // Para reconocer a qué página se navegó DESDE dentro del iframe (ej. el
+  // admin hace clic en un link de la vista previa) — "/" también cuenta
+  // como inicio porque Cloudflare Pages redirige /index.html ahí.
+  const PAGE_KEY_BY_PATH = { '/': 'home' };
+  Object.entries(PAGE_URLS).forEach(([key, url]) => { PAGE_KEY_BY_PATH[url] = key; });
   const SECTION_TYPE_LABEL = {
-    announcement_bar: 'Barra de anuncios', banner: 'Banner', header: 'Encabezado', products: 'Productos', text: 'Texto',
+    hero_product: 'Ficha del perfume destacado', announcement_bar: 'Barra de anuncios', banner: 'Banner', header: 'Encabezado', products: 'Productos', text: 'Texto',
     categories: 'Categorías', image: 'Imagen', testimonials: 'Testimonios', counters: 'Contadores',
     footer: 'Footer', custom_html: 'Código HTML/CSS',
     section_heading: 'Título de sección', decant_callout: 'Bloque de decants', manifesto: 'Manifiesto de marca',
@@ -1448,6 +1463,32 @@
     const select = document.getElementById('editorPageSelect');
     select.innerHTML = Object.entries(PAGE_LABELS).map(([key, label]) => `<option value="${key}">${label}</option>`).join('');
     select.addEventListener('change', loadEditorPage);
+    document.getElementById('editorPreview').addEventListener('load', syncEditorPageFromIframe);
+  }
+
+  // El iframe de vista previa es del mismo origen (es el propio sitio), así
+  // que si el admin navega ADENTRO de la preview (clic en un link a
+  // catálogo, a un producto, etc.) esto lo detecta por el evento "load" del
+  // iframe y sincroniza el selector de arriba + la lista de secciones —
+  // si no, el selector se quedaba mostrando la página vieja aunque la
+  // preview ya estuviera en otra.
+  function syncEditorPageFromIframe() {
+    const iframe = document.getElementById('editorPreview');
+    let path;
+    try {
+      path = iframe.contentWindow.location.pathname;
+    } catch (_err) {
+      return; // no debería pasar siendo mismo origen, pero por las dudas
+    }
+    const pageKey = PAGE_KEY_BY_PATH[path];
+    // Ya lo sabíamos (esta navegación la disparó loadEditorPage) o es una
+    // página sin sección editable (ej. producto.html?slug=... no lleva
+    // query acá, pero sí puede caer una ruta no mapeada) — no hay nada que
+    // sincronizar.
+    if (!pageKey || pageKey === iframe.dataset.page) return;
+    iframe.dataset.page = pageKey;
+    document.getElementById('editorPageSelect').value = pageKey;
+    loadEditorSections(pageKey);
   }
 
   function reloadPreview() {
@@ -1459,6 +1500,11 @@
     }
   }
 
+  async function loadEditorSections(pageKey) {
+    editorSectionsCache = await apiFetch(`/page-sections?page=${encodeURIComponent(pageKey)}&include_inactive=true`);
+    renderEditorSections();
+  }
+
   async function loadEditorPage() {
     const pageKey = document.getElementById('editorPageSelect').value;
     const iframe = document.getElementById('editorPreview');
@@ -1466,8 +1512,7 @@
       iframe.src = PAGE_URLS[pageKey];
       iframe.dataset.page = pageKey;
     }
-    editorSectionsCache = await apiFetch(`/page-sections?page=${encodeURIComponent(pageKey)}&include_inactive=true`);
-    renderEditorSections();
+    await loadEditorSections(pageKey);
   }
 
   function sectionPreviewLabel(section) {
@@ -1478,6 +1523,7 @@
         const posLabel = c.position === 'top' ? 'arriba del header' : 'en línea';
         return count === 0 ? '(sin mensajes)' : `${count} mensaje(s) · ${posLabel}`;
       }
+      case 'hero_product': return c.heading || '(sin título)';
       case 'banner': return c.title || '(sin título)';
       case 'header': return c.title || '(sin título)';
       case 'products': return c.heading || 'Grilla de productos';
@@ -1646,7 +1692,7 @@
     image: 'sectionFieldsImage', testimonials: 'sectionFieldsTestimonials', counters: 'sectionFieldsCounters',
     footer: 'sectionFieldsFooter', custom_html: 'sectionFieldsCustomHtml',
     section_heading: 'sectionFieldsSectionHeading', decant_callout: 'sectionFieldsDecantCallout',
-    manifesto: 'sectionFieldsManifesto',
+    manifesto: 'sectionFieldsManifesto', hero_product: 'sectionFieldsHeroProduct',
   };
 
   function showSectionTypeFields(type) {
@@ -1905,6 +1951,13 @@
     } else if (type === 'manifesto') {
       document.getElementById('manifestoItemList').innerHTML = (c.items && c.items.length ? c.items : [{}, {}, {}]).map(manifestoItemRowHtml).join('');
       bindRemoveRowButtons('manifestoItemList');
+    } else if (type === 'hero_product') {
+      document.getElementById('s_hero_eyebrow').value = c.eyebrow || '';
+      document.getElementById('s_hero_heading').value = c.heading || '';
+      document.getElementById('s_hero_description').value = c.description || '';
+      document.getElementById('s_hero_cta_label').value = c.cta_label || '';
+      document.getElementById('s_hero_cta_link').value = c.cta_link || '';
+      document.getElementById('s_hero_diagram_heading').value = c.diagram_heading || '';
     }
     document.getElementById('sectionDialog').showModal();
   }
@@ -2007,6 +2060,15 @@
       };
     } else if (type === 'manifesto') {
       content = { items: collectManifestoItems() };
+    } else if (type === 'hero_product') {
+      content = {
+        eyebrow: document.getElementById('s_hero_eyebrow').value.trim() || null,
+        heading: document.getElementById('s_hero_heading').value.trim() || null,
+        description: document.getElementById('s_hero_description').value.trim() || null,
+        cta_label: document.getElementById('s_hero_cta_label').value.trim() || null,
+        cta_link: document.getElementById('s_hero_cta_link').value.trim() || null,
+        diagram_heading: document.getElementById('s_hero_diagram_heading').value.trim() || null,
+      };
     } else {
       content = {
         html: document.getElementById('s_custom_html').value,

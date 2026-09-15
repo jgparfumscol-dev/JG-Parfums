@@ -466,7 +466,35 @@ function renderManifesto(section) {
   `;
 }
 
+// Ficha del perfume destacado (hero de inicio): el texto acá es el
+// respaldo — home.html pisa heroHouse/heroName/heroDesc/heroCta/heroTiers
+// con datos del producto real apenas cargan (ver loadFeatured() en
+// index.html), pero antes de que eso pase, o si no hay ningún producto
+// todavía, se queda con lo que el admin haya puesto acá. Nombre distinto
+// de renderHeroProduct(product) de index.html a propósito — son funciones
+// distintas que conviven en el mismo scope global.
+function renderHeroProductSection(section) {
+  const c = section.content || {};
+  return `
+    <section class="section section-dark">
+      <div class="container hero-spec-layout">
+        <div class="hero-spec-copy">
+          <p class="hero-spec-house text-small" id="heroHouse">${c.eyebrow || ''}</p>
+          <h1 class="display" id="heroName">${c.heading || ''}</h1>
+          <p class="hero-spec-desc" id="heroDesc">${c.description || ''}</p>
+          <a class="btn btn-onDark" id="heroCta" href="${c.cta_link || '/catalogo.html'}">${c.cta_label || 'Ver catálogo'}</a>
+        </div>
+        <div class="scent-diagram">
+          <p class="scent-diagram-heading">${c.diagram_heading || ''}</p>
+          <div id="heroTiers"></div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 const SECTION_RENDERERS = {
+  hero_product: renderHeroProductSection,
   announcement_bar: renderAnnouncementBar,
   banner: renderBanner,
   header: renderHeader,

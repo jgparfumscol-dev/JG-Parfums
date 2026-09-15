@@ -69,21 +69,6 @@
 </header>
 
 <main id="main">
-  <section class="section section-dark">
-    <div class="container hero-spec-layout">
-      <div class="hero-spec-copy">
-        <p class="hero-spec-house text-small" id="heroHouse">Perfumería de nicho · Colombia</p>
-        <h1 class="display" id="heroName">Un perfume se explica con hechos</h1>
-        <p class="hero-spec-desc" id="heroDesc">Toca cada fase de la pirámide para leer las notas reales — de salida, corazón y fondo — de este frasco.</p>
-        <a class="btn btn-onDark" id="heroCta" href="/catalogo.html">Ver catálogo</a>
-      </div>
-      <div class="scent-diagram">
-        <p class="scent-diagram-heading">Así se lee un perfume en JG</p>
-        <div id="heroTiers"></div>
-      </div>
-    </div>
-  </section>
-
   <div id="dynamicSections"></div>
 </main>
 
@@ -126,8 +111,6 @@
 <script src="/js/sections.js"></script>
 <script src="/js/reveal.js"></script>
 <script>
-  renderPageSections('home');
-
   // Escalera genérica: se muestra mientras carga el catálogo, y si no hay
   // ningún producto todavía (catálogo vacío) se queda así — nunca se
   // inventan notas ni nombre de producto que el cliente no haya entregado.
@@ -140,9 +123,12 @@
   // Misma escalera que la ficha de producto, pero con el nombre siempre en
   // blanco: el hero es de fondo oscuro y el color de una nota puede ser
   // oscuro también (ilegible como texto ahí) — el color de marca se expresa
-  // en la barra, no en la letra.
+  // en la barra, no en la letra. La sección hero (home_hero) ahora es una
+  // sección real: puede estar oculta o movida, así que #heroTiers no
+  // siempre existe — si no existe, no hay nada que pintar.
   function renderHeroNotes(notes) {
     const container = document.getElementById('heroTiers');
+    if (!container) return;
     if (!notes || notes.length === 0) {
       container.innerHTML = '';
       return;
@@ -157,8 +143,10 @@
   }
 
   function renderHeroProduct(product) {
+    const houseEl = document.getElementById('heroHouse');
+    if (!houseEl) return; // sección hero oculta: nada que actualizar
     const hasNotes = Boolean(product.notes && product.notes.length > 0);
-    document.getElementById('heroHouse').textContent = product.house ? `${product.house} · ${product.category?.name || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
+    houseEl.textContent = product.house ? `${product.house} · ${product.category?.name || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
     document.getElementById('heroName').textContent = product.name;
     document.getElementById('heroDesc').textContent = hasNotes
       ? `${product.concentration || 'Original'} · ${product.size_ml} ml — notas reales de este frasco.`
@@ -169,11 +157,11 @@
     renderHeroNotes(hasNotes ? product.notes : GENERIC_NOTES);
   }
 
-  // La grilla de "Recién llegados" que iba acá abajo del hero ahora es una
-  // sección "products" real y movible (ver home_recent_heading en la
-  // migración dde627187178) — la arma renderPageSections/renderProducts en
-  // sections.js, no este script. Acá solo queda escoger el producto del
-  // hero.
+  // La grilla de "Recién llegados" y el hero (home_recent_heading,
+  // home_hero) ya son secciones reales y movibles — las arma
+  // renderPageSections/sections.js, no este script. Acá solo queda pisar
+  // el texto del hero con los datos del producto destacado, una vez que
+  // esa sección ya exista en el DOM.
   async function loadFeatured() {
     try {
       const data = await apiFetch('/products?page_size=9');
@@ -192,8 +180,10 @@
     }
   }
 
-  renderHeroNotes(GENERIC_NOTES);
-  loadFeatured();
+  renderPageSections('home').then(() => {
+    renderHeroNotes(GENERIC_NOTES);
+    loadFeatured();
+  });
 </script>
 </body>
 </html>
