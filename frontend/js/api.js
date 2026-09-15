@@ -42,7 +42,15 @@ async function apiFetch(endpoint, options = {}) {
     let detail = 'Ocurrió un error inesperado';
     try {
       const body = await response.json();
-      detail = body.detail || detail;
+      // FastAPI manda `detail` como texto en los errores que arma la ruta a
+      // mano, pero como lista de {loc, msg, type} en cualquier 422 de
+      // validación automática (incluida la nuestra) — sin este chequeo,
+      // ese caso se mostraba como "[object Object]" en vez del mensaje.
+      if (Array.isArray(body.detail)) {
+        detail = body.detail.map((e) => e.msg || JSON.stringify(e)).join(' · ') || detail;
+      } else if (body.detail) {
+        detail = body.detail;
+      }
     } catch (_err) {
       // respuesta sin cuerpo JSON, se usa el mensaje genérico
     }

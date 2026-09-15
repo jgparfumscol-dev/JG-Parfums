@@ -230,7 +230,10 @@ Radio de 2px en botones, campos y tarjetas — geometría casi dura, deliberadam
 - **Error:** texto de 13px en `danger` (`#9E3B34`) bajo el campo — el color nunca es el único indicador.
 
 ### Navigation
-- Barra fija (`sticky top:0`), fondo Marfil, borde inferior 1px `ink-100`, alto 72px. Logo horizontal a la izquierda, links de texto (sin mayúsculas, sin subrayado permanente) visibles desde 1024px, menú hamburguesa por debajo. Ícono de carrito con contador circular en `gold-800`.
+- Barra fija (`sticky top:0`), fondo Marfil, borde inferior 1px `ink-100`, alto 64px. Sólida arriba del todo; apenas se hace scroll pasa a vidrio esmerilado (semitransparente + blur), sin quedarse como franja plana pegada arriba.
+- Escritorio (≥1024px): una sola fila compacta en grid de 3 columnas — clases del catálogo (Mujer/Hombre/Ocasiones...) a la izquierda, logo centrado, buscador + cuenta + carrito a la derecha. Links de texto sin mayúsculas, sin subrayado permanente (solo al hover, en dorado).
+- Móvil: logo centrado con menú hamburguesa a la izquierda y el ícono de carrito a la derecha (visible siempre, para no perderlo de vista); buscador, clases y cuenta se recogen en el panel del menú.
+- Ícono de carrito con contador circular en `gold-800`.
 
 ### Spec Row (firma de la marca)
 Fila de ficha técnica: `dt` de 12px en `text-muted` a la izquierda (columna fija de 88px), `dd` en Newsreader itálica de 15px a la derecha, separadas por borde inferior de 1px. Reemplaza cualquier patrón de "ícono + etiqueta" para mostrar notas, concentración, tamaño. Reutilizable en cualquier superficie que necesite comunicar un hecho de producto en vez de un adorno.

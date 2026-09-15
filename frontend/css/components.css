@@ -234,10 +234,11 @@
   display: none;
 }
 
-/* clases del catálogo (Mujer/Hombre/Ocasiones...) con el mismo lenguaje de
-   texto tracked + subrayado dorado que ya usan .text-caption y .link en el
-   resto del sitio, en vez de links planos sin identidad. Ocultas en móvil
-   — viven en el panel del menú (.nav-mobile-classes) ahí. */
+/* clases del catálogo (Mujer/Hombre/Ocasiones...) — subrayado dorado al
+   hover como .link en el resto del sitio, nunca permanente. Sin mayúsculas
+   sostenidas (BRAND.md §4.1 / DESIGN.md: prohibidas fuera de "PARFUMS" en
+   el logo). Ocultas en móvil — viven en el panel del menú
+   (.nav-mobile-classes) ahí. */
 .nav-classes {
   display: none;
   gap: var(--space-6);
@@ -251,9 +252,7 @@
   padding-bottom: 3px;
   border-bottom: 1px solid transparent;
   text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
   transition: color 150ms, border-color 150ms;
 }
@@ -660,48 +659,104 @@
 .pgs-counter-value { font-family: var(--font-display); font-size: 40px; margin: 0; }
 .pgs-counter-label { color: var(--text-muted); font-size: 13px; margin-top: var(--space-1); }
 
-/* barra de anuncios: fija arriba de todo el sitio (antes del header), con
-   el texto en cinta continua. Se arma con 4 copias idénticas del mismo
-   texto pegadas una tras otra y se anima el track completo -25% (un
-   cuarto de su ancho total) en bucle — así nunca queda un salto ni un
-   hueco en blanco al reiniciar, sin importar qué tan corto sea el texto
-   ni qué tan ancha la pantalla. Se pausa al pasar el mouse para poder
-   hacer clic en el enlace si trae uno. */
-.announcement-bar {
-  background: var(--jg-onyx);
-  color: #FFFFFF;
+/* barra de anuncios: uno o varios mensajes que rotan con fundido o
+   deslizamiento (nunca cinta con scroll infinito — a diferencia del primer
+   intento, acá el texto se lee quieto y solo cambia entero de un mensaje al
+   siguiente). Con un solo mensaje no hay rotación ni controles. Variantes
+   de color cerradas (BRAND.md §3.7): siempre roles/tokens, nunca hex suelto,
+   así heredan el acento que regenera Ajustes. */
+.announcement-bar--onyx { background: var(--jg-onyx); color: #FFFFFF; }
+.announcement-bar--onyx strong { color: var(--gold-400); }
+.announcement-bar--paper { background: var(--jg-paper); color: var(--ink-900); }
+.announcement-bar--paper strong { color: var(--gold-700); }
+.announcement-bar--gold-soft { background: var(--gold-50); color: var(--ink-900); }
+.announcement-bar--gold-soft strong { color: var(--gold-800); }
+
+.announcement-bar-inner {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-6);
+  min-height: 36px;
+}
+
+@media (min-width: 1024px) {
+  .announcement-bar-inner { padding-inline: var(--space-12); }
+}
+
+.announcement-bar-viewport { flex: 1; position: relative; }
+
+.announcement-bar-slide {
+  padding-block: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.announcement-bar-slide[hidden] { display: none; }
+.announcement-bar-slide strong { font-weight: 600; }
+
+/* mobile-first: hasta 2 líneas, nunca se corta a media palabra — nada de
+   marquee ni de recortar con ellipsis a mitad de una palabra. */
+.announcement-bar-slide > a,
+.announcement-bar-slide > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: nowrap;
 }
 
-.announcement-track {
-  display: inline-flex;
-  width: max-content;
-  animation: announcement-scroll 26s linear infinite;
+.announcement-bar-slide > a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 3px;
+  /* zona tocable de 44px cuando el mensaje es un enlace (BRAND.md §9) */
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 
-.announcement-bar:hover .announcement-track { animation-play-state: paused; }
+.announcement-bar-slide.is-entering-fade { animation: announcement-fade 300ms ease; }
+@keyframes announcement-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-.announcement-item {
+.announcement-bar-slide.is-entering-slide { animation: announcement-slide 300ms ease; }
+@keyframes announcement-slide {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.announcement-bar-controls { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
+
+.announcement-bar-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  padding-block: var(--space-2);
-  padding-inline: var(--space-8);
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 150ms;
 }
 
-.announcement-item a { color: var(--gold-400); text-decoration: none; }
-.announcement-item a:hover { text-decoration: underline; }
-
-@keyframes announcement-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-25%); }
-}
+.announcement-bar-btn:hover { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .announcement-track { animation: none; }
-  .announcement-item:nth-child(n+2) { display: none; }
+  .announcement-bar-slide.is-entering-fade,
+  .announcement-bar-slide.is-entering-slide {
+    animation: none;
+  }
 }
 
 .pgs-categories { display: flex; flex-wrap: wrap; gap: var(--space-3); }

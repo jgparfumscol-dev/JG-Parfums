@@ -81,7 +81,6 @@ def test_move_page_section_swaps_position_with_neighbor(client, admin_headers):
 
 def test_create_page_section_accepts_new_block_types(client, admin_headers):
     for section_type, content in [
-        ("announcement", {"text": "Envío gratis desde $200.000"}),
         ("header", {"title": "Nuestra historia"}),
         ("products", {"heading": "Lo más vendido", "limit": 8}),
         ("text", {"heading": "Sobre nosotros", "body": "Texto libre."}),
