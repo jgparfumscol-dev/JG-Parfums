@@ -21,6 +21,11 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const supported = 'IntersectionObserver' in window;
 
+  // rootMargin positivo: dispara ANTES de que el elemento entre a la
+  // pantalla (con -10% pasaba lo contrario — había que scrollear bastante
+  // más allá de que "debería" verse para que apareciera, y una sección
+  // entera se sentía como si faltara mientras tanto). Con esto ya está
+  // visible o terminando de animar para cuando el usuario llega a verla.
   let observer = null;
   if (supported && !reduceMotion) {
     observer = new IntersectionObserver(
@@ -31,7 +36,7 @@
           observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -10% 0px' }
+      { threshold: 0, rootMargin: '0px 0px 200px 0px' }
     );
   }
 
