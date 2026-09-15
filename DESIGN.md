@@ -39,7 +39,7 @@ typography:
     letterSpacing: "-0.01em"
   h2:
     fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
-    fontSize: "clamp(1.625rem, 3vw, 2.125rem)"
+    fontSize: "clamp(1.75rem, 3vw, 2.125rem)"
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: "-0.01em"
@@ -176,7 +176,7 @@ Paleta de 5 colores de marca más una escala de dorado y neutros derivados — d
 ### Hierarchy
 - **Display** (500, clamp 40–64px, 1.05): hero, una vez por página.
 - **H1** (500, clamp 32–48px, 1.15): título de página.
-- **H2** (500, clamp 26–34px, 1.2): título de sección, siempre con el filete dorado de 40px debajo.
+- **H2** (500, clamp 28–34px, 1.2): título de sección, siempre con el filete dorado de 40px debajo. El piso subió de 26 a 28px para respetar la Regla de los 28px — a 26px las serifas finas de Bodoni ya se perdían contra fondo claro.
 - **H3** (500, 20–22px, 1.3, Jost): nombre de producto en tarjeta.
 - **Body** (400, 16px, 1.6): texto general, máximo 68 caracteres de ancho de línea.
 - **Small** (400, 14px, 1.5): texto secundario, campos de formulario, líneas de metadatos (`.text-small`).
