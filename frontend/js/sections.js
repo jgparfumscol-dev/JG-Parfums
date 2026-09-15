@@ -9,9 +9,14 @@
    El backend ya filtró `content.messages` a solo los vigentes (activos y
    dentro de fecha, ver _message_is_live en routes/page_sections.py) — acá
    solo queda decidir cómo mostrarlos: con un mensaje no hay rotación ni
-   controles; con varios, rota con pausa/reproducir (o flechas manuales si
-   el usuario prefiere menos movimiento) y se puede cerrar si el admin lo
-   marcó como cerrable.
+   controles; con varios, rota sola (fundido o deslizamiento horizontal) y
+   se puede cerrar si el admin lo marcó como cerrable.
+
+   Sin botón de pausa a propósito — se pausa igual, solo que sin un ícono
+   visible: al pasar el mouse, al enfocar por teclado y cuando la pestaña
+   no está visible (ver initAnnouncementBar). Con prefers-reduced-motion no
+   hay autoplay en absoluto y aparecen flechas manuales en su lugar, así
+   que la rotación siempre queda controlable de alguna forma.
 
    El texto se arma con textContent en initAnnouncementBar, nunca
    interpolado en el string de HTML: es contenido que escribió el admin,
@@ -32,11 +37,7 @@ function renderAnnouncementBar(section) {
     .join('');
 
   const controls = [];
-  if (canRotate && !reduceMotion) {
-    controls.push(
-      `<button type="button" class="announcement-bar-btn" data-pause aria-label="Pausar anuncios" aria-pressed="false">${ICON_PAUSE}</button>`
-    );
-  } else if (canRotate && reduceMotion) {
+  if (canRotate && reduceMotion) {
     controls.push(
       `<button type="button" class="announcement-bar-btn" data-prev aria-label="Anuncio anterior">${ICON_PREV}</button>`,
       `<button type="button" class="announcement-bar-btn" data-next aria-label="Siguiente anuncio">${ICON_NEXT}</button>`
@@ -56,8 +57,6 @@ function renderAnnouncementBar(section) {
   `;
 }
 
-const ICON_PAUSE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
-const ICON_PLAY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>';
 const ICON_PREV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="15 6 9 12 15 18"/></svg>';
 const ICON_NEXT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 6 15 12 9 18"/></svg>';
 const ICON_CLOSE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>';
@@ -155,34 +154,43 @@ function initAnnouncementBar(el, section) {
   const transition = el.dataset.transition;
   let current = 0;
 
-  function show(index, { announce = false } = {}) {
+  // dir 1 = entra desde la derecha (avanzando), -1 = entra desde la
+  // izquierda (retrocediendo) — solo importa para el deslizamiento
+  // horizontal, el fundido lo ignora.
+  function show(index, { announce = false, dir = 1 } = {}) {
     const next = (index + slides.length) % slides.length;
     if (next === current) return;
-    slides[current].classList.remove('is-leaving');
     slides[current].hidden = true;
     current = next;
-    slides[current].hidden = false;
-    slides[current].classList.add(transition === 'slide' ? 'is-entering-slide' : 'is-entering-fade');
+    const entering = slides[current];
+    entering.hidden = false;
+    if (transition === 'slide') {
+      entering.style.setProperty('--slide-dir', String(dir));
+      entering.classList.add('is-entering-slide');
+      entering.addEventListener('animationend', () => entering.classList.remove('is-entering-slide'), { once: true });
+    } else {
+      entering.classList.add('is-entering-fade');
+      entering.addEventListener('animationend', () => entering.classList.remove('is-entering-fade'), { once: true });
+    }
     viewport.setAttribute('aria-live', announce ? 'polite' : 'off');
   }
 
   const prevBtn = el.querySelector('[data-prev]');
   const nextBtn = el.querySelector('[data-next]');
-  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1, { announce: true }));
-  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1, { announce: true }));
+  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1, { announce: true, dir: -1 }));
+  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1, { announce: true, dir: 1 }));
 
   if (el.dataset.canRotate !== 'true') return; // reduced motion: solo flechas, sin autoplay
 
   const intervalMs = Number(el.dataset.interval) * 1000;
   let timer = null;
-  let userPaused = false;
 
   function tick() {
-    show(current + 1);
+    show(current + 1, { dir: 1 });
   }
   function start() {
     stop();
-    if (userPaused || document.hidden) return;
+    if (document.hidden) return;
     timer = setInterval(tick, intervalMs);
   }
   function stop() {
@@ -192,6 +200,9 @@ function initAnnouncementBar(el, section) {
     }
   }
 
+  // Sin botón de pausa visible: se pausa solo al interactuar (mouse,
+  // teclado) o cuando la pestaña no está visible — cumple con "pausar,
+  // detener u ocultar" sin un ícono permanente en la barra.
   start();
   el.addEventListener('mouseenter', stop);
   el.addEventListener('mouseleave', start);
@@ -201,18 +212,6 @@ function initAnnouncementBar(el, section) {
     if (document.hidden) stop();
     else start();
   });
-
-  const pauseBtn = el.querySelector('[data-pause]');
-  if (pauseBtn) {
-    pauseBtn.addEventListener('click', () => {
-      userPaused = !userPaused;
-      pauseBtn.setAttribute('aria-pressed', String(userPaused));
-      pauseBtn.setAttribute('aria-label', userPaused ? 'Reanudar anuncios' : 'Pausar anuncios');
-      pauseBtn.innerHTML = userPaused ? ICON_PLAY : ICON_PAUSE;
-      if (userPaused) stop();
-      else start();
-    });
-  }
 }
 
 // Color de texto legible sobre el color de botón que elija el admin —
@@ -228,9 +227,15 @@ function contrastTextColor(hex) {
   return luminance > 0.6 ? '#201E1F' : '#FFFFFF';
 }
 
+// Imagen de fondo por tamaño: el CSS decide cuál usar según el ancho de
+// pantalla (ver --pgs-banner-bg-mobile/-desktop en components.css) — si el
+// admin solo carga una, esa se usa en los dos tamaños.
 function renderBanner(section) {
   const c = section.content || {};
-  const bgStyle = c.image_url ? ` style="background-image:url('${c.image_url}')"` : '';
+  const bgVars = [];
+  if (c.image_url_mobile) bgVars.push(`--pgs-banner-bg-mobile:url('${c.image_url_mobile}')`);
+  if (c.image_url) bgVars.push(`--pgs-banner-bg-desktop:url('${c.image_url}')`);
+  const bgStyle = bgVars.length ? ` style="${bgVars.join('; ')}"` : '';
   const ctaStyle = c.cta_color
     ? ` style="background-color:${c.cta_color}; border-color:${c.cta_color}; color:${contrastTextColor(c.cta_color)};"`
     : '';
@@ -401,11 +406,17 @@ function renderCustomHtml(section) {
 }
 
 /* --- Secciones "fijas" de la página, convertidas en editables ---
-   A diferencia de las de arriba, no se agregan libremente: cada una tiene
-   una `key` fija y un `<div id="pgs-{key}">` ya puesto en el HTML de la
-   página, en el lugar exacto donde vivía el contenido hardcodeado que
-   reemplaza. Si la sección está inactiva o fue borrada, ese div
-   simplemente queda vacío — no hay contenido de respaldo hardcodeado. */
+   No se agregan libremente desde "+ Añadir sección" — vienen sembradas por
+   migración con una `key` fija — pero se editan, ocultan y ahora también
+   se reordenan igual que cualquier sección libre (ver renderPageSections).
+
+   catalogo_header y producto_related_heading siguen ancladas a un
+   `<div id="pgs-{key}">` puesto a propósito en medio de otro elemento de
+   la página (la barra de filtros, la grilla de relacionados) — moverlas
+   no tendría sentido, así que se quedan bare (sin su propio <section>) y
+   con mount fijo. home_decant_callout y home_manifesto, en cambio, ya no
+   tienen mount fijo en el HTML: se arman su propio <section> acá mismo y
+   entran al flujo general de secciones, junto con banner/testimonios/etc. */
 
 function renderSectionHeading(section) {
   const c = section.content || {};
@@ -421,19 +432,23 @@ function renderDecantCallout(section) {
     .map((r) => `<div class="spec-row"><dt>${r.label || ''}</dt><dd>${r.value || ''}</dd></div>`)
     .join('');
   return `
-    <div>
-      <h2 class="h2 section-title">${c.heading}</h2>
-      ${c.body ? `<p class="text-muted" style="max-width:46ch; margin-bottom: var(--space-4);">${c.body}</p>` : ''}
-      ${c.cta_link ? `<a class="link" href="${c.cta_link}">${c.cta_label || 'Ver más'}</a>` : ''}
-    </div>
-    <dl class="spec-list">${rows}</dl>
+    <section class="section" style="background: var(--jg-white);">
+      <div class="container decant-callout">
+        <div>
+          <h2 class="h2 section-title">${c.heading}</h2>
+          ${c.body ? `<p class="text-muted" style="max-width:46ch; margin-bottom: var(--space-4);">${c.body}</p>` : ''}
+          ${c.cta_link ? `<a class="link" href="${c.cta_link}">${c.cta_label || 'Ver más'}</a>` : ''}
+        </div>
+        <dl class="spec-list">${rows}</dl>
+      </div>
+    </section>
   `;
 }
 
 function renderManifesto(section) {
   const items = (section.content && section.content.items) || [];
   if (items.length === 0) return '';
-  return items
+  const cols = items
     .map(
       (item, i) => `
         <div class="manifesto-item">
@@ -444,6 +459,11 @@ function renderManifesto(section) {
       `
     )
     .join('');
+  return `
+    <section class="section" style="background: var(--jg-white);">
+      <div class="container manifesto-strip">${cols}</div>
+    </section>
+  `;
 }
 
 const SECTION_RENDERERS = {
@@ -482,11 +502,18 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
         }
         continue;
       }
-      // Sección fija: se monta en su propio lugar, no en el mount genérico.
+      // Sección fija con mount propio en el HTML (catalogo_header,
+      // producto_related_heading): se monta ahí, no en el flujo general.
+      // Si no hay mount para su key en esta página (ej. home_decant_callout
+      // / home_manifesto, que ya arman su propio <section>), se trata como
+      // cualquier sección libre y entra al orden general por posición.
       const target = document.getElementById(`pgs-${section.key}`);
-      if (!target) continue;
-      const renderer = SECTION_RENDERERS[section.type];
-      target.innerHTML = renderer ? await renderer(section) : '';
+      if (target) {
+        const renderer = SECTION_RENDERERS[section.type];
+        target.innerHTML = renderer ? await renderer(section) : '';
+      } else {
+        freeform.push(section);
+      }
     }
     if (topBarMount) {
       topBarMount.innerHTML = topBar ? renderAnnouncementBar(topBar) : '';

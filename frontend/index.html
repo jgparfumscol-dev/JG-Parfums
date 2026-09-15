@@ -84,26 +84,6 @@
     </div>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div id="pgs-home_recent_heading"></div>
-      <div class="product-grid" id="featuredGrid" aria-live="polite"></div>
-      <p class="empty-state" id="featuredEmpty" hidden>Todavía no hay productos publicados. Vuelve pronto.</p>
-    </div>
-  </section>
-
-  <section class="section" style="background: var(--jg-white);">
-    <div class="container decant-callout">
-      <div id="pgs-home_decant_callout" style="display:contents"></div>
-    </div>
-  </section>
-
-  <section class="section" style="background: var(--jg-white); padding-top: 0;">
-    <div class="container manifesto-strip">
-      <div id="pgs-home_manifesto" style="display:contents"></div>
-    </div>
-  </section>
-
   <div id="dynamicSections"></div>
 </main>
 
@@ -189,13 +169,15 @@
     renderHeroNotes(hasNotes ? product.notes : GENERIC_NOTES);
   }
 
+  // La grilla de "Recién llegados" que iba acá abajo del hero ahora es una
+  // sección "products" real y movible (ver home_recent_heading en la
+  // migración dde627187178) — la arma renderPageSections/renderProducts en
+  // sections.js, no este script. Acá solo queda escoger el producto del
+  // hero.
   async function loadFeatured() {
-    const grid = document.getElementById('featuredGrid');
-    const empty = document.getElementById('featuredEmpty');
     try {
       const data = await apiFetch('/products?page_size=9');
       if (data.items.length === 0) {
-        empty.hidden = false;
         renderHeroNotes(GENERIC_NOTES);
         return;
       }
@@ -205,26 +187,7 @@
       // reciente sin notas si ninguno las tiene todavía.
       const featured = data.items.find((p) => p.notes && p.notes.length > 0) || data.items[0];
       renderHeroProduct(featured);
-
-      const rest = data.items.filter((p) => p.id !== featured.id);
-      const gridItems = rest.length > 0 ? rest : [featured];
-      grid.innerHTML = gridItems.map((product) => `
-        <a class="product-card" href="/producto.html?slug=${encodeURIComponent(product.slug)}">
-          <div class="product-card-media">
-            ${product.images[0]
-              ? `<img src="${product.images[0].url}" alt="${product.images[0].alt_text}" loading="lazy">`
-              : ''}
-          </div>
-          <div class="product-card-body">
-            <p class="product-card-name">${product.name}</p>
-            <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
-            <p class="product-card-price">${product.variants && product.variants.length ? 'Desde ' : ''}${formatCOP(product.variants && product.variants.length ? Math.min(product.price, ...product.variants.map((v) => v.price)) : product.price)}</p>
-          </div>
-        </a>
-      `).join('');
     } catch (err) {
-      empty.hidden = false;
-      empty.textContent = 'No pudimos cargar el catálogo. Intenta de nuevo en un momento.';
       renderHeroNotes(GENERIC_NOTES);
     }
   }

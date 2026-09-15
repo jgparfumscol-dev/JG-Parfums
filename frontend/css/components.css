@@ -620,12 +620,22 @@
    clases propias, trae las suyas.
    ============================================================ */
 
+/* imagen de fondo: --pgs-banner-bg-mobile/-desktop las pone renderBanner()
+   inline por sección — cada tamaño usa la suya y cae a la otra si el admin
+   solo cargó una. Padding propio (no el genérico de .section): más
+   ajustado que el resto de secciones, se siente a banner promocional en
+   vez de a bloque de contenido largo, sobre todo en móvil. */
 .pgs-banner {
   position: relative;
+  background-image: var(--pgs-banner-bg-mobile, var(--pgs-banner-bg-desktop));
   background-size: cover;
   background-position: center;
   background-color: var(--jg-onyx);
   color: #FFFFFF;
+  padding-block: var(--space-12);
+}
+@media (min-width: 768px) {
+  .pgs-banner { background-image: var(--pgs-banner-bg-desktop, var(--pgs-banner-bg-mobile)); padding-block: var(--space-16); }
 }
 .pgs-banner::before {
   content: '';
@@ -635,7 +645,10 @@
 }
 .pgs-banner-inner { position: relative; max-width: 480px; }
 .pgs-banner-title { margin: 0 0 var(--space-3); color: #FFFFFF; }
-.pgs-banner-subtitle { color: #B9B4B0; margin: 0 0 var(--space-6); }
+.pgs-banner-subtitle { color: #B9B4B0; margin: 0 0 var(--space-6); font-size: 15px; }
+@media (min-width: 768px) {
+  .pgs-banner-subtitle { font-size: 16px; }
+}
 
 .pgs-testimonials { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) { .pgs-testimonials { grid-template-columns: repeat(3, 1fr); } }
@@ -727,10 +740,12 @@
   to { opacity: 1; }
 }
 
-.announcement-bar-slide.is-entering-slide { animation: announcement-slide 300ms ease; }
+/* deslizamiento horizontal: el mensaje que entra viene desde la derecha al
+   avanzar y desde la izquierda al retroceder (--slide-dir, puesto en JS). */
+.announcement-bar-slide.is-entering-slide { animation: announcement-slide 320ms ease; }
 @keyframes announcement-slide {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateX(calc(var(--slide-dir, 1) * 28px)); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .announcement-bar-controls { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
