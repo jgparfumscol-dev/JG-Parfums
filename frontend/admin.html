@@ -35,6 +35,10 @@
   .topbar-btn { height: 36px; padding-inline: var(--space-3); font-size: 14px; gap: var(--space-2); }
   .topbar-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+  /* Barra de secciones aparte para móvil (ver media query más abajo): en el
+     header queda demasiado angosta y apretada entre logo y acciones. */
+  .mobile-section-nav { display: none; }
+
   #editorShell { flex: 1; display: flex; min-height: 0; overflow: hidden; position: relative; }
 
   #panelLeft, #panelRight { flex-shrink: 0; overflow-y: auto; background: var(--surface); }
@@ -181,13 +185,21 @@
   /* ---- móvil: solo Productos, Pedidos y Métricas ----
      El editor de la tienda (arrastrar secciones, vista previa) no es viable
      en una pantalla chica, así que ni el nav ni las acciones del topbar que
-     dependen de él aparecen acá — se van al 404 si igual se llega ahí. */
+     dependen de él aparecen acá — se van al 404 si igual se llega ahí.
+     El nav de secciones se saca del header (queda muy angosto ahí, apretado
+     entre logo y acciones — difícil de tocar) y pasa a su propia barra
+     completa debajo, con botones más grandes. */
   @media (max-width: 767px) {
-    .nav-item[data-nav="editor"],
-    .nav-item[data-nav="categories"],
-    .nav-item[data-nav="settings"],
+    .topbar-nav { display: none; }
     #historyBtn,
     #saveChangesBtn { display: none; }
+
+    .mobile-section-nav {
+      display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface);
+    }
+    .mobile-section-nav .nav-item {
+      flex: 1; justify-content: center; height: 52px; font-size: 13px; border-bottom: 2px solid transparent;
+    }
   }
 </style>
 </head>
@@ -246,6 +258,21 @@
       <button class="btn btn-secondary topbar-btn" id="logoutBtn">Cerrar sesión</button>
     </div>
   </header>
+
+  <nav class="mobile-section-nav" id="mobileSectionNav" aria-label="Secciones">
+    <button class="nav-item" data-nav="products">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="10" y="3" width="4" height="3"/><path d="M9 7h6l1 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10z"/></svg>
+      Productos
+    </button>
+    <button class="nav-item" data-nav="orders">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+      Pedidos
+    </button>
+    <button class="nav-item" data-nav="metrics">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="20" x2="5" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="19" y1="20" x2="19" y2="4"/></svg>
+      Métricas
+    </button>
+  </nav>
 
   <div id="editorShell">
     <button id="toggleLeftPanelBtn" class="drawer-toggle drawer-toggle-left" aria-label="Abrir panel izquierdo">
