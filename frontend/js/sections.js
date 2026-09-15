@@ -5,14 +5,39 @@
    secciones no requiere tocar el HTML de cada página, solo el contenido en
    la base de datos. */
 
+// 4 copias del mismo texto pegadas una tras otra: el CSS anima el track
+// -25% (un cuarto de su ancho) en bucle infinito, así nunca hay un hueco en
+// blanco al reiniciar sin importar qué tan corto sea el texto. Ver
+// .announcement-track en components.css.
 function renderAnnouncement(section) {
   const c = section.content || {};
   if (!c.text) return '';
+  const item = c.link_url ? `<a href="${c.link_url}">${c.text}</a>` : `<span>${c.text}</span>`;
   return `
-    <div class="pgs-announcement">
-      ${c.link_url ? `<a href="${c.link_url}">${c.text}</a>` : `<span>${c.text}</span>`}
+    <div class="announcement-bar">
+      <div class="announcement-track">
+        ${Array(4).fill(`<div class="announcement-item">${item}</div>`).join('')}
+      </div>
     </div>
   `;
+}
+
+// Barra de anuncios fija arriba de todo el sitio (antes del header) — vive
+// en su propio "page" ("global") para que sea la misma en todas las
+// páginas en vez de tener que repetirla una por una. Se monta en
+// #pgs-announcement-bar, presente en el <body> de cada página pública (ver
+// PAGE_LABELS/PAGE_URLS en admin.html para cómo se edita: página "Todo el
+// sitio" > + Añadir sección > Anuncio).
+async function renderAnnouncementBar() {
+  const mount = document.getElementById('pgs-announcement-bar');
+  if (!mount) return;
+  try {
+    const sections = await apiFetch('/page-sections?page=global');
+    const announcements = sections.filter((s) => s.type === 'announcement');
+    mount.innerHTML = announcements.map(renderAnnouncement).join('');
+  } catch (_err) {
+    // sin anuncio configurado, o falló la carga: la barra se queda vacía
+  }
 }
 
 // Color de texto legible sobre el color de botón que elija el admin —
@@ -289,3 +314,5 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
     // Si falla, la página sigue funcionando igual sin las secciones extra.
   }
 }
+
+renderAnnouncementBar();

@@ -61,33 +61,28 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Saltar al contenido</a>
+<div id="pgs-announcement-bar"></div>
 
 <header class="nav">
-  <div class="container nav-top">
+  <div class="container nav-bar">
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
+    <ul class="nav-classes" id="navClasses"></ul>
     <a class="nav-logo-link" href="/index.html" aria-label="JG Parfums, inicio">
       <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
     </a>
-    <a class="nav-icon-btn nav-top-cart" href="/carrito.html" aria-label="Carrito">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
-      <span class="nav-cart-count" data-cart-count hidden>0</span>
-    </a>
-  </div>
-  <div class="container nav-bottom">
-    <ul class="nav-classes" id="navClasses"></ul>
-    <div class="nav-bottom-actions">
+    <div class="nav-bar-actions">
       <form class="nav-search" id="navSearchForm" role="search">
         <input type="search" name="q" placeholder="Buscar perfumes" aria-label="Buscar perfumes">
         <button type="submit" aria-label="Buscar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
         </button>
       </form>
-      <a class="nav-icon-btn" href="/mi-cuenta.html" aria-label="Mi cuenta">
+      <a class="nav-icon-btn nav-account-icon" href="/mi-cuenta.html" aria-label="Mi cuenta">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
       </a>
-      <a class="nav-icon-btn" href="/carrito.html" aria-label="Carrito">
+      <a class="nav-icon-btn nav-cart-icon" href="/carrito.html" aria-label="Carrito">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
         <span class="nav-cart-count" data-cart-count hidden>0</span>
       </a>

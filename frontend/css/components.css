@@ -132,46 +132,20 @@
 }
 
 .nav.is-scrolled {
-  background: rgba(247, 245, 241, 0.86);
-  border-bottom-color: rgba(201, 196, 191, 0.5);
+  background: rgba(247, 245, 241, 0.62);
+  border-bottom-color: rgba(201, 196, 191, 0.35);
   box-shadow: var(--shadow-float);
 }
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .nav.is-scrolled {
-    background: rgba(247, 245, 241, 0.72);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: rgba(247, 245, 241, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 }
 
-.nav-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 72px;
-}
-
 .nav-logo { height: 28px; width: auto; }
-
-.nav-links {
-  display: none;
-  gap: var(--space-8);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-size: 15px;
-}
-
-@media (min-width: 1024px) {
-  .nav-links { display: flex; }
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
 
 .nav-icon-btn {
   position: relative;
@@ -230,52 +204,43 @@
   .nav-mobile-panel { display: none !important; }
 }
 
-/* header de dos filas: logo centrado arriba, clases (Mujer/Hombre/
-   Ocasiones...) y buscador+cuenta+carrito abajo. En móvil la fila de abajo
-   se recoge dentro del panel del menú — solo el carrito se queda visible
-   arriba, junto al logo, para no perderlo de vista. */
-.nav-top {
+/* header compacto de una sola fila: en móvil, logo centrado con el menú a
+   la izquierda y el carrito a la derecha (clases, cuenta y buscador se
+   recogen en el panel del menú); en escritorio (≥1024px) se abre a un
+   grid de 3 columnas — clases a la izquierda, logo perfectamente centrado,
+   buscador+cuenta+carrito a la derecha — todo en la misma línea. */
+.nav-bar {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 68px;
+  height: 64px;
 }
 
 .nav-logo-link { display: inline-flex; }
 
-/* Fila propia para el logo: se le da un poco más de presencia que en el
-   nav de una sola fila (nav-inner), si no la fila queda con demasiado
-   espacio muerto alrededor de un logo chico. */
-.nav-top .nav-logo { height: 32px; }
+.nav-bar .nav-mobile-toggle { position: absolute; left: 0; }
 
-.nav-top .nav-mobile-toggle { position: absolute; left: 0; }
-
-.nav-top-cart { position: absolute; right: 0; }
-
-@media (min-width: 1024px) {
-  .nav-top-cart { display: none; }
-}
-
-.nav-bottom {
-  display: none;
+.nav-bar-actions {
+  position: absolute;
+  right: 0;
+  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8);
-  height: 56px;
-  border-top: 1px solid var(--ink-100);
+  gap: var(--space-2);
 }
 
-@media (min-width: 1024px) {
-  .nav-bottom { display: flex; }
+.nav-bar-actions .nav-search,
+.nav-bar-actions .nav-account-icon {
+  display: none;
 }
 
 /* clases del catálogo (Mujer/Hombre/Ocasiones...) con el mismo lenguaje de
    texto tracked + subrayado dorado que ya usan .text-caption y .link en el
-   resto del sitio, en vez de links planos sin identidad. */
+   resto del sitio, en vez de links planos sin identidad. Ocultas en móvil
+   — viven en el panel del menú (.nav-mobile-classes) ahí. */
 .nav-classes {
-  display: flex;
-  gap: var(--space-8);
+  display: none;
+  gap: var(--space-6);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -295,7 +260,20 @@
 
 .nav-classes a:hover { color: var(--jg-onyx); border-bottom-color: var(--gold-400); }
 
-.nav-bottom-actions { display: flex; align-items: center; gap: var(--space-4); }
+@media (min-width: 1024px) {
+  .nav-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    height: 64px;
+  }
+  .nav-classes { display: flex; justify-self: start; }
+  .nav-logo-link { justify-self: center; }
+  .nav-bar-actions { position: static; justify-self: end; gap: var(--space-4); }
+  .nav-bar-actions .nav-search,
+  .nav-bar-actions .nav-account-icon {
+    display: flex;
+  }
+}
 
 .nav-search {
   display: flex;
@@ -313,7 +291,7 @@
   border: none;
   background: none;
   height: 100%;
-  width: 200px;
+  width: 180px;
   padding: 0 var(--space-3);
   font-family: var(--font-body);
   font-size: 13px;
@@ -682,16 +660,49 @@
 .pgs-counter-value { font-family: var(--font-display); font-size: 40px; margin: 0; }
 .pgs-counter-label { color: var(--text-muted); font-size: 13px; margin-top: var(--space-1); }
 
-.pgs-announcement {
+/* barra de anuncios: fija arriba de todo el sitio (antes del header), con
+   el texto en cinta continua. Se arma con 4 copias idénticas del mismo
+   texto pegadas una tras otra y se anima el track completo -25% (un
+   cuarto de su ancho total) en bucle — así nunca queda un salto ni un
+   hueco en blanco al reiniciar, sin importar qué tan corto sea el texto
+   ni qué tan ancha la pantalla. Se pausa al pasar el mouse para poder
+   hacer clic en el enlace si trae uno. */
+.announcement-bar {
   background: var(--jg-onyx);
   color: #FFFFFF;
-  text-align: center;
-  font-size: 13px;
-  padding-block: var(--space-2);
-  padding-inline: var(--space-4);
+  overflow: hidden;
+  white-space: nowrap;
 }
-.pgs-announcement a { color: var(--gold-400); text-decoration: none; }
-.pgs-announcement a:hover { text-decoration: underline; }
+
+.announcement-track {
+  display: inline-flex;
+  width: max-content;
+  animation: announcement-scroll 26s linear infinite;
+}
+
+.announcement-bar:hover .announcement-track { animation-play-state: paused; }
+
+.announcement-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-8);
+}
+
+.announcement-item a { color: var(--gold-400); text-decoration: none; }
+.announcement-item a:hover { text-decoration: underline; }
+
+@keyframes announcement-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-25%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-track { animation: none; }
+  .announcement-item:nth-child(n+2) { display: none; }
+}
 
 .pgs-categories { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .pgs-category-chip {
