@@ -149,7 +149,6 @@
   }
   .editor-icon-btn:disabled { opacity: .3; cursor: not-allowed; }
   .editor-add-row { display: flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; }
-  .editor-section-row.is-builtin { opacity: .65; }
 
   /* ---- drawers responsive ---- */
   .drawer-toggle {
@@ -1396,7 +1395,7 @@
     return editorSectionsCache.filter((s) => s.is_builtin).map((s) => `
       <div class="editor-section-row ${s.is_active ? '' : 'is-inactive'} is-builtin">
         <div style="flex:1; min-width:0;">
-          <p class="editor-section-type">Sección fija — ${SECTION_TYPE_LABEL[s.type] || s.type}</p>
+          <p class="editor-section-type">Sección fija — ${SECTION_TYPE_LABEL[s.type] || s.type}${s.is_active ? '' : ' · <span style="color:var(--danger);">oculta</span>'}</p>
           <p class="editor-section-label">${sectionPreviewLabel(s)}</p>
         </div>
         <button type="button" class="editor-icon-btn" data-toggle-active="${s.id}" aria-label="${s.is_active ? 'Ocultar' : 'Mostrar'}">${s.is_active ? '👁' : '🚫'}</button>
@@ -1415,7 +1414,7 @@
       : freeform.map((s, index) => `
       <div class="editor-section-row ${s.is_active ? '' : 'is-inactive'}">
         <div style="flex:1; min-width:0;">
-          <p class="editor-section-type">${SECTION_TYPE_LABEL[s.type]}</p>
+          <p class="editor-section-type">${SECTION_TYPE_LABEL[s.type]}${s.is_active ? '' : ' · <span style="color:var(--danger);">oculta</span>'}</p>
           <p class="editor-section-label">${sectionPreviewLabel(s)}</p>
         </div>
         <button type="button" class="editor-icon-btn" data-move-up="${s.id}" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
