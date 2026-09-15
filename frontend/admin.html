@@ -177,6 +177,18 @@
     }
     #panelLeft.is-open { transform: translateX(0); }
   }
+
+  /* ---- móvil: solo Productos, Pedidos y Métricas ----
+     El editor de la tienda (arrastrar secciones, vista previa) no es viable
+     en una pantalla chica, así que ni el nav ni las acciones del topbar que
+     dependen de él aparecen acá — se van al 404 si igual se llega ahí. */
+  @media (max-width: 767px) {
+    .nav-item[data-nav="editor"],
+    .nav-item[data-nav="categories"],
+    .nav-item[data-nav="settings"],
+    #historyBtn,
+    #saveChangesBtn { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -667,6 +679,13 @@
 <script>
   let editingProductId = null;
 
+  // El editor de la tienda (arrastrar secciones, vista previa en vivo) no
+  // funciona en pantallas chicas: en móvil el panel solo ofrece Productos,
+  // Pedidos y Métricas (ver nav-item[data-nav] en el <style> de arriba).
+  function isMobileAdmin() {
+    return window.matchMedia('(max-width: 767px)').matches;
+  }
+
   async function checkAdmin() {
     if (!isLoggedIn()) return showLoginGate();
     try {
@@ -675,7 +694,7 @@
       document.getElementById('appShell').hidden = false;
       await loadCategories();
       initEditorPageSelect();
-      setActiveNav('editor');
+      setActiveNav(isMobileAdmin() ? 'products' : 'editor');
     } catch (err) {
       showLoginGate();
     }
@@ -719,6 +738,14 @@
   const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
 
   function setActiveNav(navName) {
+    // Si de alguna manera se llega al editor de la tienda desde móvil (el
+    // nav lo oculta, pero por ejemplo un resize a mitad de sesión no debería
+    // dejarlo abierto), se trata como ruta inexistente en ese tamaño.
+    if (navName === 'editor' && isMobileAdmin()) {
+      window.location.href = '/404.html';
+      return;
+    }
+
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.nav === navName));
 
     // El panel de edición de página (Añadir/Secciones/Ajustar) solo tiene
@@ -755,6 +782,13 @@
 
   document.querySelectorAll('.nav-item').forEach((btn) => {
     btn.addEventListener('click', () => setActiveNav(btn.dataset.nav));
+  });
+
+  // Si la ventana se achica a tamaño móvil mientras se estaba viendo el
+  // editor (ej. resize en vivo), aplica la misma regla que al entrar.
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.nav-item.is-active');
+    if (active && active.dataset.nav === 'editor' && isMobileAdmin()) setActiveNav('editor');
   });
 
   document.querySelectorAll('.subtab-btn').forEach((btn) => {
@@ -824,8 +858,13 @@
     `).join('');
     document.querySelectorAll('[data-remove-category]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        await apiFetch(`/categories/${btn.dataset.removeCategory}`, { method: 'DELETE' });
-        loadCategories();
+        if (!confirm('¿Quitar esta categoría? Los productos que la usaban quedan sin categoría.')) return;
+        try {
+          await apiFetch(`/categories/${btn.dataset.removeCategory}`, { method: 'DELETE' });
+          loadCategories();
+        } catch (err) {
+          alert(`No se pudo quitar la categoría: ${err.message}`);
+        }
       });
     });
   }
@@ -840,9 +879,13 @@
     const input = document.getElementById('newCategoryName');
     const name = input.value.trim();
     if (!name) return;
-    await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, slug: slugify(name) }) });
-    input.value = '';
-    loadCategories();
+    try {
+      await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, slug: slugify(name) }) });
+      input.value = '';
+      loadCategories();
+    } catch (err) {
+      alert(`No se pudo agregar la categoría: ${err.message}`);
+    }
   });
 
   // --- Productos ---
