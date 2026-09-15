@@ -164,3 +164,53 @@ async function applySiteBranding() {
 }
 
 applySiteBranding();
+
+/* ---- header: menú móvil, clases (categorías) y buscador ----
+   Compartido por todas las páginas de la tienda que traen el header
+   (ver nav-top/nav-bottom en components.css); páginas sin ese markup
+   simplemente no tienen los elementos y cada init sale sin hacer nada. */
+
+function initMobileNavToggle() {
+  const toggle = document.getElementById('navToggle');
+  const panel = document.getElementById('navMobilePanel');
+  if (!toggle || !panel) return;
+  toggle.addEventListener('click', () => {
+    const isOpen = panel.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  });
+}
+
+// Las "clases" del header son las categorías ya creadas en el panel admin
+// (Mujer, Hombre, Ocasiones...) — mismo listado que alimenta el filtro del
+// catálogo, solo que acá cada una linkea directo con el filtro aplicado.
+async function initNavClasses() {
+  const desktopList = document.getElementById('navClasses');
+  const mobileList = document.getElementById('navClassesMobile');
+  if (!desktopList && !mobileList) return;
+  try {
+    const categories = await apiFetch('/categories');
+    if (categories.length === 0) return;
+    const items = categories
+      .map((c) => `<li><a href="/catalogo.html?category_id=${c.id}">${c.name}</a></li>`)
+      .join('');
+    if (desktopList) desktopList.innerHTML = items;
+    if (mobileList) mobileList.innerHTML = items;
+  } catch (_err) {
+    // sin categorías todavía, o falló la carga: el header se queda sin esa lista
+  }
+}
+
+function initNavSearch() {
+  document.querySelectorAll('.nav-search').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const query = new FormData(form).get('q');
+      const params = query ? `?search=${encodeURIComponent(query)}` : '';
+      window.location.href = `/catalogo.html${params}`;
+    });
+  });
+}
+
+initMobileNavToggle();
+initNavClasses();
+initNavSearch();

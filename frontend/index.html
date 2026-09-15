@@ -30,15 +30,27 @@
 <a class="skip-link" href="#main">Saltar al contenido</a>
 
 <header class="nav">
-  <div class="container nav-inner">
-    <a href="/index.html" aria-label="JG Parfums, inicio">
+  <div class="container nav-top">
+    <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <a class="nav-logo-link" href="/index.html" aria-label="JG Parfums, inicio">
       <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
     </a>
-    <ul class="nav-links">
-      <li><a href="/catalogo.html">Catálogo</a></li>
-      <li><a href="/mi-cuenta.html">Mi cuenta</a></li>
-    </ul>
-    <div class="nav-actions">
+    <a class="nav-icon-btn nav-top-cart" href="/carrito.html" aria-label="Carrito">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+      <span class="nav-cart-count" data-cart-count hidden>0</span>
+    </a>
+  </div>
+  <div class="container nav-bottom">
+    <ul class="nav-classes" id="navClasses"></ul>
+    <div class="nav-bottom-actions">
+      <form class="nav-search" id="navSearchForm" role="search">
+        <input type="search" name="q" placeholder="Buscar perfumes" aria-label="Buscar perfumes">
+        <button type="submit" aria-label="Buscar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+        </button>
+      </form>
       <a class="nav-icon-btn" href="/mi-cuenta.html" aria-label="Mi cuenta">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
       </a>
@@ -46,12 +58,16 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.5 10.5a2 2 0 0 0 2 1.5h7a2 2 0 0 0 2-1.7L20 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
         <span class="nav-cart-count" data-cart-count hidden>0</span>
       </a>
-      <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
     </div>
   </div>
   <nav class="nav-mobile-panel container" id="navMobilePanel">
+    <form class="nav-search nav-search-mobile" id="navSearchFormMobile" role="search">
+      <input type="search" name="q" placeholder="Buscar perfumes" aria-label="Buscar perfumes">
+      <button type="submit" aria-label="Buscar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+      </button>
+    </form>
+    <ul class="nav-mobile-classes" id="navClassesMobile"></ul>
     <a href="/catalogo.html">Catálogo</a>
     <a href="/mi-cuenta.html">Mi cuenta</a>
   </nav>
@@ -133,13 +149,9 @@
 <script src="/js/site-settings.js"></script>
 <script src="/js/cart.js"></script>
 <script src="/js/sections.js"></script>
+<script src="/js/reveal.js"></script>
 <script>
   renderPageSections('home');
-  document.getElementById('navToggle').addEventListener('click', (event) => {
-    const panel = document.getElementById('navMobilePanel');
-    const isOpen = panel.classList.toggle('is-open');
-    event.currentTarget.setAttribute('aria-expanded', String(isOpen));
-  });
 
   // Escalera genérica: se muestra mientras carga el catálogo, y si no hay
   // ningún producto todavía (catálogo vacío) se queda así — nunca se

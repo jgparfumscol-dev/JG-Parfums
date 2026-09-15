@@ -15,15 +15,31 @@ function renderAnnouncement(section) {
   `;
 }
 
+// Color de texto legible sobre el color de botón que elija el admin —
+// mismo criterio de luminancia relativa que usa applyAccentColor en
+// site-settings.js para no depender de que el admin acierte el contraste.
+function contrastTextColor(hex) {
+  const h = /^#[0-9A-Fa-f]{6}$/.test(hex || '') ? hex.slice(1) : null;
+  if (!h) return '#FFFFFF';
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? '#201E1F' : '#FFFFFF';
+}
+
 function renderBanner(section) {
   const c = section.content || {};
   const bgStyle = c.image_url ? ` style="background-image:url('${c.image_url}')"` : '';
+  const ctaStyle = c.cta_color
+    ? ` style="background-color:${c.cta_color}; border-color:${c.cta_color}; color:${contrastTextColor(c.cta_color)};"`
+    : '';
   return `
     <section class="section pgs-banner"${bgStyle}>
       <div class="container pgs-banner-inner">
         ${c.title ? `<h2 class="h2 pgs-banner-title">${c.title}</h2>` : ''}
         ${c.subtitle ? `<p class="pgs-banner-subtitle">${c.subtitle}</p>` : ''}
-        ${c.link_url ? `<a class="btn btn-onDark" href="${c.link_url}">${c.cta_label || 'Ver más'}</a>` : ''}
+        ${c.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${c.link_url}">${c.cta_label || 'Ver más'}</a>` : ''}
       </div>
     </section>
   `;

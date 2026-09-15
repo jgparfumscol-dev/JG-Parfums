@@ -604,8 +604,9 @@
         <div class="field"><label for="s_banner_image">URL de la imagen</label><input id="s_banner_image" placeholder="https://..."></div>
         <div class="field"><label for="s_banner_title">Título</label><input id="s_banner_title"></div>
         <div class="field"><label for="s_banner_subtitle">Subtítulo</label><input id="s_banner_subtitle"></div>
-        <div class="field"><label for="s_banner_link">Enlace (opcional)</label><input id="s_banner_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_banner_link">Enlace del botón (producto o promoción)</label><input id="s_banner_link" placeholder="/catalogo.html"></div>
         <div class="field"><label for="s_banner_cta">Texto del botón</label><input id="s_banner_cta" placeholder="Ver catálogo"></div>
+        <div class="field"><label for="s_banner_cta_color">Color del botón</label><input type="color" id="s_banner_cta_color" value="#D3AE6A" style="height:44px; padding:var(--space-1); cursor:pointer;"></div>
       </div>
 
       <div id="sectionFieldsHeader" hidden>
@@ -1712,6 +1713,7 @@
       document.getElementById('s_banner_subtitle').value = c.subtitle || '';
       document.getElementById('s_banner_link').value = c.link_url || '';
       document.getElementById('s_banner_cta').value = c.cta_label || '';
+      document.getElementById('s_banner_cta_color').value = c.cta_color || '#D3AE6A';
     } else if (type === 'header') {
       document.getElementById('s_header_title').value = c.title || '';
       document.getElementById('s_header_subtitle').value = c.subtitle || '';
@@ -1797,6 +1799,7 @@
         subtitle: document.getElementById('s_banner_subtitle').value.trim() || null,
         link_url: document.getElementById('s_banner_link').value.trim() || null,
         cta_label: document.getElementById('s_banner_cta').value.trim() || null,
+        cta_color: document.getElementById('s_banner_cta_color').value || null,
       };
     } else if (type === 'header') {
       content = {
