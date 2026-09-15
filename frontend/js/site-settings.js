@@ -13,7 +13,7 @@
 
 const FONT_PAIRINGS = {
   classic: {
-    display: "'Bodoni Moda', 'Didot', Georgia, serif",
+    display: "'Newsreader', Georgia, serif",
     body: "'Jost', 'Futura', 'Century Gothic', system-ui, sans-serif",
     url: null, // ya la carga tokens.css
   },

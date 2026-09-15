@@ -26,19 +26,19 @@ colors:
   info: "#3F5D73"
 typography:
   display:
-    fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
+    fontFamily: "'Newsreader', Georgia, serif"
     fontSize: "clamp(2.5rem, 6vw, 4rem)"
     fontWeight: 500
     lineHeight: 1.05
     letterSpacing: "-0.02em"
   h1:
-    fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
+    fontFamily: "'Newsreader', Georgia, serif"
     fontSize: "clamp(2rem, 5vw, 3rem)"
     fontWeight: 500
     lineHeight: 1.15
     letterSpacing: "-0.01em"
   h2:
-    fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
+    fontFamily: "'Newsreader', Georgia, serif"
     fontSize: "clamp(1.75rem, 3vw, 2.125rem)"
     fontWeight: 500
     lineHeight: 1.2
@@ -72,7 +72,7 @@ typography:
     fontWeight: 400
     lineHeight: 1.4
   price:
-    fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
+    fontFamily: "'Newsreader', Georgia, serif"
     fontSize: "clamp(22px, 2vw, 26px)"
     fontWeight: 600
     lineHeight: 1
@@ -82,7 +82,7 @@ typography:
     fontWeight: 600
     lineHeight: 1
   note-italic:
-    fontFamily: "'Bodoni Moda', 'Didot', Georgia, serif"
+    fontFamily: "'Newsreader', Georgia, serif"
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.4
@@ -168,26 +168,28 @@ Paleta de 5 colores de marca más una escala de dorado y neutros derivados — d
 
 ## Typography
 
-**Display Font:** Bodoni Moda (con Didot, Georgia, serif de respaldo)
+**Display Font:** Newsreader (con Georgia, serif de respaldo)
 **Body Font:** Jost (con Futura, Century Gothic, system-ui de respaldo)
 
-**Character:** Un didone de alto contraste (puente con el "PARFUMS" clásico del logo) contra una geométrica neutral (puente con el "JG" macizo). Dos familias, nunca más — la letra del logotipo vive solo en el logo.
+**Character:** Un serif editorial de contraste moderado (evoca el cuaderno técnico, sin la fragilidad de un didone) contra una geométrica neutral (puente con el "JG" macizo del logo). Dos familias, nunca más — la letra del logotipo vive solo en el logo.
+
+> Cambio de fuente (post-lanzamiento): el display original era Bodoni Moda, un didone de contraste muy alto. En pruebas reales, sus trazos finos se volvían casi invisibles contra fondos claros en monitores de escritorio de densidad estándar — no solo por debajo de cierto tamaño, el problema persistía incluso en tamaños grandes de título. Se reemplazó por Newsreader (mismo serif ya usado en la combinación "Cálido"), que mantiene el tono editorial/elegante pero con un contraste de trazo mucho más moderado y un eje óptico pensado para lectura en pantalla.
 
 ### Hierarchy
 - **Display** (500, clamp 40–64px, 1.05): hero, una vez por página.
 - **H1** (500, clamp 32–48px, 1.15): título de página.
-- **H2** (500, clamp 28–34px, 1.2): título de sección, siempre con el filete dorado de 40px debajo. El piso subió de 26 a 28px para respetar la Regla de los 28px — a 26px las serifas finas de Bodoni ya se perdían contra fondo claro.
+- **H2** (500, clamp 28–34px, 1.2): título de sección, siempre con el filete dorado de 40px debajo.
 - **H3** (500, 20–22px, 1.3, Jost): nombre de producto en tarjeta.
 - **Body** (400, 16px, 1.6): texto general, máximo 68 caracteres de ancho de línea.
 - **Small** (400, 14px, 1.5): texto secundario, campos de formulario, líneas de metadatos (`.text-small`).
 - **Meta** (400, 13px, 1.4): segunda línea bajo el nombre en tarjeta de producto (casa · tamaño) — un paso por debajo de Small a propósito, para no competir con el nombre.
 - **Label** (500, 12px, 1.4, tracking 0.03em): etiquetas de stock, tamaños en ml — nunca mayúsculas sostenidas salvo "PARFUMS" dentro del logo.
-- **Price** (600, 22–26px, Bodoni, 1): precio en ficha de producto.
-- **Price card** (600, 17px, Jost, 1): precio en tarjeta de catálogo y total de recibo (`.ledger-row-total`) — Jost, no Bodoni, para que no se vuelva ruido repetido en grilla.
-- **Nota itálica** (400, 15px, Bodoni): valor de fila técnica (`.spec-row dd`) y nombre de fase olfativa (`.scent-tier-name`) — la única cursiva permitida, reservada a información real, nunca decorativa.
+- **Price** (600, 22–26px, Newsreader, 1): precio en ficha de producto.
+- **Price card** (600, 17px, Jost, 1): precio en tarjeta de catálogo y total de recibo (`.ledger-row-total`) — Jost, no Newsreader, para que no se vuelva ruido repetido en grilla.
+- **Nota itálica** (400, 15px, Newsreader): valor de fila técnica (`.spec-row dd`) y nombre de nota en la escalera olfativa (`.notes-step-name`) — la única cursiva permitida, reservada a información real, nunca decorativa.
 
 ### Named Rules
-**La Regla de los 28px.** Bodoni Moda solo se usa desde 28px hacia arriba; por debajo sus serifas finas se rompen en pantallas de baja densidad.
+**Piso de 28px para títulos.** El display font (Newsreader) se mantiene legible en tamaños más chicos que un didone clásico gracias a su eje óptico, pero los títulos (Display/H1/H2) no bajan de 28px de todas formas — es el tamaño donde cualquier serif con algo de contraste de trazo se lee con comodidad sin esfuerzo, en cualquier densidad de pantalla. Por debajo de eso (nombre de producto en tarjeta, etiquetas), se usa Jost.
 
 ## Layout
 
@@ -231,7 +233,7 @@ Radio de 2px en botones, campos y tarjetas — geometría casi dura, deliberadam
 - Barra fija (`sticky top:0`), fondo Marfil, borde inferior 1px `ink-100`, alto 72px. Logo horizontal a la izquierda, links de texto (sin mayúsculas, sin subrayado permanente) visibles desde 1024px, menú hamburguesa por debajo. Ícono de carrito con contador circular en `gold-800`.
 
 ### Spec Row (firma de la marca)
-Fila de ficha técnica: `dt` de 12px en `text-muted` a la izquierda (columna fija de 88px), `dd` en Bodoni itálica de 15px a la derecha, separadas por borde inferior de 1px. Reemplaza cualquier patrón de "ícono + etiqueta" para mostrar notas, concentración, tamaño. Reutilizable en cualquier superficie que necesite comunicar un hecho de producto en vez de un adorno.
+Fila de ficha técnica: `dt` de 12px en `text-muted` a la izquierda (columna fija de 88px), `dd` en Newsreader itálica de 15px a la derecha, separadas por borde inferior de 1px. Reemplaza cualquier patrón de "ícono + etiqueta" para mostrar notas, concentración, tamaño. Reutilizable en cualquier superficie que necesite comunicar un hecho de producto en vez de un adorno.
 
 ### Scent Diagram (firma de la marca)
 Pirámide olfativa como notación, no como ilustración: tres filas (Salida / Corazón / Fondo) con una barra de progreso de 1px de alto que se llena en dorado con `cubic-bezier(0.16, 1, 0.3, 1)` al cargar la página, respetando `prefers-reduced-motion`. Vive sobre fondo Ónix.

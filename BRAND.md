@@ -199,15 +199,17 @@ Equivalente en Tailwind v4 (`app/globals.css`):
 
 | Rol | Familia | Por qué |
 |---|---|---|
-| Títulos y precios grandes | **Bodoni Moda** (Google Fonts, variable) | El didone es el idioma nativo de la perfumería: alto contraste de trazo, serifas finas. Hace de puente con el "PARFUMS" clásico del logo. Variable, así que solo pesa un archivo. |
+| Títulos y precios grandes | **Newsreader** (Google Fonts, variable) | Serif editorial de contraste moderado con eje óptico pensado para pantalla. Mantiene el tono de cuaderno técnico sin la fragilidad de un didone clásico. Variable, así que solo pesa un archivo. |
 | Interfaz, cuerpo, botones, formularios | **Jost** (Google Fonts, variable) | Geométrica, emparenta directo con el "JG" del logo. Neutral en formularios y legible en móvil. |
 
 Dos familias, no más. La letra del logotipo **no se usa en la interfaz**: vive solo en el logo.
 
-Fallbacks: `Bodoni Moda, "Didot", Georgia, serif` · `Jost, "Futura", "Century Gothic", system-ui, sans-serif`
+Fallbacks: `Newsreader, Georgia, serif` · `Jost, "Futura", "Century Gothic", system-ui, sans-serif`
+
+> **Cambio post-lanzamiento (2026-09-16):** la familia de títulos original era Bodoni Moda, un didone de contraste muy alto. Verificado en producción, sus serifas finas se perdían contra fondos claros en monitores de escritorio de densidad estándar (no solo por debajo de cierto tamaño — el problema persistía incluso en Display/H1 grandes). Se reemplazó por Newsreader en todo el sitio.
 
 **Reglas duras**
-- Bodoni Moda solo desde 28 px hacia arriba. Por debajo, sus serifas finas desaparecen en pantallas de baja densidad y en móvil se ve rota.
+- Los títulos (Display/H1/H2) no bajan de 28 px. Por debajo de eso se usa Jost, no la familia de títulos — a cualquier tamaño chico, un serif con algo de contraste de trazo cuesta más de leer que una geométrica neutral.
 - Nada de mayúsculas sostenidas para etiquetas de interfaz. Si algo necesita destacar, se destaca con tamaño o color, no con `text-transform: uppercase`. Excepción única: la palabra "PARFUMS" cuando aparece dentro del logo.
 - Sin cursivas decorativas. La cursiva se reserva para nombres de notas olfativas (*bergamota, oud, ámbar*) y ahí sí es información, no adorno.
 - Ancho de línea máximo 68 caracteres en textos largos.
@@ -218,17 +220,17 @@ Escala modular 1.25 (cuarta mayor reducida), base 16 px. Móvil primero; los tam
 
 | Token | Tamaño | Familia | Peso | Interlínea | Tracking | Uso |
 |---|---|---|---|---|---|---|
-| `display` | 40 (64) | Bodoni Moda | 500 | 1.05 | -0.02em | Hero, una vez por página |
-| `h1` | 32 (48) | Bodoni Moda | 500 | 1.15 | -0.01em | Título de página |
-| `h2` | 26 (34) | Bodoni Moda | 500 | 1.2 | -0.01em | Título de sección |
+| `display` | 40 (64) | Newsreader | 500 | 1.05 | -0.02em | Hero, una vez por página |
+| `h1` | 32 (48) | Newsreader | 500 | 1.15 | -0.01em | Título de página |
+| `h2` | 28 (34) | Newsreader | 500 | 1.2 | -0.01em | Título de sección |
 | `h3` | 20 (22) | Jost | 500 | 1.3 | 0 | Nombre de producto en tarjeta |
 | `body` | 16 | Jost | 400 | 1.6 | 0.005em | Texto general |
 | `small` | 14 | Jost | 400 | 1.5 | 0.01em | Metadatos, notas de envío |
 | `caption` | 12 | Jost | 500 | 1.4 | 0.03em | Etiquetas de stock, tallas de ml |
-| `price` | 22 (26) | Bodoni Moda | 600 | 1 | 0 | Precio en ficha de producto |
+| `price` | 22 (26) | Newsreader | 600 | 1 | 0 | Precio en ficha de producto |
 | `price-card` | 17 | Jost | 600 | 1 | 0 | Precio en tarjeta de catálogo |
 
-El precio de la ficha va en Bodoni y el de la tarjeta en Jost a propósito: en cuadrícula, el didone en tamaño pequeño y repetido 20 veces se vuelve ruido.
+El precio de la ficha va en Newsreader y el de la tarjeta en Jost a propósito: en cuadrícula, un serif en tamaño pequeño y repetido 20 veces se vuelve ruido.
 
 ---
 

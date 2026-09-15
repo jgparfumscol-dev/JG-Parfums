@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Jost:wght@400;500;600&display=swap');
 
 :root {
   /* marca */
@@ -41,7 +41,7 @@
   --accent-text: var(--gold-700);
 
   /* tipografía */
-  --font-display: 'Bodoni Moda', 'Didot', Georgia, serif;
+  --font-display: 'Newsreader', Georgia, serif;
   --font-body: 'Jost', 'Futura', 'Century Gothic', system-ui, sans-serif;
 
   /* espaciado (escala de 4px) */
