@@ -758,7 +758,10 @@ function initClassesCarousel(el) {
   const wrap = el.querySelector('.pgs-carousel-wrap');
   if (!wrap) return;
   const interval = Number(el.dataset.autoplayInterval) || 0;
-  initSnapCarousel(wrap, { loop: interval > 0, autoplayInterval: interval });
+  // Siempre en bucle: seguir dando a la misma flecha vuelve al principio
+  // (o al final, desde la primera) en vez de quedarse deshabilitada en la
+  // punta — independiente de si el autoavance está prendido o no.
+  initSnapCarousel(wrap, { loop: true, autoplayInterval: interval });
 }
 
 function renderBrandLogo(brand, grayscale) {
@@ -815,7 +818,7 @@ function initBrandsCarousel(el) {
   // movimiento (ver renderBrandsCarousel), caso en el que ya no se marca
   // como "continuous" y cae acá igual, en modo manual normal.
   if (el.dataset.carouselMode === 'continuous') return;
-  initSnapCarousel(wrap, {});
+  initSnapCarousel(wrap, { loop: true });
 }
 
 function renderTestimonials(section) {

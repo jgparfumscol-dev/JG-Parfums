@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css">
-<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/tokens.css?v=20260916">
+<link rel="stylesheet" href="/css/components.css?v=20260916">
 <style>
   /* el bloque completo (título + form + whatsapp) se centra en una columna
      más angosta que el container de 1200px, para que no quede estirado de
@@ -34,7 +34,13 @@
     <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
-    <ul class="nav-classes" id="navClasses"></ul>
+    <div class="nav-classes-menu">
+      <button type="button" class="nav-classes-toggle" id="navClassesToggle" aria-haspopup="true" aria-expanded="false" aria-controls="navClasses">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        Clases
+      </button>
+      <ul class="nav-classes" id="navClasses"></ul>
+    </div>
     <a class="nav-logo-link" href="/index.html" aria-label="JG Parfums, inicio">
       <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
     </a>
@@ -130,11 +136,11 @@
   </div>
 </footer>
 
-<script src="/js/api.js"></script>
-<script src="/js/site-settings.js"></script>
-<script src="/js/cart.js"></script>
-<script src="/js/sections.js"></script>
-<script src="/js/reveal.js"></script>
+<script src="/js/api.js?v=20260916"></script>
+<script src="/js/site-settings.js?v=20260916"></script>
+<script src="/js/cart.js?v=20260916"></script>
+<script src="/js/sections.js?v=20260916"></script>
+<script src="/js/reveal.js?v=20260916"></script>
 <script>
   renderPageSections('contacto');
 

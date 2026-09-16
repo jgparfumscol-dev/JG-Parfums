@@ -224,6 +224,42 @@ async function initNavClasses() {
   }
 }
 
+// Menú de clases en escritorio (ver .nav-classes-menu en components.css):
+// botón con icono de menú + "Clases" que despliega un panel flotante,
+// distinto del panel de menú móvil de abajo. Se cierra al hacer clic
+// afuera, con Escape, o al elegir una clase.
+function initNavClassesToggle() {
+  const toggle = document.getElementById('navClassesToggle');
+  const dropdown = document.getElementById('navClasses');
+  if (!toggle || !dropdown) return;
+
+  function close() {
+    dropdown.classList.remove('is-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  function open() {
+    dropdown.classList.add('is-open');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  toggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (dropdown.classList.contains('is-open')) close();
+    else open();
+  });
+  dropdown.addEventListener('click', (event) => {
+    if (event.target.closest('a')) close();
+  });
+  document.addEventListener('click', (event) => {
+    if (!dropdown.classList.contains('is-open')) return;
+    if (dropdown.contains(event.target) || toggle.contains(event.target)) return;
+    close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') close();
+  });
+}
+
 function initNavSearch() {
   document.querySelectorAll('.nav-search').forEach((form) => {
     form.addEventListener('submit', (event) => {
@@ -237,5 +273,6 @@ function initNavSearch() {
 
 initMobileNavToggle();
 initNavClasses();
+initNavClassesToggle();
 initNavSearch();
 initNavScrollState();
