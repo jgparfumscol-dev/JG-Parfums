@@ -227,37 +227,113 @@ function contrastTextColor(hex) {
   return luminance > 0.6 ? '#201E1F' : '#FFFFFF';
 }
 
-// <picture> con la fuente de móvil (si el admin cargó una): el navegador
-// baja una sola imagen según su propio ancho, no las dos. Sin imagen_url
-// de escritorio pero con la de móvil, esa hace de <img> principal también
-// — así sigue habiendo algo que mostrar en pantallas anchas.
-function renderBanner(section) {
-  const c = section.content || {};
-  const mainImg = c.image_url || c.image_url_mobile;
+// Banner con una o varias fotos ("slides"). Compatible con el shape viejo
+// (un solo objeto plano con image_url/title/etc, sin `slides`): se trata
+// como un array de un solo elemento, así que ningún banner ya guardado se
+// rompe — el admin lo "actualiza" al nuevo shape la próxima vez que lo
+// edite y guarde desde el panel.
+function renderBannerSlide(slide, index, isFirst) {
+  const s = slide || {};
+  const mainImg = s.image_url || s.image_url_mobile;
   const pictureHtml = mainImg
     ? `
       <picture>
-        ${c.image_url_mobile ? `<source media="(max-width: 767px)" srcset="${c.image_url_mobile}">` : ''}
-        <img class="pgs-banner-media" src="${mainImg}" alt="${c.title || ''}">
+        ${s.image_url_mobile ? `<source media="(max-width: 767px)" srcset="${s.image_url_mobile}">` : ''}
+        <img class="pgs-banner-media" src="${mainImg}" alt="${s.title || ''}">
       </picture>
     `
     : '';
-  const ctaStyle = c.cta_color
-    ? ` style="background-color:${c.cta_color}; border-color:${c.cta_color}; color:${contrastTextColor(c.cta_color)};"`
+  const ctaStyle = s.cta_color
+    ? ` style="background-color:${s.cta_color}; border-color:${s.cta_color}; color:${contrastTextColor(s.cta_color)};"`
     : '';
   return `
-    <section class="section pgs-banner">
+    <div class="pgs-banner-slide" data-slide data-index="${index}"${isFirst ? '' : ' hidden'}>
       ${pictureHtml}
       <div class="pgs-banner-scrim"></div>
       <div class="pgs-banner-inner">
         <div class="pgs-banner-copy">
-          ${c.title ? `<h2 class="h2 pgs-banner-title">${c.title}</h2>` : ''}
-          ${c.subtitle ? `<p class="pgs-banner-subtitle">${c.subtitle}</p>` : ''}
-          ${c.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${c.link_url}">${c.cta_label || 'Ver más'}</a>` : ''}
+          ${s.title ? `<h2 class="h2 pgs-banner-title">${s.title}</h2>` : ''}
+          ${s.subtitle ? `<p class="pgs-banner-subtitle">${s.subtitle}</p>` : ''}
+          ${s.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${s.link_url}">${s.cta_label || 'Ver más'}</a>` : ''}
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderBanner(section) {
+  const c = section.content || {};
+  const slides = (c.slides && c.slides.length ? c.slides : [c]).filter(
+    (s) => s && (s.image_url || s.image_url_mobile || s.title || s.subtitle)
+  );
+  if (slides.length === 0) return '';
+  const interval = Math.max(2, Number(c.rotation_interval) || 5);
+  const slidesHtml = slides.map((s, i) => renderBannerSlide(s, i, i === 0)).join('');
+  const dotsHtml =
+    slides.length > 1
+      ? `<div class="pgs-banner-dots">${slides
+          .map((_, i) => `<button type="button" class="pgs-banner-dot${i === 0 ? ' is-active' : ''}" data-dot="${i}" aria-label="Ir a la foto ${i + 1}"></button>`)
+          .join('')}</div>`
+      : '';
+  return `
+    <section class="section pgs-banner" data-section-id="${section.id}" data-interval="${interval}">
+      ${slidesHtml}
+      ${dotsHtml}
     </section>
   `;
+}
+
+// Misma lógica de rotación que la barra de anuncios (ver
+// initAnnouncementBar): pausa al pasar el mouse/enfocar/pestaña oculta, sin
+// botón de pausa visible, y sin autoplay si se prefiere menos movimiento
+// (ahí los puntos siguen sirviendo para navegar a mano).
+function initBanner(el) {
+  const slides = Array.from(el.querySelectorAll('[data-slide]'));
+  if (slides.length <= 1) return;
+  let current = 0;
+
+  function show(index) {
+    const next = (index + slides.length) % slides.length;
+    if (next === current) return;
+    slides[current].hidden = true;
+    current = next;
+    slides[current].hidden = false;
+    el.querySelectorAll('[data-dot]').forEach((dot, i) => dot.classList.toggle('is-active', i === current));
+  }
+
+  el.querySelectorAll('[data-dot]').forEach((dot) => {
+    dot.addEventListener('click', () => show(Number(dot.dataset.dot)));
+  });
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const intervalMs = Number(el.dataset.interval) * 1000;
+  let timer = null;
+
+  function tick() {
+    show(current + 1);
+  }
+  function start() {
+    stop();
+    if (document.hidden) return;
+    timer = setInterval(tick, intervalMs);
+  }
+  function stop() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  start();
+  el.addEventListener('mouseenter', stop);
+  el.addEventListener('mouseleave', start);
+  el.addEventListener('focusin', stop);
+  el.addEventListener('focusout', start);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else start();
+  });
 }
 
 function renderHeader(section) {
@@ -663,6 +739,7 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
         if (section) initAnnouncementBar(el, section);
       });
       mount.querySelectorAll('.pgs-gallery[data-section-id]').forEach((el) => initGallery(el));
+      mount.querySelectorAll('.pgs-banner[data-section-id]').forEach((el) => initBanner(el));
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.

@@ -637,13 +637,13 @@
       </div>
 
       <div id="sectionFieldsBanner" hidden>
-        <div class="field"><label for="s_banner_image">URL de la imagen (escritorio)</label><input id="s_banner_image" placeholder="https://..."></div>
-        <div class="field"><label for="s_banner_image_mobile">URL de la imagen (móvil, opcional)</label><input id="s_banner_image_mobile" placeholder="Si la dejas vacía, se usa la de escritorio"></div>
-        <div class="field"><label for="s_banner_title">Título</label><input id="s_banner_title"></div>
-        <div class="field"><label for="s_banner_subtitle">Subtítulo</label><input id="s_banner_subtitle"></div>
-        <div class="field"><label for="s_banner_link">Enlace del botón (producto o promoción)</label><input id="s_banner_link" placeholder="/catalogo.html"></div>
-        <div class="field"><label for="s_banner_cta">Texto del botón</label><input id="s_banner_cta" placeholder="Ver catálogo"></div>
-        <div class="field"><label for="s_banner_cta_color">Color del botón</label><input type="color" id="s_banner_cta_color" value="#D3AE6A" style="height:44px; padding:var(--space-1); cursor:pointer;"></div>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Dimensiones recomendadas para que la foto llene el espacio sin recorte: <strong>1600×600px</strong> para escritorio y <strong>800×1000px</strong> para móvil. Si la foto no viene justo en esa proporción, se recorta lo mínimo para que nunca quede un marco vacío alrededor.</p>
+        <div class="field"><label for="s_banner_interval">Intervalo de rotación (segundos, si hay más de una foto)</label>
+          <input type="number" id="s_banner_interval" min="2" max="15" value="5">
+        </div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Fotos — arrastra o usa las flechas para reordenar. Agrega tantas como quieras.</p>
+        <div id="bannerSlideList"></div>
+        <button class="btn btn-secondary" type="button" id="addBannerSlideBtn" style="margin-top:var(--space-2);">+ Agregar foto</button>
       </div>
 
       <div id="sectionFieldsHeader" hidden>
@@ -1550,7 +1550,11 @@
         return count === 0 ? '(sin mensajes)' : `${count} mensaje(s) · ${posLabel}`;
       }
       case 'hero_product': return c.heading || '(sin título)';
-      case 'banner': return c.title || '(sin título)';
+      case 'banner': {
+        const slides = c.slides && c.slides.length ? c.slides : (c.image_url || c.image_url_mobile || c.title ? [c] : []);
+        if (slides.length === 0) return '(sin fotos)';
+        return slides.length === 1 ? (slides[0].title || '(sin título)') : `${slides.length} fotos rotando`;
+      }
       case 'header': return c.title || '(sin título)';
       case 'products': return c.heading || 'Grilla de productos';
       case 'text': return c.heading || '(sin título)';
@@ -1970,6 +1974,92 @@
     });
   }
 
+  function bannerSlideRowHtml(slide = {}) {
+    const esc = (v) => (v || '').replace(/"/g, '&quot;');
+    return `
+      <div class="image-row banner-slide-row" draggable="true" style="align-items:flex-start;">
+        <div class="announcement-msg-handle" aria-hidden="true" title="Arrastrar para reordenar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.4"/><circle cx="16" cy="6" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="16" cy="12" r="1.4"/><circle cx="8" cy="18" r="1.4"/><circle cx="16" cy="18" r="1.4"/></svg>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:var(--space-2); min-width:0;">
+          <input class="input-sm" placeholder="URL de la imagen (escritorio, 1600×600 recomendado)" data-bs-image value="${esc(slide.image_url)}">
+          <input class="input-sm" placeholder="URL de la imagen (móvil, 800×1000 recomendado — opcional)" data-bs-image-mobile value="${esc(slide.image_url_mobile)}">
+          <input class="input-sm" placeholder="Título (opcional)" data-bs-title value="${esc(slide.title)}">
+          <input class="input-sm" placeholder="Subtítulo (opcional)" data-bs-subtitle value="${esc(slide.subtitle)}">
+          <input class="input-sm" placeholder="Enlace del botón (opcional): /catalogo.html" data-bs-link value="${esc(slide.link_url)}">
+          <div style="display:flex; gap:var(--space-2);">
+            <input class="input-sm" placeholder="Texto del botón" data-bs-cta-label value="${esc(slide.cta_label)}" style="flex:1;">
+            <input type="color" data-bs-cta-color value="${esc(slide.cta_color) || '#D3AE6A'}" style="height:44px; width:44px; padding:var(--space-1); cursor:pointer; flex-shrink:0;">
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:var(--space-1);">
+          <button type="button" class="btn btn-secondary" data-bs-up aria-label="Subir foto" style="height:36px; width:36px; padding:var(--space-1);">↑</button>
+          <button type="button" class="btn btn-secondary" data-bs-down aria-label="Bajar foto" style="height:36px; width:36px; padding:var(--space-1);">↓</button>
+          <button type="button" class="remove-btn" data-bs-remove aria-label="Quitar foto">Quitar</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function collectBannerSlides() {
+    return Array.from(document.querySelectorAll('#bannerSlideList .banner-slide-row'))
+      .map((row) => ({
+        image_url: row.querySelector('[data-bs-image]').value.trim() || null,
+        image_url_mobile: row.querySelector('[data-bs-image-mobile]').value.trim() || null,
+        title: row.querySelector('[data-bs-title]').value.trim() || null,
+        subtitle: row.querySelector('[data-bs-subtitle]').value.trim() || null,
+        link_url: row.querySelector('[data-bs-link]').value.trim() || null,
+        cta_label: row.querySelector('[data-bs-cta-label]').value.trim() || null,
+        cta_color: row.querySelector('[data-bs-cta-color]').value || null,
+      }))
+      .filter((s) => s.image_url || s.image_url_mobile || s.title || s.subtitle);
+  }
+
+  // Mismo mecanismo de arrastre + flechas que las fotos de la galería (ver
+  // bindGalleryImageRows) — el orden final es el orden de las filas en el DOM.
+  function bindBannerSlideRows() {
+    const list = document.getElementById('bannerSlideList');
+    let dragging = null;
+
+    list.querySelectorAll('.banner-slide-row').forEach((row) => {
+      row.addEventListener('dragstart', () => {
+        dragging = row;
+        row.classList.add('is-dragging');
+      });
+      row.addEventListener('dragend', () => {
+        dragging = null;
+        row.classList.remove('is-dragging');
+      });
+      row.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!dragging || dragging === row) return;
+        const rect = row.getBoundingClientRect();
+        const before = event.clientY - rect.top < rect.height / 2;
+        row.parentNode.insertBefore(dragging, before ? row : row.nextSibling);
+      });
+    });
+
+    list.querySelectorAll('[data-bs-up]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.banner-slide-row');
+        const prev = row.previousElementSibling;
+        if (prev) row.parentNode.insertBefore(row, prev);
+      });
+    });
+    list.querySelectorAll('[data-bs-down]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.banner-slide-row');
+        const next = row.nextElementSibling;
+        if (next) row.parentNode.insertBefore(next, row);
+      });
+    });
+    list.querySelectorAll('[data-bs-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (confirm('¿Quitar esta foto del banner?')) btn.closest('.banner-slide-row').remove();
+      });
+    });
+  }
+
   document.getElementById('addTestimonialBtn').addEventListener('click', () => {
     document.getElementById('testimonialList').insertAdjacentHTML('beforeend', testimonialRowHtml());
     bindRemoveRowButtons('testimonialList');
@@ -1994,6 +2084,10 @@
     document.getElementById('galleryImageList').insertAdjacentHTML('beforeend', galleryImageRowHtml());
     bindGalleryImageRows();
   });
+  document.getElementById('addBannerSlideBtn').addEventListener('click', () => {
+    document.getElementById('bannerSlideList').insertAdjacentHTML('beforeend', bannerSlideRowHtml());
+    bindBannerSlideRows();
+  });
 
   function openSectionDialog(section, forcedType) {
     editingSectionId = section ? section.id : null;
@@ -2015,13 +2109,12 @@
       document.getElementById('announcementMessageList').innerHTML = (c.messages && c.messages.length ? c.messages : [{}]).map(announcementMessageRowHtml).join('');
       bindAnnouncementMessageRows();
     } else if (type === 'banner') {
-      document.getElementById('s_banner_image').value = c.image_url || '';
-      document.getElementById('s_banner_image_mobile').value = c.image_url_mobile || '';
-      document.getElementById('s_banner_title').value = c.title || '';
-      document.getElementById('s_banner_subtitle').value = c.subtitle || '';
-      document.getElementById('s_banner_link').value = c.link_url || '';
-      document.getElementById('s_banner_cta').value = c.cta_label || '';
-      document.getElementById('s_banner_cta_color').value = c.cta_color || '#D3AE6A';
+      // Compatible con banners guardados antes de que existieran varias
+      // fotos: si no hay `slides`, el content mismo es la única foto.
+      const slides = c.slides && c.slides.length ? c.slides : (c.image_url || c.image_url_mobile || c.title ? [c] : [{}]);
+      document.getElementById('s_banner_interval').value = c.rotation_interval || 5;
+      document.getElementById('bannerSlideList').innerHTML = slides.map(bannerSlideRowHtml).join('');
+      bindBannerSlideRows();
     } else if (type === 'header') {
       document.getElementById('s_header_title').value = c.title || '';
       document.getElementById('s_header_subtitle').value = c.subtitle || '';
@@ -2126,14 +2219,14 @@
       }
     } else if (type === 'banner') {
       content = {
-        image_url: document.getElementById('s_banner_image').value.trim() || null,
-        image_url_mobile: document.getElementById('s_banner_image_mobile').value.trim() || null,
-        title: document.getElementById('s_banner_title').value.trim() || null,
-        subtitle: document.getElementById('s_banner_subtitle').value.trim() || null,
-        link_url: document.getElementById('s_banner_link').value.trim() || null,
-        cta_label: document.getElementById('s_banner_cta').value.trim() || null,
-        cta_color: document.getElementById('s_banner_cta_color').value || null,
+        slides: collectBannerSlides(),
+        rotation_interval: Number(document.getElementById('s_banner_interval').value) || 5,
       };
+      if (content.slides.length === 0) {
+        errorEl.textContent = 'Agrega al menos una foto.';
+        errorEl.hidden = false;
+        return;
+      }
     } else if (type === 'header') {
       content = {
         title: document.getElementById('s_header_title').value.trim() || null,

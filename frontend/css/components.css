@@ -620,29 +620,39 @@
    clases propias, trae las suyas.
    ============================================================ */
 
-/* banner: la altura la da la imagen, no al revés — antes era background-
-   size:cover dentro de una caja con padding fijo, así que cualquier
-   imagen que no calzara con esa proporción quedaba recortada (en móvil y
-   en escritorio). Ahora es una <img> real a su ancho y alto natural — se
-   adapta del todo a la imagen, sin recorte y sin marco/letterboxing de
-   ningún tipo (a propósito sin tope de alto: un tope forzaría
-   object-fit:contain y volvería a aparecer el marco que se quiere evitar
-   — si el admin sube una foto muy vertical, la sección se hace más alta,
-   eso es preferible a un marco). <picture> con la fuente para móvil
-   (renderBanner en sections.js) hace que el navegador baje una sola
-   imagen, no las dos. */
+/* banner: proporción fija (object-fit:cover) en vez de dejar que la
+   imagen mande su propio alto — eso evitaba el recorte pero terminaba en
+   marco/letterboxing cuando la imagen no calzaba con el espacio
+   disponible, que es justo lo que se quiere evitar siempre que se pueda.
+   Con una proporción fija y conocida de antemano (ver dimensiones
+   recomendadas en el editor admin: 1600×600 escritorio, 800×1000 móvil)
+   el recorte es mínimo si la imagen ya viene en esa proporción, y nunca
+   hay marco. <picture> con la fuente de móvil (renderBanner en
+   sections.js) hace que el navegador baje una sola imagen, no las dos.
+   Admite una o varias fotos ("slides"): con una sola no hay puntos ni
+   rotación; con varias, rota sola cada `rotation_interval` segundos (se
+   pausa con hover/foco/pestaña oculta — sin botón de pausa visible,
+   misma razón que la barra de anuncios) y los puntos de abajo permiten
+   saltar a cualquiera a mano. */
 .pgs-banner {
   position: relative;
   overflow: hidden;
   background: var(--jg-onyx);
   color: #FFFFFF;
-  min-height: 320px; /* resguardo si la sección no tiene imagen (solo texto) */
+  aspect-ratio: 8 / 3;
 }
-.pgs-banner picture { display: block; }
+@media (max-width: 767px) {
+  .pgs-banner { aspect-ratio: 4 / 5; }
+}
+.pgs-banner-slide { position: absolute; inset: 0; }
+.pgs-banner-slide[hidden] { display: none; }
+.pgs-banner picture { display: block; width: 100%; height: 100%; }
 .pgs-banner-media {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 .pgs-banner-scrim {
   position: absolute;
@@ -668,6 +678,27 @@
 @media (min-width: 768px) {
   .pgs-banner-subtitle { font-size: 16px; }
 }
+
+.pgs-banner-dots {
+  position: absolute;
+  z-index: 1;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-2);
+}
+.pgs-banner-dot {
+  width: 22px;
+  height: 2px;
+  background: rgba(255, 255, 255, .4);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.pgs-banner-dot.is-active,
+.pgs-banner-dot:hover { background: #FFFFFF; }
 
 /* galería de fotos: una imagen a todo el ancho, grilla contenida, tira
    pegada para comparar, o carrusel de navegación manual (sin autoplay, así
