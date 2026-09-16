@@ -909,6 +909,194 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 .pgs-gallery-dot.is-active,
 .pgs-gallery-dot:hover { background: #FFFFFF; }
 
+/* --- Carrusel de clases y carrusel de marcas ---
+   Vocabulario compartido de pista con scroll-snap (ver initSnapCarousel en
+   sections.js): la cantidad de tarjetas/logos visibles por pantalla se fija
+   con custom properties (--pgs-cards-*/--pgs-logos-*) que pone cada sección
+   inline, según lo que configuró el admin — acá solo se leen. */
+.pgs-carousel-wrap { position: relative; }
+.pgs-carousel-track {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pgs-carousel-track::-webkit-scrollbar { display: none; }
+.pgs-carousel-track > * { scroll-snap-align: start; flex-shrink: 0; }
+
+.pgs-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jg-white);
+  color: var(--text);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 150ms;
+  z-index: 1;
+}
+.pgs-carousel-arrow:hover { border-color: var(--gold-600); }
+.pgs-carousel-arrow:disabled { opacity: .35; cursor: not-allowed; }
+.pgs-carousel-arrow-prev { left: calc(-1 * var(--space-4)); }
+.pgs-carousel-arrow-next { right: calc(-1 * var(--space-4)); }
+@media (max-width: 767px) {
+  /* En móvil se desliza al dedo; las flechas quedan pegadas al borde del
+     container en vez de salirse de la pantalla. */
+  .pgs-carousel-arrow-prev { left: 0; }
+  .pgs-carousel-arrow-next { right: 0; }
+}
+
+/* Clases: tarjeta con proporción fija, sin marco en la imagen (radio 0) y
+   2px en la tarjeta — mismo criterio que el resto de imágenes de producto
+   (ver Shapes en DESIGN.md). Cantidad visible por pantalla vía --pgs-cards-*. */
+.pgs-classes-carousel .pgs-carousel-track { --pgs-cards: var(--pgs-cards-mobile, 1.3); }
+@media (min-width: 768px) {
+  .pgs-classes-carousel .pgs-carousel-track { --pgs-cards: var(--pgs-cards-tablet, 3); }
+}
+@media (min-width: 1024px) {
+  .pgs-classes-carousel .pgs-carousel-track { --pgs-cards: var(--pgs-cards-desktop, 4); }
+}
+.pgs-class-card {
+  display: block;
+  flex: 0 0 calc((100% - (var(--pgs-cards) - 1) * var(--space-4)) / var(--pgs-cards));
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+}
+.pgs-class-card-media {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+.pgs-class-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Excepción acotada a esta tarjeta (ver DESIGN.md, Cards / Containers): la
+   regla general de "nunca transform en hover" es para la tarjeta de
+   producto. Acá solo escala la imagen, la tarjeta no se mueve ni gana
+   sombra. */
+.pgs-class-card:hover .pgs-class-card-media img,
+.pgs-class-card:focus-visible .pgs-class-card-media img { transform: scale(1.06); }
+.pgs-class-card-scrim { position: absolute; inset: 0; pointer-events: none; }
+.pgs-class-card-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-4);
+}
+.pgs-class-card-eyebrow {
+  margin: 0 0 var(--space-1);
+  color: #FFFFFF;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+.pgs-class-card-name {
+  margin: 0;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+}
+.pgs-class-card-arrow {
+  position: absolute;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gold-400);
+  border-radius: 50%;
+  color: var(--gold-400);
+  background: transparent;
+  transition: background-color 150ms, color 150ms;
+}
+.pgs-class-card:hover .pgs-class-card-arrow,
+.pgs-class-card:focus-visible .pgs-class-card-arrow {
+  background: var(--gold-400);
+  color: var(--ink-900);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pgs-class-card:hover .pgs-class-card-media img,
+  .pgs-class-card:focus-visible .pgs-class-card-media img { transform: none; }
+}
+
+/* Marcas: altura fija, ancho automático, centrados — escala de grises por
+   defecto (franja de logos de pago, ver BRAND.md). */
+.pgs-brands-carousel .pgs-carousel-track { --pgs-logos: var(--pgs-logos-mobile, 3); }
+@media (min-width: 768px) {
+  .pgs-brands-carousel .pgs-carousel-track { --pgs-logos: var(--pgs-logos-tablet, 5); }
+}
+@media (min-width: 1024px) {
+  .pgs-brands-carousel .pgs-carousel-track { --pgs-logos: var(--pgs-logos-desktop, 7); }
+}
+.pgs-brand-item {
+  flex: 0 0 calc((100% - (var(--pgs-logos) - 1) * var(--space-6)) / var(--pgs-logos));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pgs-brands-carousel .pgs-carousel-track { gap: var(--space-6); }
+.pgs-brand-logo-link { display: block; line-height: 0; }
+.pgs-brand-logo {
+  height: 48px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), filter 200ms, opacity 200ms;
+}
+@media (min-width: 1024px) {
+  .pgs-brand-logo { height: 56px; }
+}
+.pgs-brand-logo--grayscale { filter: grayscale(1); opacity: .6; }
+.pgs-brand-item:hover .pgs-brand-logo,
+.pgs-brand-logo-link:focus-visible .pgs-brand-logo { transform: scale(1.08); }
+.pgs-brand-item:hover .pgs-brand-logo--grayscale,
+.pgs-brand-logo-link:focus-visible .pgs-brand-logo--grayscale { filter: grayscale(0); opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .pgs-brand-item:hover .pgs-brand-logo,
+  .pgs-brand-logo-link:focus-visible .pgs-brand-logo { transform: none; }
+}
+
+/* Modo continuo: pista duplicada (ver renderBrandsCarousel) que se desliza
+   sola con @keyframes; se pausa en hover/foco. Las flechas quedan en el DOM
+   por accesibilidad pero ocultas acá — sections.js ya no marca la sección
+   como "continuous" cuando prefers-reduced-motion está activo, así que esta
+   regla nunca convive con la animación desactivada. */
+.pgs-carousel-wrap--continuous .pgs-carousel-arrow { display: none; }
+.pgs-brand-track--continuous {
+  overflow: visible;
+  animation: pgs-brand-marquee 30s linear infinite;
+}
+.pgs-carousel-wrap--continuous:hover .pgs-brand-track--continuous,
+.pgs-carousel-wrap--continuous:focus-within .pgs-brand-track--continuous {
+  animation-play-state: paused;
+}
+@keyframes pgs-brand-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 .pgs-testimonials { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) { .pgs-testimonials { grid-template-columns: repeat(3, 1fr); } }
 .pgs-testimonial-card { padding: var(--space-6); border: 1px solid var(--ink-100); }

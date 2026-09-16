@@ -194,3 +194,133 @@ def test_builtin_section_is_editable_like_any_other(client, admin_headers, db):
     assert update.status_code == 200
     assert update.json()["content"]["heading"] == "Novedades"
     assert update.json()["key"] == "home_recent_heading"
+
+
+def test_create_classes_carousel_with_defaults(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"heading": "Explora por clase"}},
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["heading"] == "Explora por clase"
+    assert content["mode"] == "all"
+    assert content["category_ids"] == []
+    assert content["cards_mobile"] == 1.3
+    assert content["cards_tablet"] == 3
+    assert content["cards_desktop"] == 4
+    assert content["show_arrows"] is True
+    assert content["autoplay"] is False
+
+
+def test_create_classes_carousel_manual_mode_with_selection(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "classes_carousel",
+            "content": {"mode": "manual", "category_ids": [3, 1, 2], "cards_mobile": 1, "cards_desktop": 5},
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["mode"] == "manual"
+    assert content["category_ids"] == [3, 1, 2]
+    assert content["cards_desktop"] == 5
+
+
+def test_create_classes_carousel_rejects_invalid_mode(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"mode": "featured"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_classes_carousel_rejects_cards_out_of_range(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"cards_desktop": 20}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_update_classes_carousel_validates_content(client, admin_headers):
+    section = client.post(
+        "/page-sections", json={"page": "home", "type": "classes_carousel", "content": {}}, headers=admin_headers
+    ).json()
+    update = client.put(
+        f"/page-sections/{section['id']}",
+        json={"content": {"autoplay_interval": 30}},
+        headers=admin_headers,
+    )
+    assert update.status_code == 422
+
+
+def test_create_brands_carousel_with_defaults(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {}},
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["mode"] == "all"
+    assert content["carousel_mode"] == "arrows"
+    assert content["logos_mobile"] == 3
+    assert content["logos_tablet"] == 5
+    assert content["logos_desktop"] == 7
+    assert content["logo_color"] == "grayscale"
+
+
+def test_create_brands_carousel_continuous_mode_with_manual_selection(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "brands_carousel",
+            "content": {"mode": "manual", "brand_ids": [2, 1], "carousel_mode": "continuous", "logo_color": "original"},
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["brand_ids"] == [2, 1]
+    assert content["carousel_mode"] == "continuous"
+    assert content["logo_color"] == "original"
+
+
+def test_create_brands_carousel_rejects_invalid_carousel_mode(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {"carousel_mode": "fade"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_new_carousel_types_require_admin(client):
+    response = client.post(
+        "/page-sections", json={"page": "home", "type": "classes_carousel", "content": {}}
+    )
+    assert response.status_code == 401
+
+
+def test_restore_classes_carousel_from_history(client, admin_headers):
+    section = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"heading": "Explora"}},
+        headers=admin_headers,
+    ).json()
+    client.put(
+        f"/page-sections/{section['id']}", json={"content": {"heading": "Nuestras clases"}}, headers=admin_headers
+    )
+
+    history = client.get("/page-sections/history", params={"page": "home"}, headers=admin_headers).json()
+    created_entry = next(h for h in history if h["action"] == "created")
+
+    restore = client.post(f"/page-sections/history/{created_entry['id']}/restore", headers=admin_headers)
+    assert restore.status_code == 200
+    assert restore.json()["content"]["heading"] == "Explora"

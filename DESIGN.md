@@ -222,6 +222,7 @@ Radio de 2px en botones, campos y tarjetas — geometría casi dura, deliberadam
 - **Corner Style:** 2px.
 - **Background:** Blanco sobre fondo Marfil.
 - **Border:** 1px `ink-100` en reposo; `gold-200` en hover (150ms, sin movimiento — nunca `transform` en hover de tarjeta de producto).
+- **Excepción acotada — tarjeta de clase y logo de marca:** en el carrusel de clases y el de marcas (home), la imagen/logo sí escala levemente en hover/focus-visible (`transform: scale()`, ver Carrusel de clases / Carrusel de marcas más abajo) — la tarjeta en sí no se mueve ni gana sombra, solo el contenido interno. Es la única excepción a "nunca transform en hover" de esta sección, y no se extiende a la tarjeta de producto.
 - **Shadow Strategy:** ninguna — ver Elevation & Depth.
 
 ### Inputs / Fields
@@ -230,7 +231,8 @@ Radio de 2px en botones, campos y tarjetas — geometría casi dura, deliberadam
 - **Error:** texto de 13px en `danger` (`#9E3B34`) bajo el campo — el color nunca es el único indicador.
 
 ### Navigation
-- Barra fija (`sticky top:0`), fondo Marfil, borde inferior 1px `ink-100`, alto 64px. Sólida arriba del todo; apenas se hace scroll pasa a vidrio esmerilado (semitransparente + blur), sin quedarse como franja plana pegada arriba.
+- Barra fija (`sticky top:0`), fondo Marfil, borde inferior 1px `ink-100`, alto 64px. Sólida arriba del todo; apenas se hace scroll pasa a vidrio esmerilado (semitransparente + blur), sin quedarse como franja plana pegada arriba. Este es el comportamiento por defecto en toda página que no tenga una sección oscura pegada debajo del header.
+- **Excepción — home:** el header flota transparente sobre el banner en vez de quedar sólido (evita la franja sólida entre la barra de anuncios y el banner). Se saca del flujo normal (`position:absolute`, con el alto real de la barra de anuncios como offset) para que el banner suba y quede detrás; un degradado oscuro sutil (~160px, sin caja visible) hace de "sombrita" para que el logo e íconos —en blanco acá— se lean sobre cualquier foto. Apenas se hace scroll pasa a `position:fixed` y recupera el header sólido/vidrio de siempre, con el logo e íconos oscuros otra vez. Es la única excepción a la regla de arriba porque es la única página con una sección oscura pegada debajo del header — no se replica en el resto del sitio (catálogo, carrito, etc. arrancan con fondo claro, un logo blanco ahí se perdería).
 - Escritorio (≥1024px): una sola fila compacta en grid de 3 columnas — clases del catálogo (Mujer/Hombre/Ocasiones...) a la izquierda, logo centrado, buscador + cuenta + carrito a la derecha. Links de texto sin mayúsculas, sin subrayado permanente (solo al hover, en dorado).
 - Móvil: logo centrado con menú hamburguesa a la izquierda y el ícono de carrito a la derecha (visible siempre, para no perderlo de vista); buscador, clases y cuenta se recogen en el panel del menú.
 - Ícono de carrito con contador circular en `gold-800`.
@@ -244,10 +246,23 @@ Pirámide olfativa como notación, no como ilustración: tres filas (Salida / Co
 ### Ledger Row (firma de la marca)
 Fila de recibo con `justify-content: space-between` y números tabulares (`font-variant-numeric: tabular-nums`), borde inferior 1px, la fila de total con borde superior más grueso y peso 600. Usada en resumen de carrito, checkout y detalle de pedido — nunca se reinventa una tabla de precios distinta en otra página.
 
+### Foto con texto superpuesto (banner / galería)
+Vocabulario compartido entre el banner del home y la sección de galería — cualquier foto administrable puede llevar título, subtítulo y botón encima, con tres controles por foto: **posición del texto** (izquierda/centro/derecha, mueve el bloque de texto entero), **oscurecido** (0–100%, una capa `rgba(32,30,31,·)` entre la foto y el texto — reemplaza el alpha fijo que había al principio) y **desenfoque** (0–20px, `filter:blur()` sobre la imagen con un `scale(1.1)` para que el blur no deje un borde claro en el límite de la foto). El banner además tiene proporción fija (`aspect-ratio`, 8/3 escritorio · 4/5 móvil) con `object-fit:cover`: nunca se genera marco, se recorta la imagen si hace falta — decisión explícita del cliente sobre priorizar "sin marco" por encima de "sin recorte". Transición entre fotos del banner y entre mensajes de la barra de anuncios (cuando se elige "Deslizamiento"): empuje suave con `transform`, no un cambio brusco — la que sale se desliza hacia un lado mientras la que entra viene del otro, tomando siempre el camino más corto del círculo al volver de la última a la primera.
+
+### Bloque centrado (páginas de texto)
+Contacto, Quiénes somos y Envíos y políticas usan una columna de 760px centrada (en vez del `container` de 1200px a todo lo ancho) para que el título, el texto y cualquier formulario se lean como un solo bloque compacto en el centro de la pantalla, no estirados de borde a borde. Mismo criterio en cualquier página nueva que sea mayormente texto/lectura, no catálogo ni grilla.
+
+### Carrusel de clases
+Sección administrable (`classes_carousel`) que muestra las clases (categorías) del catálogo como tarjetas de foto — todas las activas o una selección manual ordenable, leídas en vivo de la pestaña Clases del panel, sin duplicar datos en la sección. Tarjeta con proporción fija (`aspect-ratio: 3/4`) y `object-fit:cover`, radio 0 en la imagen y 2px en la tarjeta; texto superpuesto (eyebrow en Jost 14px/500 y nombre en Newsreader ≥28px/500, sin mayúsculas sostenidas) sobre una capa `rgba(32,30,31,·)` graduable por clase (`overlay_darkness`, mismo vocabulario que banner/galería) más el mismo control de posición del texto. Indicador circular con borde 1px `gold-400` y flecha, que se llena de `gold-400` con flecha Ónix en hover — mismo criterio transitorio que `button-onDark`. En hover/focus-visible la imagen (no la tarjeta) escala a ~1.06 con `cubic-bezier(0.16,1,0.3,1)` en 500ms; sin animación bajo `prefers-reduced-motion`. Toda la tarjeta es un único `<a>` al catálogo filtrado por esa clase (`/catalogo.html?category_id=`), sin enlaces anidados. Pista con `scroll-snap-type:x mandatory` (deslizamiento nativo al dedo en móvil) y flechas que avanzan una tarjeta por clic, deshabilitadas en los extremos o con vuelta si el autoavance está activo — cantidad de tarjetas visibles configurable por pantalla (móvil/tablet/escritorio), por defecto 1.3/3/4 (el .3 asoma la siguiente tarjeta a propósito, para invitar al deslizamiento).
+
+### Carrusel de marcas
+Sección administrable (`brands_carousel`), pensada para ir justo debajo del carrusel de clases: logos de marca (tabla `brands` nueva, sin relación con `Product.house`) sobre fondo Marfil, altura uniforme (48px móvil / 56px escritorio) y ancho automático, centrados. Escala de grises por defecto (`filter:grayscale(1)`, opacidad ~0.6 — misma franja de logos de pago que ya usa BRAND.md), con opción de color original. Dos modos: **flechas** (mismo carrusel de scroll-snap que el de clases) o **continuo** (pista duplicada + `@keyframes` de deslizamiento lento, se pausa en hover/foco; bajo `prefers-reduced-motion` no hay animación y el carrusel queda en modo flechas). En hover/focus-visible el logo escala a ~1.08 y, si está en escala de grises, pasa a color; sin escala bajo `prefers-reduced-motion`, solo el cambio de color. El catálogo no filtra por marca hoy (`Product.house` es texto libre, sin parámetro de filtro estructurado) — el enlace de cada logo es `link_url` libre que pone el admin, no un filtro automático.
+
 ## Do's and Don'ts
 
 ### Do:
 - **Do** usar `.spec-row`, `.scent-diagram` y `.ledger-row` como el vocabulario compartido para cualquier pantalla nueva que muestre hechos de producto o dinero — son la firma visual de la marca, no un componente de una sola página.
+- **Do** usar los mismos tres controles (posición del texto, oscurecido, desenfoque) para cualquier foto administrable nueva que lleve texto encima — no inventar un cuarto patrón de overlay distinto al de banner/galería.
 - **Do** mantener el dorado por debajo del 10% de superficie visible en cualquier pantalla nueva.
 - **Do** usar Marfil o Blanco como fondo de cualquier pantalla transaccional (catálogo, carrito, checkout, cuenta); Ónix solo en momentos de marca.
 - **Do** escribir copy con hechos de producto (notas, familia, duración, estela) en vez de adjetivos de relleno.

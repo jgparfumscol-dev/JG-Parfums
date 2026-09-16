@@ -1,6 +1,7 @@
 """Un modelo importado aquí queda visible para Alembic autogenerate (Base.metadata)."""
 
 from database import Base  # noqa: F401
+from models.brand import Brand  # noqa: F401
 from models.category import Category  # noqa: F401
 from models.contact_message import ContactMessage  # noqa: F401
 from models.order import Order, OrderStatus, PaymentProvider, PaymentStatus  # noqa: F401

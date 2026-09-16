@@ -624,6 +624,195 @@ function initGallery(el) {
   });
 }
 
+/* --- Carrusel de clases (classes_carousel) y de marcas (brands_carousel) ---
+   Módulo compartido: `initSnapCarousel` maneja el deslizamiento (pista
+   `scroll-snap-type:x mandatory`, nativa al dedo en móvil) y las flechas de
+   ambos carruseles — nada de librería externa. El contenido de las
+   tarjetas/logos no se guarda en la sección: se lee en vivo de /categories
+   y /brands al renderizar, la sección solo guarda cómo mostrarlo. */
+
+// Avanza/retrocede la pista una tarjeta por clic (con scroll suave nativo),
+// deshabilita las flechas en los extremos o, si `loop` está activo (solo el
+// autoplay de clases lo usa), da la vuelta al otro extremo en vez de
+// quedarse quieta. Mismo criterio de pausa en hover/foco/pestaña oculta que
+// el banner (ver initBanner) cuando hay autoplay.
+function initSnapCarousel(wrap, { loop = false, autoplayInterval = 0 } = {}) {
+  const track = wrap.querySelector('[data-track]');
+  if (!track) return;
+  const items = Array.from(track.children);
+  if (items.length === 0) return;
+
+  const prevBtn = wrap.querySelector('[data-prev]');
+  const nextBtn = wrap.querySelector('[data-next]');
+
+  function cardStep() {
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    return items[0].getBoundingClientRect().width + gap;
+  }
+  function atStart() { return track.scrollLeft <= 1; }
+  function atEnd() { return track.scrollLeft >= track.scrollWidth - track.clientWidth - 1; }
+
+  function updateArrows() {
+    if (prevBtn) prevBtn.disabled = !loop && atStart();
+    if (nextBtn) nextBtn.disabled = !loop && atEnd();
+  }
+
+  function goNext() {
+    if (atEnd()) {
+      if (loop) track.scrollTo({ left: 0, behavior: 'smooth' });
+      return;
+    }
+    track.scrollBy({ left: cardStep(), behavior: 'smooth' });
+  }
+  function goPrev() {
+    if (atStart()) {
+      if (loop) track.scrollTo({ left: track.scrollWidth, behavior: 'smooth' });
+      return;
+    }
+    track.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+  }
+
+  if (prevBtn) prevBtn.addEventListener('click', goPrev);
+  if (nextBtn) nextBtn.addEventListener('click', goNext);
+  track.addEventListener('scroll', updateArrows, { passive: true });
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+
+  if (autoplayInterval > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let timer = null;
+    function start() { stop(); timer = setInterval(goNext, autoplayInterval * 1000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    start();
+    wrap.addEventListener('mouseenter', stop);
+    wrap.addEventListener('mouseleave', start);
+    wrap.addEventListener('focusin', stop);
+    wrap.addEventListener('focusout', start);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+  }
+}
+
+function renderClassCard(cat) {
+  const overlay = Math.max(0, Math.min(100, cat.overlay_darkness == null ? 40 : Number(cat.overlay_darkness))) / 100;
+  const position = ['left', 'center', 'right'].includes(cat.text_position) ? cat.text_position : 'left';
+  const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
+  const name = cat.display_name || cat.name;
+  return `
+    <a class="pgs-class-card" href="/catalogo.html?category_id=${cat.id}">
+      <div class="pgs-class-card-media">
+        ${cat.image_url ? `<img src="${cat.image_url}" alt="${name}" loading="lazy">` : ''}
+        <div class="pgs-class-card-scrim" style="background: rgba(32, 30, 31, ${overlay});"></div>
+        <div class="pgs-class-card-copy" style="align-items: ${justify}; text-align: ${position};">
+          ${cat.eyebrow ? `<p class="pgs-class-card-eyebrow">${cat.eyebrow}</p>` : ''}
+          <p class="pgs-class-card-name">${name}</p>
+        </div>
+        <span class="pgs-class-card-arrow" aria-hidden="true">${ICON_NEXT}</span>
+      </div>
+    </a>
+  `;
+}
+
+async function renderClassesCarousel(section) {
+  const c = section.content || {};
+  try {
+    const categories = await apiFetch('/categories');
+    let items = categories.filter((cat) => cat.is_active);
+    if (c.mode === 'manual' && (c.category_ids || []).length) {
+      const byId = new Map(items.map((cat) => [cat.id, cat]));
+      items = c.category_ids.map((id) => byId.get(id)).filter(Boolean);
+    }
+    if (items.length === 0) return '';
+
+    const showArrows = c.show_arrows !== false;
+    const arrowsHtml = showArrows
+      ? `
+        <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-prev" data-prev aria-label="Clase anterior">${ICON_PREV}</button>
+        <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente clase">${ICON_NEXT}</button>
+      `
+      : '';
+    return `
+      <section class="section pgs-classes-carousel" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
+        style="--pgs-cards-mobile:${c.cards_mobile || 1.3}; --pgs-cards-tablet:${c.cards_tablet || 3}; --pgs-cards-desktop:${c.cards_desktop || 4};">
+        <div class="container">
+          ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
+          <div class="pgs-carousel-wrap">
+            <div class="pgs-carousel-track" data-track>${items.map(renderClassCard).join('')}</div>
+            ${arrowsHtml}
+          </div>
+        </div>
+      </section>
+    `;
+  } catch (_err) {
+    return '';
+  }
+}
+
+function initClassesCarousel(el) {
+  const wrap = el.querySelector('.pgs-carousel-wrap');
+  if (!wrap) return;
+  const interval = Number(el.dataset.autoplayInterval) || 0;
+  initSnapCarousel(wrap, { loop: interval > 0, autoplayInterval: interval });
+}
+
+function renderBrandLogo(brand, grayscale) {
+  const img = `<img src="${brand.logo_url}" alt="${brand.name}" loading="lazy" class="pgs-brand-logo${grayscale ? ' pgs-brand-logo--grayscale' : ''}">`;
+  return `<div class="pgs-brand-item">${brand.link_url ? `<a class="pgs-brand-logo-link" href="${brand.link_url}">${img}</a>` : img}</div>`;
+}
+
+async function renderBrandsCarousel(section) {
+  const c = section.content || {};
+  try {
+    const brands = await apiFetch('/brands');
+    let items = brands;
+    if (c.mode === 'manual' && (c.brand_ids || []).length) {
+      const byId = new Map(items.map((b) => [b.id, b]));
+      items = c.brand_ids.map((id) => byId.get(id)).filter(Boolean);
+    }
+    if (items.length === 0) return '';
+
+    const grayscale = c.logo_color !== 'original';
+    // El modo continuo se resuelve acá, no en initBrandsCarousel: con
+    // prefers-reduced-motion la pista NO se duplica (si no, el manual de
+    // respaldo mostraría cada logo dos veces) y queda como carrusel de
+    // flechas normal.
+    const continuous = c.carousel_mode === 'continuous' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const logosHtml = items.map((b) => renderBrandLogo(b, grayscale)).join('');
+    const trackHtml = continuous ? logosHtml + logosHtml : logosHtml;
+    const arrowsHtml = `
+      <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-prev" data-prev aria-label="Marca anterior">${ICON_PREV}</button>
+      <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente marca">${ICON_NEXT}</button>
+    `;
+    return `
+      <section class="section pgs-brands-carousel" data-section-id="${section.id}" data-carousel-mode="${continuous ? 'continuous' : 'arrows'}"
+        style="--pgs-logos-mobile:${c.logos_mobile || 3}; --pgs-logos-tablet:${c.logos_tablet || 5}; --pgs-logos-desktop:${c.logos_desktop || 7};">
+        <div class="container">
+          ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
+          <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}">
+            <div class="pgs-carousel-track pgs-brand-track${continuous ? ' pgs-brand-track--continuous' : ''}" data-track>${trackHtml}</div>
+            ${arrowsHtml}
+          </div>
+        </div>
+      </section>
+    `;
+  } catch (_err) {
+    return '';
+  }
+}
+
+function initBrandsCarousel(el) {
+  const wrap = el.querySelector('.pgs-carousel-wrap');
+  if (!wrap) return;
+  // Modo continuo: la animación es puro CSS (pista duplicada + @keyframes,
+  // pausa en :hover/:focus-within) — no necesita JS. Las flechas quedan en
+  // el DOM pero ocultas por CSS, salvo que el usuario prefiera menos
+  // movimiento (ver renderBrandsCarousel), caso en el que ya no se marca
+  // como "continuous" y cae acá igual, en modo manual normal.
+  if (el.dataset.carouselMode === 'continuous') return;
+  initSnapCarousel(wrap, {});
+}
+
 function renderTestimonials(section) {
   const items = (section.content && section.content.items) || [];
   if (items.length === 0) return '';
@@ -790,6 +979,8 @@ const SECTION_RENDERERS = {
   decant_callout: renderDecantCallout,
   manifesto: renderManifesto,
   gallery: renderGallery,
+  classes_carousel: renderClassesCarousel,
+  brands_carousel: renderBrandsCarousel,
 };
 
 async function renderPageSections(pageKey, mountId = 'dynamicSections') {
@@ -839,6 +1030,8 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
       });
       mount.querySelectorAll('.pgs-gallery[data-section-id]').forEach((el) => initGallery(el));
       mount.querySelectorAll('.pgs-banner[data-section-id]').forEach((el) => initBanner(el));
+      mount.querySelectorAll('.pgs-classes-carousel[data-section-id]').forEach((el) => initClassesCarousel(el));
+      mount.querySelectorAll('.pgs-brands-carousel[data-section-id]').forEach((el) => initBrandsCarousel(el));
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.

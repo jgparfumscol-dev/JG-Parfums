@@ -21,6 +21,8 @@ SectionType = Literal[
     "manifesto",
     "hero_product",
     "gallery",
+    "classes_carousel",
+    "brands_carousel",
 ]
 
 
@@ -146,3 +148,43 @@ def validate_announcement_bar_content(content: dict) -> dict:
     un 422 con el detalle de cada campo.
     """
     return AnnouncementBarContent(**content).model_dump(mode="json")
+
+
+class ClassesCarouselContent(BaseModel):
+    """Carrusel de clases (categorías) en el home. No duplica datos de las
+    categorías acá — solo guarda cómo mostrarlas (todas o una selección
+    ordenada por id); el nombre, la foto y el resto de la tarjeta se leen
+    en vivo de /categories al renderizar.
+    """
+
+    heading: str | None = Field(default=None, max_length=80)
+    mode: Literal["all", "manual"] = "all"
+    category_ids: list[int] = Field(default_factory=list)
+    cards_mobile: float = Field(default=1.3, ge=1, le=4)
+    cards_tablet: int = Field(default=3, ge=1, le=6)
+    cards_desktop: int = Field(default=4, ge=1, le=8)
+    show_arrows: bool = True
+    autoplay: bool = False
+    autoplay_interval: int = Field(default=5, ge=3, le=10)
+
+
+class BrandsCarouselContent(BaseModel):
+    """Carrusel de marcas (logos) en el home. Mismo criterio que arriba: solo
+    guarda cómo mostrarlas, no copia name/logo_url de /brands."""
+
+    heading: str | None = Field(default=None, max_length=80)
+    mode: Literal["all", "manual"] = "all"
+    brand_ids: list[int] = Field(default_factory=list)
+    carousel_mode: Literal["arrows", "continuous"] = "arrows"
+    logos_mobile: int = Field(default=3, ge=1, le=8)
+    logos_tablet: int = Field(default=5, ge=1, le=10)
+    logos_desktop: int = Field(default=7, ge=1, le=12)
+    logo_color: Literal["grayscale", "original"] = "grayscale"
+
+
+def validate_classes_carousel_content(content: dict) -> dict:
+    return ClassesCarouselContent(**content).model_dump(mode="json")
+
+
+def validate_brands_carousel_content(content: dict) -> dict:
+    return BrandsCarouselContent(**content).model_dump(mode="json")

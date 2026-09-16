@@ -46,6 +46,7 @@ app.add_middleware(
 # `from main import limiter` para decorar sus endpoints con @limiter.limit(...).
 from routes import (  # noqa: E402
     auth,
+    brands,
     categories,
     contact_messages,
     orders,
@@ -58,6 +59,7 @@ from routes import (  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(categories.router)
+app.include_router(brands.router)
 app.include_router(products.router)
 app.include_router(orders.router)
 app.include_router(payments.router)

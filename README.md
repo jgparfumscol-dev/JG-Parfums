@@ -51,14 +51,16 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, decants, notas, pedidos, pagos, ajustes, admin) | ✅ Construido y probado (65 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (115 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
 | Notas de producto libres (nombre + color por nota, escalera con la más fuerte abajo) | ✅ Backend, panel admin y ficha de producto/hero construidos y probados |
 | Categorías y estadísticas propias de tráfico (sin cookies ni datos personales) | ✅ Backend, panel admin y filtro de catálogo construidos y probados |
-| Panel admin: tienda en vivo editable (secciones de página: banner, anuncio, testimonios, contadores, etc.) y Ajustes de marca (nombre, color, tipografía, contacto/redes, envío) | ✅ Construido y probado |
+| Panel admin: tienda en vivo editable (secciones de página: banner con varias fotos, galería, anuncio, testimonios, contadores, etc.) y Ajustes de marca (nombre, color, tipografía, contacto/redes, envío) | ✅ Construido y probado |
 | Secciones fijas de cada página (hero, encabezados, bloque de decants, manifiesto) editables desde el panel, con historial de versiones y restauración | ✅ Backend, panel admin y sitio público construidos y probados |
+| Producto destacado del home seleccionable con una estrella en el panel (en vez de elegirse solo, al azar) | ✅ Construido y probado |
+| Páginas institucionales editables desde el panel: Envíos y políticas, Contacto (con formulario que guarda mensajes revisables en el panel) y Quiénes somos | ✅ Construido y probado |
 | Frontend (tienda, cuenta, panel admin) | ✅ Construido — sistema de diseño documentado (`DESIGN.md`), tipografía de títulos Newsreader (legible en cualquier densidad de pantalla), acentos circulares para romper la retícula sin tocar el radio duro de botones/tarjetas |
 | Frontend desplegado (Cloudflare Pages) | ✅ En línea — [jg-parfums.pages.dev](https://jg-parfums.pages.dev) |
 | CORS frontend ↔ backend | ✅ Verificado con petición real |
@@ -73,7 +75,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 **Bloqueante para vender:**
 - [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene productos de prueba, sin fotos)
-- [ ] Página de política de tratamiento de datos personales y términos de compra
+- [ ] Página de política de tratamiento de datos personales (Habeas Data, Ley 1581 de 2012) — distinta de la página de Envíos y políticas de cambio ya construida, que cubre devoluciones/garantía (Ley 1480), no manejo de datos personales
 - [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
 
 **No bloqueante, pero pendiente:**
@@ -124,15 +126,21 @@ flowchart LR
 
 ### Frontend
 
-- Home: producto destacado como ficha técnica interactiva, con sus notas olfativas reales en una escalera de barras (más fuerte abajo), grilla de recién llegados, bloque de decants
+- Home: producto destacado (elegido con una estrella en el panel, no al azar) como ficha técnica interactiva, con sus notas olfativas reales en una escalera de barras (más fuerte abajo), grilla de recién llegados, bloque de decants; sin ningún producto marcado, la ficha se queda con copy genérico de la tienda en vez de mostrar una marca de perfume puntual
+- Header transparente en la portada, flotando sobre el banner (degradado sutil + logo/íconos en blanco) hasta que se hace scroll, donde pasa al header sólido de vidrio esmerilado de siempre
+- Banner con una o varias fotos: rotación configurable, transición de "empuje" suave entre fotos, posición del texto (izquierda/centro/derecha), oscurecido y desenfoque por foto, proporción fija (sin marco nunca, se recorta si hace falta)
+- Sección de galería de fotos (grid, carrusel manual, comparar una al lado de la otra, o una sola foto), con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner
+- Carrusel de clases (categorías con foto, eyebrow, oscurecido y posición de texto configurables) que enlaza cada tarjeta al catálogo ya filtrado, y carrusel de marcas (logos en escala de grises, modo flechas o deslizamiento continuo) — ambos con zoom en hover/foco sobre la imagen, deslizamiento nativo al dedo en móvil y respeto de `prefers-reduced-motion`
+- Barra de anuncios con rotación (fundido real o deslizamiento direccional configurable), variantes de color, y mensajes con fecha de vigencia
 - Catálogo con filtros (categoría, rango de precio, búsqueda, orden por precio, solo con decant disponible)
 - Ficha de producto: galería, notas olfativas en escalera, selector de presentación (frasco completo o decant de 5ml/10ml), stock por presentación
 - Carrito persistido en el navegador (`localStorage`), con una línea independiente por presentación
 - Checkout con datos de envío, costo de envío configurable y elección de pasarela de pago
 - Cuentas de usuario opcionales + checkout invitado
 - Historial de pedidos para usuarios registrados
+- Páginas institucionales editables desde el panel: Envíos y políticas de cambio (una sola página), Contacto (formulario que guarda el mensaje + enlace directo a WhatsApp) y Quiénes somos
 - Footer con iconos de métodos de pago y, si el admin los configura en Ajustes, iconos de WhatsApp/Instagram/TikTok que enlazan directo a esas cuentas
-- Panel administrativo (SPA de 3 columnas): editor de "tienda en vivo" (secciones de página administrables — banner, anuncio, testimonios, contadores, categorías, footer — con vista previa en vivo por dispositivo), productos (notas, decants, desactivar/eliminar), pedidos, categorías, métricas propias y ajustes de marca (nombre, color de acento, tipografía, contacto/redes, envío)
+- Panel administrativo (SPA de 3 columnas): editor de "tienda en vivo" (secciones de página administrables — banner, galería, carrusel de clases, carrusel de marcas, anuncio, testimonios, contadores, categorías, footer — con vista previa en vivo por dispositivo), productos (notas, decants, destacado, desactivar/eliminar), pedidos, pestaña Clases (antes "Categorías": foto, eyebrow, oscurecido, posición de texto, activar/reordenar), pestaña Marcas (logo, enlace, activar/reordenar), mensajes de contacto, métricas propias y ajustes de marca (nombre, color de acento, tipografía, contacto/redes, envío)
 - Las secciones fijas de cada página (hero, "Recién llegados", bloque de decants, manifiesto de marca, encabezados) también son editables/ocultables/eliminables desde el mismo panel, con historial de versiones y restauración de un clic
 
 </td>
@@ -143,9 +151,12 @@ flowchart LR
 - API REST con FastAPI y autenticación JWT
 - Registro/login/recuperación de contraseña sin enumeración de cuentas
 - Gestión de productos, imágenes y notas olfativas (nombre + color libres por nota, ordenables)
-- Categorías de producto, con filtro en catálogo
-- Secciones de página administrables desde el panel (`page_sections`), tanto agregadas libremente como las partes fijas originales de cada página (hero, encabezados, decants, manifiesto) — mismo mecanismo para las dos
+- Categorías de producto ("clases" de cara al admin), con filtro en catálogo, foto/eyebrow/oscurecido/posición de texto propios y orden manual (`sort_order`)
+- Marcas (tabla `brands` nueva): logo, enlace opcional, activar/desactivar y orden manual, con endpoint público que solo devuelve las activas ordenadas
+- Secciones de página administrables desde el panel (`page_sections`), tanto agregadas libremente (incluye banner de varias fotos, galería, carrusel de clases y carrusel de marcas) como las partes fijas originales de cada página (hero, encabezados, decants, manifiesto) — mismo mecanismo para todas, y también para las páginas institucionales nuevas (envíos/políticas, contacto, quiénes somos)
 - Historial de versiones (`page_section_history`): cada creación/edición/borrado queda guardado con una copia completa del contenido y se puede restaurar, incluso si la sección ya fue borrada
+- Producto destacado (`is_featured`): al marcar uno se desmarca cualquier otro automáticamente — solo puede haber uno a la vez, es el que alimenta la ficha del home
+- Mensajes de contacto (`contact_messages`): guarda lo que dejan los visitantes en `/contacto.html`, con límite de tasa por IP contra spam; el admin los marca como leídos o los elimina desde el panel
 - Ajustes de marca en una fila única (`site_settings`): color de acento (regenera toda la escala dorada), tipografía, datos de contacto/redes y costo de envío
 - Estadísticas propias de tráfico (sin cookies, IP ni user-agent) para el panel de Métricas
 - Decants por producto (5ml/10ml): precio y stock propios, independientes del frasco completo
@@ -154,8 +165,8 @@ flowchart LR
 - Integración con Wompi (firma de integridad + verificación de checksum de webhook)
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
-- Rate limiting en endpoints sensibles (login, registro, checkout)
-- Suite de tests (65) contra SQLite en memoria, sin tocar servicios externos
+- Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
+- Suite de tests (115) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -165,6 +176,14 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Dos secciones nuevas para el editor de "tienda en vivo": carrusel de clases (`classes_carousel`) y carrusel de marcas (`brands_carousel`), pensado este último para ir justo debajo del de clases. `Category` se extiende con foto/eyebrow/nombre de tarjeta/oscurecido/posición de texto/orden/activo (pestaña del panel renombrada de "Categorías" a "Clases", sin tocar la tabla ni la ruta); tabla `brands` nueva con el mismo patrón de admin, sin datos de ejemplo precargados. Ambos carruseles comparten un módulo de scroll-snap en `sections.js` (deslizamiento nativo al dedo, flechas que se deshabilitan en los extremos), con zoom en hover/foco sobre la imagen —excepción acotada a estas tarjetas de la regla general "nunca transform en hover", documentada en `DESIGN.md`— y respeto de `prefers-reduced-motion` (el modo "continuo" de marcas cae a manual sin animación). El catálogo no tiene filtro estructurado por marca hoy (`Product.house` es texto libre): el enlace de cada logo es `link_url` libre, no un filtro automático. 24 tests nuevos (115 en total).
+- Páginas institucionales nuevas y editables desde el panel: Envíos y políticas (fusionadas en una sola página tras probarse por separado — el admin prefirió un solo destino), Contacto (formulario que guarda el mensaje en `contact_messages`, con una pestaña "Mensajes" nueva en el panel para marcarlos leídos o eliminarlos, más un enlace directo a WhatsApp con el número de Ajustes) y Quiénes somos. Footer simplificado: se quitan los enlaces de "Carrito" y "Mi cuenta" (ya accesibles desde los íconos del header) en las 9 páginas que lo tienen.
+- Producto destacado del home seleccionable con una estrella en la tabla de Productos del panel (`is_featured`, un único producto a la vez — marcar uno desmarca cualquier otro): antes se elegía solo, el más reciente con notas cargadas, lo que a veces mostraba el nombre de una marca de perfume puntual en vez del copy genérico de la ficha "así se lee un perfume". Sin ningún producto marcado, el home se queda con ese copy genérico.
+- Banner rehecho para admitir varias fotos con rotación configurable (antes una sola imagen fija): cada foto con su propio texto, posición (izquierda/centro/derecha), botón, oscurecido (0–100%) y desenfoque (0–20px) configurables, con proporción fija (`aspect-ratio`) para que nunca se genere marco — se recorta la imagen si hace falta, a pedido explícito del cliente tras dos vueltas probando "sin recorte nunca". Transición entre fotos rehecha de un cambio brusco a un deslizamiento de "empuje" suave, con el camino más corto al volver de la última foto a la primera.
+- Sección de galería de fotos nueva (`gallery`): grid, carrusel de navegación manual, comparar fotos una al lado de la otra, o una sola foto — con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner. Sin botón, el enlace de la foto sigue haciendo clicable la imagen completa (sin anidar `<a>`).
+- Barra de anuncios: la transición de "deslizamiento" pasa de un sutil desvanecido con leve corrimiento a un desplazamiento completo y real, con dirección configurable (derecha/izquierda) — nuevo campo `slide_direction`.
+- Header transparente en la portada: antes se veía una franja sólida entre la barra de anuncios y el banner; ahora el header flota sobre el banner (degradado sutil + logo/íconos en blanco) mientras no se hace scroll, y pasa al header sólido de vidrio esmerilado de siempre apenas se scrollea. Solo en home, que es la única página con una sección oscura pegada debajo del header.
+- Corregido un bug real en la sección de manifiesto de marca: el bloque completo quedaba desbalanceado hacia la izquierda por un margen negativo que compensaba el padding del texto cuando estaba alineado a la izquierda — dejó de aplicar cuando el texto se centró en una corrección anterior, y nadie lo había quitado. 26 tests nuevos entre estas features (91 en total).
 - Secciones fijas de cada página (hero de home, "Recién llegados", bloque de decants, manifiesto de marca, encabezado de catálogo, "También te puede interesar" en ficha de producto) convertidas en editables desde el panel — antes eran HTML fijo, ahora se pueden editar, ocultar o eliminar sin tocar código, igual que las secciones agregadas libremente. Se suma un historial de versiones (`page_section_history`): cada cambio queda guardado con una copia completa del contenido y se puede restaurar con un clic, incluso si la sección ya fue borrada — se conecta al botón "Historial" del panel, que ya existía en la interfaz pero estaba deshabilitado. Encontrado y corregido en el camino un bug real: cuando una página no tenía secciones agregadas libremente, los botones de las secciones fijas quedaban sin funcionar (el código cortaba antes de conectar los clics). 5 tests nuevos.
 - Título de la tienda de Bodoni Moda a Newsreader: verificado en producción que un didone de contraste tan alto como Bodoni Moda perdía legibilidad contra fondos claros en monitores de escritorio de densidad estándar, incluso en tamaños grandes — el problema no era el tamaño, era el diseño de la tipografía. Se reemplaza por Newsreader (serif editorial de contraste moderado) en todo el sitio vía la variable `--font-display`, y se corrige el nombre de producto en tarjeta (que ya debía ir en Jost según `DESIGN.md` pero estaba implementado en Bodoni a 16px, muy por debajo del piso de legibilidad).
 - Botón "Eliminar" de producto: corregido para que borre de verdad (antes solo desactivaba) — `DELETE /products/{id}?hard=true`, seguro porque `order_items` guarda su propio snapshot de nombre/precio y no depende de la fila del producto. Se separó del botón "Desactivar" existente y se agregó manejo de errores visible (antes una falla quedaba completamente silenciosa).
@@ -215,13 +234,13 @@ flowchart LR
 ```
 .
 ├── backend/
-│   ├── routes/          # auth, products, categories, orders, payments, settings, stats, page_sections
-│   ├── models/           # Modelos SQLAlchemy (incluye product_note, product_variant, site_settings, page_section, page_section_history)
+│   ├── routes/          # auth, products, categories, brands, orders, payments, settings, stats, page_sections, contact_messages
+│   ├── models/           # Modelos SQLAlchemy (incluye brand, product_note, product_variant, site_settings, page_section, page_section_history, contact_message)
 │   ├── schemas/           # Esquemas Pydantic
 │   ├── services/           # Wompi, Mercado Pago, email
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (65 tests)
+│   └── tests/                   # pytest, SQLite en memoria (115 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño

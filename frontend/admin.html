@@ -245,7 +245,11 @@
       </button>
       <button class="nav-item" data-nav="categories">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12l-8 8-9-9V4h7z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
-        Categorías
+        Clases
+      </button>
+      <button class="nav-item" data-nav="brands">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="8" r="4.5"/><circle cx="12" cy="16" r="4.5"/></svg>
+        Marcas
       </button>
       <button class="nav-item" data-nav="settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="1.6"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="1.6"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="1.6"/></svg>
@@ -337,6 +341,14 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
             <span>Footer</span>
           </button>
+          <button type="button" class="addsec-card" data-addsec="classes_carousel">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="7" height="14"/><rect x="10.5" y="5" width="7" height="14"/><rect x="19" y="8" width="4" height="8" opacity="0.5"/></svg>
+            <span>Carrusel de clases</span>
+          </button>
+          <button type="button" class="addsec-card" data-addsec="brands_carousel">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="8" r="3.5"/><circle cx="17" cy="8" r="3.5"/><circle cx="12" cy="16" r="3.5"/></svg>
+            <span>Carrusel de marcas</span>
+          </button>
         </div>
         <button type="button" class="addsec-card addsec-card-wide" data-addsec="custom">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="9 6 4 12 9 18"/><polyline points="15 6 20 12 15 18"/></svg>
@@ -357,6 +369,8 @@
             <option value="image">Imagen</option>
             <option value="gallery">Galería de fotos</option>
             <option value="footer">Footer</option>
+            <option value="classes_carousel">Carrusel de clases</option>
+            <option value="brands_carousel">Carrusel de marcas</option>
             <option value="testimonials">Testimonios</option>
             <option value="counters">Contadores</option>
             <option value="custom_html">Código HTML/CSS</option>
@@ -418,17 +432,30 @@
       </div>
 
       <div id="centerCategories" class="center-view" hidden>
-        <h2 class="h3" style="margin-bottom: var(--space-2);">Categorías</h2>
-        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Las que crees acá son las que aparecen en el filtro del catálogo, en la ficha de cada producto y al armar una sección de "Productos" en el editor.</p>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Clases</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Las que crees acá son las que aparecen en el filtro del catálogo, en la ficha de cada producto, al armar una sección de "Productos" en el editor y en el carrusel de clases del home.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Nombre</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Nombre</th><th>Eyebrow</th><th>Estado</th><th></th></tr></thead>
             <tbody id="categoriesBody"></tbody>
           </table>
         </div>
-        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap;">
-          <input id="newCategoryName" class="input-sm" placeholder="Nombre de la categoría" style="flex:1; min-width:200px;">
-          <button class="btn btn-primary" type="button" id="addCategoryBtn">+ Agregar categoría</button>
+        <div style="margin-top: var(--space-4);">
+          <button class="btn btn-primary" type="button" id="addCategoryBtn">+ Agregar clase</button>
+        </div>
+      </div>
+
+      <div id="centerBrands" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Marcas</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Los logos que actives acá son los que aparecen en el carrusel de marcas del home.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Nombre</th><th>Enlace</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="brandsBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top: var(--space-4);">
+          <button class="btn btn-primary" type="button" id="addBrandBtn">+ Agregar marca</button>
         </div>
       </div>
 
@@ -725,6 +752,71 @@
         <div class="field"><label for="s_footer_cta_link">Enlace del botón (opcional)</label><input id="s_footer_cta_link" placeholder="/catalogo.html"></div>
       </div>
 
+      <div id="sectionFieldsClassesCarousel" hidden>
+        <div class="field"><label for="s_classcar_heading">Título de la sección (opcional)</label><input id="s_classcar_heading" placeholder="Explora por clase"></div>
+        <div class="field"><label for="s_classcar_mode">Qué clases mostrar</label>
+          <select id="s_classcar_mode">
+            <option value="all">Todas las activas</option>
+            <option value="manual">Selección manual</option>
+          </select>
+        </div>
+        <p id="classCarouselEmptyNotice" class="text-muted text-small" style="color:var(--danger);" hidden>Todavía no hay clases activas. Créalas en la pestaña Clases.</p>
+        <div id="classCarouselPickerWrap" hidden>
+          <p class="text-caption" style="margin-bottom: var(--space-2);">Marca las clases a mostrar y arrastra para ordenarlas</p>
+          <div id="classCarouselPicker"></div>
+        </div>
+        <p class="text-caption" style="margin-bottom: var(--space-2); margin-top: var(--space-4);">Tarjetas visibles por pantalla</p>
+        <div style="display:flex; gap: var(--space-2);">
+          <div class="field" style="flex:1;"><label for="s_classcar_mobile">Móvil</label><input id="s_classcar_mobile" type="number" min="1" max="4" step="0.1" value="1.3"></div>
+          <div class="field" style="flex:1;"><label for="s_classcar_tablet">Tablet</label><input id="s_classcar_tablet" type="number" min="1" max="6" value="3"></div>
+          <div class="field" style="flex:1;"><label for="s_classcar_desktop">Escritorio</label><input id="s_classcar_desktop" type="number" min="1" max="8" value="4"></div>
+        </div>
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:var(--space-2);">
+            <input type="checkbox" id="s_classcar_arrows" checked> Mostrar flechas
+          </label>
+        </div>
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:var(--space-2);">
+            <input type="checkbox" id="s_classcar_autoplay"> Autoavance
+          </label>
+        </div>
+        <div class="field"><label for="s_classcar_interval">Intervalo de autoavance (3 a 10 segundos)</label><input id="s_classcar_interval" type="number" min="3" max="10" value="5"></div>
+      </div>
+
+      <div id="sectionFieldsBrandsCarousel" hidden>
+        <div class="field"><label for="s_brandcar_heading">Título de la sección (opcional)</label><input id="s_brandcar_heading" placeholder="Marcas que confían en nosotros"></div>
+        <div class="field"><label for="s_brandcar_mode">Qué marcas mostrar</label>
+          <select id="s_brandcar_mode">
+            <option value="all">Todas las activas</option>
+            <option value="manual">Selección manual</option>
+          </select>
+        </div>
+        <p id="brandCarouselEmptyNotice" class="text-muted text-small" style="color:var(--danger);" hidden>Todavía no hay marcas activas. Créalas en la pestaña Marcas.</p>
+        <div id="brandCarouselPickerWrap" hidden>
+          <p class="text-caption" style="margin-bottom: var(--space-2);">Marca las marcas a mostrar y arrastra para ordenarlas</p>
+          <div id="brandCarouselPicker"></div>
+        </div>
+        <div class="field" style="margin-top: var(--space-4);"><label for="s_brandcar_carousel_mode">Modo</label>
+          <select id="s_brandcar_carousel_mode">
+            <option value="arrows">Flechas (manual)</option>
+            <option value="continuous">Continuo (deslizamiento infinito lento)</option>
+          </select>
+        </div>
+        <div class="field"><label for="s_brandcar_color">Color de los logos</label>
+          <select id="s_brandcar_color">
+            <option value="grayscale">Escala de grises</option>
+            <option value="original">Color original</option>
+          </select>
+        </div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Logos visibles por pantalla</p>
+        <div style="display:flex; gap: var(--space-2);">
+          <div class="field" style="flex:1;"><label for="s_brandcar_mobile">Móvil</label><input id="s_brandcar_mobile" type="number" min="1" max="8" value="3"></div>
+          <div class="field" style="flex:1;"><label for="s_brandcar_tablet">Tablet</label><input id="s_brandcar_tablet" type="number" min="1" max="10" value="5"></div>
+          <div class="field" style="flex:1;"><label for="s_brandcar_desktop">Escritorio</label><input id="s_brandcar_desktop" type="number" min="1" max="12" value="7"></div>
+        </div>
+      </div>
+
       <div id="sectionFieldsTestimonials" hidden>
         <p class="text-caption" style="margin-bottom: var(--space-2);">Testimonios</p>
         <div id="testimonialList"></div>
@@ -781,6 +873,68 @@
   </div>
 </dialog>
 
+<dialog id="classDialog">
+  <div class="dialog-inner" style="max-width:640px;">
+    <h2 class="h3" style="margin-bottom: var(--space-4);" id="classDialogTitle">Nueva clase</h2>
+    <form id="classForm">
+      <p class="form-error" id="classFormError" style="color:var(--danger);" hidden></p>
+      <div class="field"><label for="cls_name">Nombre</label><input id="cls_name" required></div>
+      <div class="field"><label for="cls_display_name">Nombre en la tarjeta (opcional)</label><input id="cls_display_name" placeholder="Si lo dejas vacío, se usa el nombre de arriba"></div>
+      <div class="field"><label for="cls_eyebrow">Eyebrow (opcional)</label><input id="cls_eyebrow" placeholder="Perfumes"></div>
+      <div class="field"><label for="cls_image_url">URL de la foto</label><input id="cls_image_url" placeholder="https://..."></div>
+      <div style="display:flex; gap: var(--space-2); align-items:center;">
+        <label class="text-caption" style="flex-shrink:0;">Texto</label>
+        <select class="input-sm" id="cls_text_position" style="flex:1;">
+          <option value="left">Izquierda</option>
+          <option value="center">Centro</option>
+          <option value="right">Derecha</option>
+        </select>
+      </div>
+      <div class="field"><label for="cls_overlay">Oscurecer imagen (0-100%)</label><input id="cls_overlay" type="number" min="0" max="100" value="40"></div>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:var(--space-2);">
+          <input type="checkbox" id="cls_is_active" checked> Activa (visible en el carrusel de clases)
+        </label>
+      </div>
+
+      <p class="text-caption" style="margin-bottom: var(--space-2);">Vista previa</p>
+      <div id="classPreview" style="position:relative; width:220px; height:160px; overflow:hidden; border-radius:var(--radius); background:#3A3739 center/cover no-repeat; margin-bottom:var(--space-6);">
+        <div id="classPreviewScrim" style="position:absolute; inset:0; background:rgba(32,30,31,0.4);"></div>
+        <div id="classPreviewInner" style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:var(--space-3); text-align:left;">
+          <p id="classPreviewEyebrow" style="margin:0; color:#fff; font-family:var(--font-body); font-size:11px; font-weight:500;"></p>
+          <p id="classPreviewName" style="margin:0; color:#fff; font-family:var(--font-display); font-size:20px; font-weight:500;">Nombre de la clase</p>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" type="button" id="cancelClassDialogBtn">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="brandDialog">
+  <div class="dialog-inner" style="max-width:480px;">
+    <h2 class="h3" style="margin-bottom: var(--space-4);" id="brandDialogTitle">Nueva marca</h2>
+    <form id="brandForm">
+      <p class="form-error" id="brandFormError" style="color:var(--danger);" hidden></p>
+      <div class="field"><label for="brd_name">Nombre</label><input id="brd_name" required></div>
+      <div class="field"><label for="brd_logo_url">URL del logo (SVG o PNG con fondo transparente)</label><input id="brd_logo_url" placeholder="https://..." required></div>
+      <div class="field"><label for="brd_link_url">Enlace (opcional)</label><input id="brd_link_url" placeholder="https://... o /catalogo.html"></div>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:var(--space-2);">
+          <input type="checkbox" id="brd_is_active" checked> Activa (visible en el carrusel de marcas)
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" type="button" id="cancelBrandDialogBtn">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
 <dialog id="historyDialog">
   <div class="dialog-inner">
     <h2 class="h3" style="margin-bottom: var(--space-4);">Historial — <span id="historyDialogPage"></span></h2>
@@ -810,6 +964,7 @@
       if (!me.is_admin) return showLoginGate('Esta cuenta no tiene permisos de administrador');
       document.getElementById('appShell').hidden = false;
       await loadCategories();
+      await loadBrands();
       initEditorPageSelect();
       setActiveNav(isMobileAdmin() ? 'products' : 'editor');
     } catch (err) {
@@ -852,7 +1007,7 @@
   });
 
   // --- Navegación primaria + drawers responsive ---
-  const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes', messages: 'Mensajes' };
+  const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Clases', brands: 'Marcas', settings: 'Ajustes', messages: 'Mensajes' };
 
   function setActiveNav(navName) {
     // Si de alguna manera se llega al editor de la tienda desde móvil (el
@@ -875,6 +1030,7 @@
     document.getElementById('centerProducts').hidden = navName !== 'products';
     document.getElementById('centerOrders').hidden = navName !== 'orders';
     document.getElementById('centerCategories').hidden = navName !== 'categories';
+    document.getElementById('centerBrands').hidden = navName !== 'brands';
     document.getElementById('centerMetrics').hidden = navName !== 'metrics';
     document.getElementById('centerSettings').hidden = navName !== 'settings';
     document.getElementById('centerMessages').hidden = navName !== 'messages';
@@ -890,6 +1046,7 @@
     if (navName === 'products') loadProducts();
     if (navName === 'orders') loadOrders();
     if (navName === 'categories') loadCategories();
+    if (navName === 'brands') loadBrands();
     if (navName === 'metrics') loadStats();
     if (navName === 'settings') loadSettingsForm();
     if (navName === 'messages') loadMessages();
@@ -955,38 +1112,9 @@
     });
   });
 
-  // --- Categorías ---
+  // --- Clases (Category) ---
   let categoriesCache = [];
-
-  async function loadCategories() {
-    categoriesCache = await apiFetch('/categories');
-    const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-    document.getElementById('p_category').innerHTML = '<option value="">Sin categoría</option>' + options;
-    document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
-
-    const body = document.getElementById('categoriesBody');
-    if (categoriesCache.length === 0) {
-      body.innerHTML = `<tr><td colspan="2" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay categorías.</td></tr>`;
-      return;
-    }
-    body.innerHTML = categoriesCache.map((c) => `
-      <tr>
-        <td>${c.name}</td>
-        <td><button type="button" class="remove-btn" data-remove-category="${c.id}">Quitar</button></td>
-      </tr>
-    `).join('');
-    document.querySelectorAll('[data-remove-category]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('¿Quitar esta categoría? Los productos que la usaban quedan sin categoría.')) return;
-        try {
-          await apiFetch(`/categories/${btn.dataset.removeCategory}`, { method: 'DELETE' });
-          loadCategories();
-        } catch (err) {
-          alert(`No se pudo quitar la categoría: ${err.message}`);
-        }
-      });
-    });
-  }
+  let editingCategoryId = null;
 
   function slugify(text) {
     return text.toLowerCase().trim()
@@ -994,16 +1122,231 @@
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
-  document.getElementById('addCategoryBtn').addEventListener('click', async () => {
-    const input = document.getElementById('newCategoryName');
-    const name = input.value.trim();
-    if (!name) return;
+  async function loadCategories() {
+    categoriesCache = await apiFetch('/categories');
+    const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('p_category').innerHTML = '<option value="">Sin categoría</option>' + options;
+    document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
+    renderClassCarouselPicker();
+    updateClassCarouselEmptyNotice();
+
+    const body = document.getElementById('categoriesBody');
+    if (categoriesCache.length === 0) {
+      body.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay clases.</td></tr>`;
+      return;
+    }
+    body.innerHTML = categoriesCache.map((c, index) => `
+      <tr>
+        <td>${c.image_url ? `<img src="${c.image_url}" alt="" style="width:40px; height:40px; object-fit:cover; border-radius:var(--radius); display:block;">` : ''}</td>
+        <td>${c.name}</td>
+        <td class="text-muted text-small">${c.eyebrow || '—'}</td>
+        <td>${c.is_active ? 'Activa' : '<span style="color:var(--danger);">Oculta</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button type="button" class="editor-icon-btn" data-cls-up="${c.id}" ${index === 0 ? 'disabled' : ''} aria-label="Subir">↑</button>
+          <button type="button" class="editor-icon-btn" data-cls-down="${c.id}" ${index === categoriesCache.length - 1 ? 'disabled' : ''} aria-label="Bajar">↓</button>
+          <button type="button" class="editor-icon-btn" data-cls-toggle="${c.id}" aria-label="${c.is_active ? 'Ocultar' : 'Mostrar'}">${c.is_active ? '👁' : '🚫'}</button>
+          <button type="button" class="editor-icon-btn" data-cls-edit="${c.id}" aria-label="Editar">✎</button>
+          <button type="button" class="editor-icon-btn" data-cls-remove="${c.id}" aria-label="Eliminar">✕</button>
+        </td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('[data-cls-up]').forEach((btn) => btn.addEventListener('click', () => moveCategory(btn.dataset.clsUp, 'up')));
+    body.querySelectorAll('[data-cls-down]').forEach((btn) => btn.addEventListener('click', () => moveCategory(btn.dataset.clsDown, 'down')));
+    body.querySelectorAll('[data-cls-toggle]').forEach((btn) => btn.addEventListener('click', () => toggleCategoryActive(btn.dataset.clsToggle)));
+    body.querySelectorAll('[data-cls-edit]').forEach((btn) => btn.addEventListener('click', () => openClassDialog(categoriesCache.find((c) => c.id === Number(btn.dataset.clsEdit)))));
+    body.querySelectorAll('[data-cls-remove]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar esta clase? Los productos que la usaban quedan sin clase.')) return;
+        try {
+          await apiFetch(`/categories/${btn.dataset.clsRemove}`, { method: 'DELETE' });
+          loadCategories();
+        } catch (err) {
+          alert(`No se pudo eliminar la clase: ${err.message}`);
+        }
+      });
+    });
+  }
+
+  async function moveCategory(id, direction) {
+    await apiFetch(`/categories/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) });
+    loadCategories();
+  }
+
+  async function toggleCategoryActive(id) {
+    const category = categoriesCache.find((c) => c.id === Number(id));
     try {
-      await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, slug: slugify(name) }) });
-      input.value = '';
+      await apiFetch(`/categories/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: !category.is_active }) });
       loadCategories();
     } catch (err) {
-      alert(`No se pudo agregar la categoría: ${err.message}`);
+      alert(`No se pudo actualizar la clase: ${err.message}`);
+    }
+  }
+
+  function updateClassPreview() {
+    const imageUrl = document.getElementById('cls_image_url').value.trim();
+    const overlay = Math.max(0, Math.min(100, Number(document.getElementById('cls_overlay').value) || 0)) / 100;
+    const position = document.getElementById('cls_text_position').value;
+    const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position] || 'flex-start';
+    const align = { left: 'left', center: 'center', right: 'right' }[position] || 'left';
+    const preview = document.getElementById('classPreview');
+    preview.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : 'none';
+    document.getElementById('classPreviewScrim').style.background = `rgba(32,30,31,${overlay})`;
+    const inner = document.getElementById('classPreviewInner');
+    inner.style.alignItems = justify;
+    inner.style.textAlign = align;
+    document.getElementById('classPreviewEyebrow').textContent = document.getElementById('cls_eyebrow').value.trim();
+    document.getElementById('classPreviewName').textContent =
+      document.getElementById('cls_display_name').value.trim() || document.getElementById('cls_name').value.trim() || 'Nombre de la clase';
+  }
+
+  ['cls_name', 'cls_display_name', 'cls_eyebrow', 'cls_image_url', 'cls_overlay', 'cls_text_position'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', updateClassPreview);
+  });
+
+  function openClassDialog(category) {
+    editingCategoryId = category ? category.id : null;
+    document.getElementById('classDialogTitle').textContent = category ? 'Editar clase' : 'Nueva clase';
+    document.getElementById('classFormError').hidden = true;
+    document.getElementById('cls_name').value = category ? category.name : '';
+    document.getElementById('cls_display_name').value = (category && category.display_name) || '';
+    document.getElementById('cls_eyebrow').value = (category && category.eyebrow) || '';
+    document.getElementById('cls_image_url').value = (category && category.image_url) || '';
+    document.getElementById('cls_text_position').value = (category && category.text_position) || 'left';
+    document.getElementById('cls_overlay').value = category ? category.overlay_darkness : 40;
+    document.getElementById('cls_is_active').checked = category ? category.is_active : true;
+    updateClassPreview();
+    document.getElementById('classDialog').showModal();
+  }
+
+  document.getElementById('addCategoryBtn').addEventListener('click', () => openClassDialog(null));
+  document.getElementById('cancelClassDialogBtn').addEventListener('click', () => document.getElementById('classDialog').close());
+
+  document.getElementById('classForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('classFormError');
+    errorEl.hidden = true;
+    const name = document.getElementById('cls_name').value.trim();
+    const payload = {
+      name,
+      display_name: document.getElementById('cls_display_name').value.trim() || null,
+      eyebrow: document.getElementById('cls_eyebrow').value.trim() || null,
+      image_url: document.getElementById('cls_image_url').value.trim() || null,
+      text_position: document.getElementById('cls_text_position').value,
+      overlay_darkness: Math.max(0, Math.min(100, Number(document.getElementById('cls_overlay').value) || 0)),
+      is_active: document.getElementById('cls_is_active').checked,
+    };
+    try {
+      if (editingCategoryId) {
+        await apiFetch(`/categories/${editingCategoryId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ ...payload, slug: slugify(name) }) });
+      }
+      document.getElementById('classDialog').close();
+      loadCategories();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+    }
+  });
+
+  // --- Marcas (Brand) ---
+  let brandsCache = [];
+  let editingBrandId = null;
+
+  async function loadBrands() {
+    brandsCache = await apiFetch('/brands?include_inactive=true');
+    renderBrandCarouselPicker();
+    updateBrandCarouselEmptyNotice();
+
+    const body = document.getElementById('brandsBody');
+    if (brandsCache.length === 0) {
+      body.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay marcas.</td></tr>`;
+      return;
+    }
+    body.innerHTML = brandsCache.map((b, index) => `
+      <tr>
+        <td>${b.logo_url ? `<img src="${b.logo_url}" alt="" style="width:40px; height:40px; object-fit:contain; display:block;">` : ''}</td>
+        <td>${b.name}</td>
+        <td class="text-muted text-small">${b.link_url || '—'}</td>
+        <td>${b.is_active ? 'Activa' : '<span style="color:var(--danger);">Oculta</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button type="button" class="editor-icon-btn" data-brd-up="${b.id}" ${index === 0 ? 'disabled' : ''} aria-label="Subir">↑</button>
+          <button type="button" class="editor-icon-btn" data-brd-down="${b.id}" ${index === brandsCache.length - 1 ? 'disabled' : ''} aria-label="Bajar">↓</button>
+          <button type="button" class="editor-icon-btn" data-brd-toggle="${b.id}" aria-label="${b.is_active ? 'Ocultar' : 'Mostrar'}">${b.is_active ? '👁' : '🚫'}</button>
+          <button type="button" class="editor-icon-btn" data-brd-edit="${b.id}" aria-label="Editar">✎</button>
+          <button type="button" class="editor-icon-btn" data-brd-remove="${b.id}" aria-label="Eliminar">✕</button>
+        </td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('[data-brd-up]').forEach((btn) => btn.addEventListener('click', () => moveBrand(btn.dataset.brdUp, 'up')));
+    body.querySelectorAll('[data-brd-down]').forEach((btn) => btn.addEventListener('click', () => moveBrand(btn.dataset.brdDown, 'down')));
+    body.querySelectorAll('[data-brd-toggle]').forEach((btn) => btn.addEventListener('click', () => toggleBrandActive(btn.dataset.brdToggle)));
+    body.querySelectorAll('[data-brd-edit]').forEach((btn) => btn.addEventListener('click', () => openBrandDialog(brandsCache.find((b) => b.id === Number(btn.dataset.brdEdit)))));
+    body.querySelectorAll('[data-brd-remove]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar esta marca?')) return;
+        try {
+          await apiFetch(`/brands/${btn.dataset.brdRemove}`, { method: 'DELETE' });
+          loadBrands();
+        } catch (err) {
+          alert(`No se pudo eliminar la marca: ${err.message}`);
+        }
+      });
+    });
+  }
+
+  async function moveBrand(id, direction) {
+    await apiFetch(`/brands/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) });
+    loadBrands();
+  }
+
+  async function toggleBrandActive(id) {
+    const brand = brandsCache.find((b) => b.id === Number(id));
+    try {
+      await apiFetch(`/brands/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: !brand.is_active }) });
+      loadBrands();
+    } catch (err) {
+      alert(`No se pudo actualizar la marca: ${err.message}`);
+    }
+  }
+
+  function openBrandDialog(brand) {
+    editingBrandId = brand ? brand.id : null;
+    document.getElementById('brandDialogTitle').textContent = brand ? 'Editar marca' : 'Nueva marca';
+    document.getElementById('brandFormError').hidden = true;
+    document.getElementById('brd_name').value = brand ? brand.name : '';
+    document.getElementById('brd_logo_url').value = (brand && brand.logo_url) || '';
+    document.getElementById('brd_link_url').value = (brand && brand.link_url) || '';
+    document.getElementById('brd_is_active').checked = brand ? brand.is_active : true;
+    document.getElementById('brandDialog').showModal();
+  }
+
+  document.getElementById('addBrandBtn').addEventListener('click', () => openBrandDialog(null));
+  document.getElementById('cancelBrandDialogBtn').addEventListener('click', () => document.getElementById('brandDialog').close());
+
+  document.getElementById('brandForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('brandFormError');
+    errorEl.hidden = true;
+    const payload = {
+      name: document.getElementById('brd_name').value.trim(),
+      logo_url: document.getElementById('brd_logo_url').value.trim(),
+      link_url: document.getElementById('brd_link_url').value.trim() || null,
+      is_active: document.getElementById('brd_is_active').checked,
+    };
+    try {
+      if (editingBrandId) {
+        await apiFetch(`/brands/${editingBrandId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      } else {
+        await apiFetch('/brands', { method: 'POST', body: JSON.stringify(payload) });
+      }
+      document.getElementById('brandDialog').close();
+      loadBrands();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
     }
   });
 
@@ -1586,6 +1929,7 @@
     categories: 'Categorías', image: 'Imagen', gallery: 'Galería de fotos', testimonials: 'Testimonios', counters: 'Contadores',
     footer: 'Footer', custom_html: 'Código HTML/CSS',
     section_heading: 'Título de sección', decant_callout: 'Bloque de decants', manifesto: 'Manifiesto de marca',
+    classes_carousel: 'Carrusel de clases', brands_carousel: 'Carrusel de marcas',
   };
 
   let editingSectionId = null;
@@ -1677,6 +2021,15 @@
       case 'section_heading': return c.heading || '(sin título)';
       case 'decant_callout': return c.heading || '(sin título)';
       case 'manifesto': return `${(c.items || []).length} columna(s)`;
+      case 'classes_carousel': {
+        const modeLabel = c.mode === 'manual' ? `${(c.category_ids || []).length} clase(s) seleccionadas` : 'todas las activas';
+        return c.heading || modeLabel;
+      }
+      case 'brands_carousel': {
+        const modeLabel = c.mode === 'manual' ? `${(c.brand_ids || []).length} marca(s) seleccionadas` : 'todas las activas';
+        const carouselLabel = c.carousel_mode === 'continuous' ? 'continuo' : 'flechas';
+        return `${c.heading || modeLabel} · ${carouselLabel}`;
+      }
       default: return 'Código personalizado';
     }
   }
@@ -1834,12 +2187,94 @@
     footer: 'sectionFieldsFooter', custom_html: 'sectionFieldsCustomHtml',
     section_heading: 'sectionFieldsSectionHeading', decant_callout: 'sectionFieldsDecantCallout',
     manifesto: 'sectionFieldsManifesto', hero_product: 'sectionFieldsHeroProduct',
+    classes_carousel: 'sectionFieldsClassesCarousel', brands_carousel: 'sectionFieldsBrandsCarousel',
   };
 
   function showSectionTypeFields(type) {
     Object.values(SECTION_FIELD_IDS).forEach((id) => { document.getElementById(id).hidden = true; });
     document.getElementById(SECTION_FIELD_IDS[type]).hidden = false;
   }
+
+  // --- Selector de clases/marcas para los carruseles (modo manual) ---
+  // Mismo mecanismo de arrastre que bindGalleryImageRows/bindAnnouncementMessageRows,
+  // pero sobre filas de clases/marcas ya existentes (con checkbox) en vez de
+  // fotos nuevas — el orden final es el orden de las filas marcadas en el DOM.
+  function pickerRowHtml(item, checked) {
+    return `
+      <div class="image-row picker-row" draggable="true" data-picker-id="${item.id}">
+        <div class="announcement-msg-handle" aria-hidden="true" title="Arrastrar para reordenar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.4"/><circle cx="16" cy="6" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="16" cy="12" r="1.4"/><circle cx="8" cy="18" r="1.4"/><circle cx="16" cy="18" r="1.4"/></svg>
+        </div>
+        <label style="display:flex; align-items:center; gap:var(--space-2); flex:1; margin:0;">
+          <input type="checkbox" data-picker-check ${checked ? 'checked' : ''}>
+          ${item.name}${item.is_active === false ? ' <span class="text-muted text-small">(oculta)</span>' : ''}
+        </label>
+      </div>
+    `;
+  }
+
+  function bindPickerRows(containerId) {
+    const list = document.getElementById(containerId);
+    let dragging = null;
+    list.querySelectorAll('.picker-row').forEach((row) => {
+      row.addEventListener('dragstart', () => { dragging = row; row.classList.add('is-dragging'); });
+      row.addEventListener('dragend', () => { dragging = null; row.classList.remove('is-dragging'); });
+      row.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!dragging || dragging === row) return;
+        const rect = row.getBoundingClientRect();
+        const before = event.clientY - rect.top < rect.height / 2;
+        row.parentNode.insertBefore(dragging, before ? row : row.nextSibling);
+      });
+    });
+  }
+
+  function renderClassCarouselPicker(selectedIds) {
+    const ids = selectedIds || [];
+    const ordered = [
+      ...ids.map((id) => categoriesCache.find((c) => c.id === id)).filter(Boolean),
+      ...categoriesCache.filter((c) => !ids.includes(c.id)),
+    ];
+    document.getElementById('classCarouselPicker').innerHTML = ordered.map((c) => pickerRowHtml(c, ids.includes(c.id))).join('');
+    bindPickerRows('classCarouselPicker');
+  }
+
+  function collectClassCarouselIds() {
+    return Array.from(document.querySelectorAll('#classCarouselPicker .picker-row'))
+      .filter((row) => row.querySelector('[data-picker-check]').checked)
+      .map((row) => Number(row.dataset.pickerId));
+  }
+
+  function updateClassCarouselEmptyNotice() {
+    document.getElementById('classCarouselEmptyNotice').hidden = categoriesCache.some((c) => c.is_active);
+  }
+
+  function renderBrandCarouselPicker(selectedIds) {
+    const ids = selectedIds || [];
+    const ordered = [
+      ...ids.map((id) => brandsCache.find((b) => b.id === id)).filter(Boolean),
+      ...brandsCache.filter((b) => !ids.includes(b.id)),
+    ];
+    document.getElementById('brandCarouselPicker').innerHTML = ordered.map((b) => pickerRowHtml(b, ids.includes(b.id))).join('');
+    bindPickerRows('brandCarouselPicker');
+  }
+
+  function collectBrandCarouselIds() {
+    return Array.from(document.querySelectorAll('#brandCarouselPicker .picker-row'))
+      .filter((row) => row.querySelector('[data-picker-check]').checked)
+      .map((row) => Number(row.dataset.pickerId));
+  }
+
+  function updateBrandCarouselEmptyNotice() {
+    document.getElementById('brandCarouselEmptyNotice').hidden = brandsCache.some((b) => b.is_active);
+  }
+
+  document.getElementById('s_classcar_mode').addEventListener('change', (event) => {
+    document.getElementById('classCarouselPickerWrap').hidden = event.target.value !== 'manual';
+  });
+  document.getElementById('s_brandcar_mode').addEventListener('change', (event) => {
+    document.getElementById('brandCarouselPickerWrap').hidden = event.target.value !== 'manual';
+  });
 
   function testimonialRowHtml(t = {}) {
     return `
@@ -2320,6 +2755,29 @@
       document.getElementById('s_hero_cta_label').value = c.cta_label || '';
       document.getElementById('s_hero_cta_link').value = c.cta_link || '';
       document.getElementById('s_hero_diagram_heading').value = c.diagram_heading || '';
+    } else if (type === 'classes_carousel') {
+      document.getElementById('s_classcar_heading').value = c.heading || '';
+      document.getElementById('s_classcar_mode').value = c.mode || 'all';
+      document.getElementById('classCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
+      document.getElementById('s_classcar_mobile').value = c.cards_mobile != null ? c.cards_mobile : 1.3;
+      document.getElementById('s_classcar_tablet').value = c.cards_tablet != null ? c.cards_tablet : 3;
+      document.getElementById('s_classcar_desktop').value = c.cards_desktop != null ? c.cards_desktop : 4;
+      document.getElementById('s_classcar_arrows').checked = c.show_arrows != null ? c.show_arrows : true;
+      document.getElementById('s_classcar_autoplay').checked = Boolean(c.autoplay);
+      document.getElementById('s_classcar_interval').value = c.autoplay_interval || 5;
+      renderClassCarouselPicker(c.category_ids || []);
+      updateClassCarouselEmptyNotice();
+    } else if (type === 'brands_carousel') {
+      document.getElementById('s_brandcar_heading').value = c.heading || '';
+      document.getElementById('s_brandcar_mode').value = c.mode || 'all';
+      document.getElementById('brandCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
+      document.getElementById('s_brandcar_carousel_mode').value = c.carousel_mode || 'arrows';
+      document.getElementById('s_brandcar_color').value = c.logo_color || 'grayscale';
+      document.getElementById('s_brandcar_mobile').value = c.logos_mobile || 3;
+      document.getElementById('s_brandcar_tablet').value = c.logos_tablet || 5;
+      document.getElementById('s_brandcar_desktop').value = c.logos_desktop || 7;
+      renderBrandCarouselPicker(c.brand_ids || []);
+      updateBrandCarouselEmptyNotice();
     }
     document.getElementById('sectionDialog').showModal();
   }
@@ -2445,6 +2903,29 @@
         cta_label: document.getElementById('s_hero_cta_label').value.trim() || null,
         cta_link: document.getElementById('s_hero_cta_link').value.trim() || null,
         diagram_heading: document.getElementById('s_hero_diagram_heading').value.trim() || null,
+      };
+    } else if (type === 'classes_carousel') {
+      content = {
+        heading: document.getElementById('s_classcar_heading').value.trim() || null,
+        mode: document.getElementById('s_classcar_mode').value,
+        category_ids: collectClassCarouselIds(),
+        cards_mobile: Number(document.getElementById('s_classcar_mobile').value) || 1.3,
+        cards_tablet: Number(document.getElementById('s_classcar_tablet').value) || 3,
+        cards_desktop: Number(document.getElementById('s_classcar_desktop').value) || 4,
+        show_arrows: document.getElementById('s_classcar_arrows').checked,
+        autoplay: document.getElementById('s_classcar_autoplay').checked,
+        autoplay_interval: Number(document.getElementById('s_classcar_interval').value) || 5,
+      };
+    } else if (type === 'brands_carousel') {
+      content = {
+        heading: document.getElementById('s_brandcar_heading').value.trim() || null,
+        mode: document.getElementById('s_brandcar_mode').value,
+        brand_ids: collectBrandCarouselIds(),
+        carousel_mode: document.getElementById('s_brandcar_carousel_mode').value,
+        logo_color: document.getElementById('s_brandcar_color').value,
+        logos_mobile: Number(document.getElementById('s_brandcar_mobile').value) || 3,
+        logos_tablet: Number(document.getElementById('s_brandcar_tablet').value) || 5,
+        logos_desktop: Number(document.getElementById('s_brandcar_desktop').value) || 7,
       };
     } else {
       content = {

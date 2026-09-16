@@ -56,6 +56,75 @@ def test_product_category_assignment_and_filter(client, admin_headers):
     assert filtered.json()["items"][0]["slug"] == "citrico-manana"
 
 
+def test_create_category_with_class_card_fields_and_defaults(client, admin_headers):
+    create = client.post(
+        "/categories",
+        json={
+            "name": "Amaderado", "slug": "amaderado", "image_url": "https://cdn.jg/amaderado.jpg",
+            "eyebrow": "Perfumes", "display_name": "Amaderados", "overlay_darkness": 55, "text_position": "center",
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    body = create.json()
+    assert body["image_url"] == "https://cdn.jg/amaderado.jpg"
+    assert body["eyebrow"] == "Perfumes"
+    assert body["display_name"] == "Amaderados"
+    assert body["overlay_darkness"] == 55
+    assert body["text_position"] == "center"
+    assert body["is_active"] is True
+    assert body["sort_order"] == 0
+
+    defaults = client.post("/categories", json={"name": "Floral", "slug": "floral"}, headers=admin_headers).json()
+    assert defaults["overlay_darkness"] == 40
+    assert defaults["text_position"] == "left"
+    assert defaults["image_url"] is None
+    assert defaults["sort_order"] == 1
+
+
+def test_create_category_rejects_overlay_darkness_out_of_range(client, admin_headers):
+    response = client.post(
+        "/categories", json={"name": "Cítrico", "slug": "citrico", "overlay_darkness": 101}, headers=admin_headers
+    )
+    assert response.status_code == 422
+
+
+def test_create_category_rejects_invalid_text_position(client, admin_headers):
+    response = client.post(
+        "/categories", json={"name": "Cítrico", "slug": "citrico", "text_position": "top"}, headers=admin_headers
+    )
+    assert response.status_code == 422
+
+
+def test_update_category_can_toggle_is_active(client, admin_headers):
+    category = client.post("/categories", json={"name": "Oriental", "slug": "oriental"}, headers=admin_headers).json()
+    update = client.put(f"/categories/{category['id']}", json={"is_active": False}, headers=admin_headers)
+    assert update.status_code == 200
+    assert update.json()["is_active"] is False
+
+
+def test_move_category_swaps_sort_order_with_neighbor(client, admin_headers):
+    a = client.post("/categories", json={"name": "A", "slug": "a"}, headers=admin_headers).json()
+    b = client.post("/categories", json={"name": "B", "slug": "b"}, headers=admin_headers).json()
+    c = client.post("/categories", json={"name": "C", "slug": "c"}, headers=admin_headers).json()
+    assert [cat["slug"] for cat in client.get("/categories").json()] == ["a", "b", "c"]
+
+    move = client.put(f"/categories/{b['id']}/move", json={"direction": "up"}, headers=admin_headers)
+    assert move.status_code == 200
+    assert [cat["slug"] for cat in client.get("/categories").json()] == ["b", "a", "c"]
+
+    # En el extremo, moverse más allá no rompe nada — se queda quieto.
+    edge = client.put(f"/categories/{b['id']}/move", json={"direction": "up"}, headers=admin_headers)
+    assert edge.status_code == 200
+    assert [cat["slug"] for cat in client.get("/categories").json()] == ["b", "a", "c"]
+
+
+def test_move_category_requires_admin(client, admin_headers):
+    category = client.post("/categories", json={"name": "A", "slug": "a"}, headers=admin_headers).json()
+    response = client.put(f"/categories/{category['id']}/move", json={"direction": "up"})
+    assert response.status_code == 401
+
+
 def test_deleting_category_unsets_it_on_products_instead_of_deleting_them(client, admin_headers):
     category = client.post("/categories", json={"name": "Oriental", "slug": "oriental"}, headers=admin_headers).json()
     product = client.post(

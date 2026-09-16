@@ -17,7 +17,15 @@ from schemas.page_section import (
     PageSectionResponse,
     PageSectionUpdate,
     validate_announcement_bar_content,
+    validate_brands_carousel_content,
+    validate_classes_carousel_content,
 )
+
+CONTENT_VALIDATORS = {
+    "announcement_bar": validate_announcement_bar_content,
+    "classes_carousel": validate_classes_carousel_content,
+    "brands_carousel": validate_brands_carousel_content,
+}
 
 router = APIRouter(prefix="/page-sections", tags=["page-sections"])
 
@@ -200,13 +208,14 @@ def create_page_section(
     payload: PageSectionCreate, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
 ):
     content = payload.content
-    if payload.type == "announcement_bar":
+    validator = CONTENT_VALIDATORS.get(payload.type)
+    if validator:
         try:
-            content = validate_announcement_bar_content(content)
+            content = validator(content)
         except ValidationError as exc:
             raise _validation_http_error(exc)
-        if payload.is_active:
-            _assert_single_top_announcement(db, payload.page, content)
+    if payload.type == "announcement_bar" and payload.is_active:
+        _assert_single_top_announcement(db, payload.page, content)
 
     max_position = (
         db.query(PageSection.position)
@@ -239,13 +248,15 @@ def update_page_section(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sección no encontrada")
 
     updates = payload.model_dump(exclude_unset=True)
+    validator = CONTENT_VALIDATORS.get(section.type)
+    if "content" in updates and validator:
+        try:
+            updates["content"] = validator(updates["content"])
+        except ValidationError as exc:
+            raise _validation_http_error(exc)
     if section.type == "announcement_bar":
         will_be_active = updates.get("is_active", section.is_active)
         if "content" in updates:
-            try:
-                updates["content"] = validate_announcement_bar_content(updates["content"])
-            except ValidationError as exc:
-                raise _validation_http_error(exc)
             if will_be_active:
                 _assert_single_top_announcement(db, section.page, updates["content"], exclude_id=section.id)
         elif will_be_active and "is_active" in updates:
