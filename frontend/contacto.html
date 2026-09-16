@@ -3,27 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JG Parfums — Perfumería de nicho en Colombia</title>
-<meta name="description" content="Perfumes originales de nicho. Notas, familia olfativa y duración de cada frasco, sin relleno. Ahora también en decant de 5ml y 10ml.">
+<title>Contacto — JG Parfums</title>
+<meta name="description" content="Escríbenos y te respondemos lo antes posible.">
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  /* hero: la ficha técnica de un perfume real, no un eslogan */
-  .hero-spec-layout { display: grid; gap: var(--space-8); }
-  @media (min-width: 1024px) {
-    .hero-spec-layout { grid-template-columns: 1fr 1fr; align-items: center; gap: var(--space-24); }
-  }
-  .hero-spec-house { color: #B9B4B0; margin: 0 0 var(--space-2); }
-  .hero-spec-copy h1 { color: #FFFFFF; max-width: 16ch; }
-  .hero-spec-desc { color: #B9B4B0; max-width: 46ch; margin-top: var(--space-4); font-family: var(--font-display); font-style: italic; }
-  .hero-spec-copy .btn { margin-top: var(--space-8); }
-
-  /* callout de decants */
-  .decant-callout { display: grid; gap: var(--space-8); }
-  @media (min-width: 768px) { .decant-callout { grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; } }
+  .contact-layout { display: grid; gap: var(--space-12); padding-bottom: var(--space-16); }
+  @media (min-width: 1024px) { .contact-layout { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .contact-form-card { padding: var(--space-6); border: 1px solid var(--ink-100); }
+  .whatsapp-card { padding: var(--space-6); background: var(--jg-onyx); color: #FFFFFF; display: flex; flex-direction: column; gap: var(--space-4); }
+  .whatsapp-card[hidden] { display: none; }
+  .whatsapp-card p { color: #B9B4B0; margin: 0; }
+  .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 </style>
 </head>
 <body>
@@ -70,6 +64,31 @@
 
 <main id="main">
   <div id="dynamicSections"></div>
+  <div class="container contact-layout">
+    <div class="contact-form-card">
+      <form id="contactForm">
+        <p class="form-error" id="contactFormError" hidden></p>
+        <p class="text-small" id="contactFormSuccess" style="color:var(--success); margin-bottom: var(--space-4);" hidden>Gracias, recibimos tu mensaje. Te contactamos pronto.</p>
+        <div class="field">
+          <label for="contact_name">Nombre</label>
+          <input id="contact_name" name="name" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="contact_contact">Correo o teléfono</label>
+          <input id="contact_contact" name="contact" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="contact_message">Mensaje</label>
+          <textarea id="contact_message" name="message" rows="5" required></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Enviar mensaje</button>
+      </form>
+    </div>
+    <div class="whatsapp-card" id="whatsappCard" hidden>
+      <p>¿Prefieres escribirnos directo?</p>
+      <a class="btn btn-onDark" id="whatsappLink" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+    </div>
+  </div>
 </main>
 
 <footer class="site-footer">
@@ -114,81 +133,36 @@
 <script src="/js/sections.js"></script>
 <script src="/js/reveal.js"></script>
 <script>
-  // Escalera genérica: se muestra mientras carga el catálogo, y si no hay
-  // ningún producto todavía (catálogo vacío) se queda así — nunca se
-  // inventan notas ni nombre de producto que el cliente no haya entregado.
-  const GENERIC_NOTES = [
-    { name: 'Salida', color: '#E3CCA1' },
-    { name: 'Corazón', color: '#CB9F4E' },
-    { name: 'Fondo', color: '#6A501F' },
-  ];
+  renderPageSections('contacto');
 
-  // Misma escalera que la ficha de producto, pero con el nombre siempre en
-  // blanco: el hero es de fondo oscuro y el color de una nota puede ser
-  // oscuro también (ilegible como texto ahí) — el color de marca se expresa
-  // en la barra, no en la letra. La sección hero (home_hero) ahora es una
-  // sección real: puede estar oculta o movida, así que #heroTiers no
-  // siempre existe — si no existe, no hay nada que pintar.
-  function renderHeroNotes(notes) {
-    const container = document.getElementById('heroTiers');
-    if (!container) return;
-    if (!notes || notes.length === 0) {
-      container.innerHTML = '';
-      return;
-    }
-    const total = notes.length;
-    container.innerHTML = notes.map((n, i) => `
-      <div class="notes-step">
-        <span class="notes-step-name" style="color:#FFFFFF;">${n.name}</span>
-        <span class="notes-step-track" style="background:#3A3739;"><span class="notes-step-fill" style="width:${Math.round(((i + 1) / total) * 100)}%; background:${n.color};"></span></span>
-      </div>
-    `).join('');
-  }
+  getSiteSettings().then((settings) => {
+    if (!settings.whatsapp_number) return;
+    document.getElementById('whatsappLink').href = `https://wa.me/${encodeURIComponent(settings.whatsapp_number)}`;
+    document.getElementById('whatsappCard').hidden = false;
+  });
 
-  function renderHeroProduct(product) {
-    const houseEl = document.getElementById('heroHouse');
-    if (!houseEl) return; // sección hero oculta: nada que actualizar
-    const hasNotes = Boolean(product.notes && product.notes.length > 0);
-    houseEl.textContent = product.house ? `${product.house} · ${product.category?.name || 'Perfumería de nicho'}` : 'Perfumería de nicho · Colombia';
-    document.getElementById('heroName').textContent = product.name;
-    document.getElementById('heroDesc').textContent = hasNotes
-      ? `${product.concentration || 'Original'} · ${product.size_ml} ml — notas reales de este frasco.`
-      : `${product.concentration || 'Original'} · ${product.size_ml} ml.`;
-    document.getElementById('heroCta').textContent = 'Ver ficha completa';
-    document.getElementById('heroCta').href = `/producto.html?slug=${encodeURIComponent(product.slug)}`;
-
-    renderHeroNotes(hasNotes ? product.notes : GENERIC_NOTES);
-  }
-
-  // La grilla de "Recién llegados" y el hero (home_recent_heading,
-  // home_hero) ya son secciones reales y movibles — las arma
-  // renderPageSections/sections.js, no este script. Acá solo queda pisar
-  // el texto del hero con los datos del producto destacado, una vez que
-  // esa sección ya exista en el DOM.
-  //
-  // El hero es una ficha educativa ("así se lee un perfume"), no la vitrina
-  // de un producto cualquiera: solo se pisa su copy genérico (de la sección
-  // home_hero) con los datos de un perfume real si el admin marcó explícita-
-  // mente ese producto con la estrella de "destacado" en el panel. Si ningún
-  // producto está marcado, se deja el texto genérico de la sección tal cual
-  // (puede hablar de la tienda, no de una marca de perfume puntual) con la
-  // escalera de notas genérica.
-  async function loadFeatured() {
+  document.getElementById('contactForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById('contactFormError');
+    const successEl = document.getElementById('contactFormSuccess');
+    errorEl.hidden = true;
+    successEl.hidden = true;
+    const form = new FormData(event.target);
     try {
-      const data = await apiFetch('/products?is_featured=true&page_size=1');
-      if (data.items.length === 0) {
-        renderHeroNotes(GENERIC_NOTES);
-        return;
-      }
-      renderHeroProduct(data.items[0]);
+      await apiFetch('/contact-messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: form.get('name'),
+          contact: form.get('contact'),
+          message: form.get('message'),
+        }),
+      });
+      event.target.reset();
+      successEl.hidden = false;
     } catch (err) {
-      renderHeroNotes(GENERIC_NOTES);
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
     }
-  }
-
-  renderPageSections('home').then(() => {
-    renderHeroNotes(GENERIC_NOTES);
-    loadFeatured();
   });
 </script>
 </body>

@@ -251,6 +251,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="1.6"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="1.6"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="1.6"/></svg>
         Ajustes
       </button>
+      <button class="nav-item" data-nav="messages">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v12H8l-4 4z"/></svg>
+        Mensajes
+      </button>
     </nav>
 
     <div class="topbar-actions">
@@ -497,6 +501,12 @@
 
           <button class="btn btn-primary" type="submit">Guardar ajustes</button>
         </form>
+      </div>
+
+      <div id="centerMessages" class="center-view" hidden>
+        <h2 class="h3" style="margin-bottom: var(--space-2);">Mensajes</h2>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Lo que deja la gente en el formulario de /contacto.html. Respondes por tu cuenta (WhatsApp, correo, teléfono) — acá solo queda el registro.</p>
+        <div id="messagesList"></div>
       </div>
     </div>
 
@@ -836,7 +846,7 @@
   });
 
   // --- Navegación primaria + drawers responsive ---
-  const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes' };
+  const RIGHT_PANEL_TITLE = { editor: 'Productos', products: 'Productos', orders: 'Pedidos', metrics: 'Métricas', categories: 'Categorías', settings: 'Ajustes', messages: 'Mensajes' };
 
   function setActiveNav(navName) {
     // Si de alguna manera se llega al editor de la tienda desde móvil (el
@@ -861,6 +871,7 @@
     document.getElementById('centerCategories').hidden = navName !== 'categories';
     document.getElementById('centerMetrics').hidden = navName !== 'metrics';
     document.getElementById('centerSettings').hidden = navName !== 'settings';
+    document.getElementById('centerMessages').hidden = navName !== 'messages';
 
     const showRightProducts = navName === 'products' || navName === 'editor';
     const showRightOrders = navName === 'orders';
@@ -875,6 +886,7 @@
     if (navName === 'categories') loadCategories();
     if (navName === 'metrics') loadStats();
     if (navName === 'settings') loadSettingsForm();
+    if (navName === 'messages') loadMessages();
     if (showRightProducts) loadRightProducts();
     if (showRightOrders) loadRightOrders();
 
@@ -1482,18 +1494,81 @@
     }
   });
 
+  // --- Mensajes de contacto ---
+  // A diferencia del resto del panel (donde el texto lo escribe el propio
+  // admin), esto lo escribe cualquier visitante — se escapa antes de meterlo
+  // en innerHTML para no ejecutar HTML/script ajeno en el navegador del admin.
+  function escHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  async function loadMessages() {
+    const list = document.getElementById('messagesList');
+    let messages;
+    try {
+      messages = await apiFetch('/contact-messages');
+    } catch (err) {
+      list.innerHTML = `<p class="form-error">No se pudieron cargar los mensajes: ${escHtml(err.message)}</p>`;
+      return;
+    }
+    if (messages.length === 0) {
+      list.innerHTML = `<p class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay mensajes.</p>`;
+      return;
+    }
+    list.innerHTML = messages.map((m) => `
+      <div class="image-row" style="align-items:flex-start; ${m.is_read ? 'opacity:.6;' : ''}">
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-weight:500;">${escHtml(m.name)} <span class="text-muted text-small">— ${escHtml(m.contact)}</span></p>
+          <p class="text-muted text-small" style="margin:var(--space-1) 0 var(--space-2);">${new Date(m.created_at).toLocaleString('es-CO')}</p>
+          <p style="margin:0; white-space:pre-wrap;">${escHtml(m.message)}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:var(--space-1);">
+          <button type="button" class="btn btn-secondary" data-msg-toggle-read="${m.id}" style="height:36px;padding:0 var(--space-3); white-space:nowrap;">${m.is_read ? 'Marcar sin leer' : 'Marcar leído'}</button>
+          <button type="button" class="remove-btn" data-msg-delete="${m.id}" style="color:var(--danger);">Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-msg-toggle-read]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const message = messages.find((m) => m.id === Number(btn.dataset.msgToggleRead));
+        try {
+          await apiFetch(`/contact-messages/${message.id}`, { method: 'PUT', body: JSON.stringify({ is_read: !message.is_read }) });
+          loadMessages();
+        } catch (err) {
+          alert(`No se pudo actualizar el mensaje: ${err.message}`);
+        }
+      });
+    });
+    list.querySelectorAll('[data-msg-delete]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar este mensaje?')) return;
+        try {
+          await apiFetch(`/contact-messages/${btn.dataset.msgDelete}`, { method: 'DELETE' });
+          loadMessages();
+        } catch (err) {
+          alert(`No se pudo eliminar el mensaje: ${err.message}`);
+        }
+      });
+    });
+  }
+
   // --- Editor de secciones (sub-tab "Secciones" + canvas del nav "Editor") ---
   const PAGE_LABELS = {
     home: 'Inicio', catalogo: 'Catálogo', producto: 'Ficha de producto', carrito: 'Carrito',
     checkout: 'Checkout', 'mi-cuenta': 'Mi cuenta', login: 'Iniciar sesión', registro: 'Registro',
     'recuperar-password': 'Recuperar contraseña', 'reset-password': 'Restablecer contraseña',
     'pedido-confirmado': 'Pedido confirmado',
+    envios: 'Envíos', politicas: 'Políticas de cambio', contacto: 'Contacto',
   };
   const PAGE_URLS = {
     home: '/index.html', catalogo: '/catalogo.html', producto: '/producto.html', carrito: '/carrito.html',
     checkout: '/checkout.html', 'mi-cuenta': '/mi-cuenta.html', login: '/login.html', registro: '/registro.html',
     'recuperar-password': '/recuperar-password.html', 'reset-password': '/reset-password.html',
     'pedido-confirmado': '/pedido-confirmado.html',
+    envios: '/envios.html', politicas: '/politicas.html', contacto: '/contacto.html',
   };
   // Para reconocer a qué página se navegó DESDE dentro del iframe (ej. el
   // admin hace clic en un link de la vista previa) — "/" también cuenta
