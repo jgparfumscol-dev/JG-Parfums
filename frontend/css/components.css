@@ -984,6 +984,12 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
   object-fit: cover;
   display: block;
   border-radius: 0;
+  /* --pgs-class-base-scale la pone inline sections.js solo cuando hay
+     desenfoque (1.1, para que el filter:blur no deje un borde claro en el
+     límite de la foto — mismo criterio que banner/galería). El hover de
+     abajo multiplica sobre esa base en vez de pisarla, así el zoom leve
+     sigue funcionando con o sin desenfoque configurado. */
+  transform: scale(var(--pgs-class-base-scale, 1));
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 /* Excepción acotada a esta tarjeta (ver DESIGN.md, Cards / Containers): la
@@ -991,7 +997,7 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
    producto. Acá solo escala la imagen, la tarjeta no se mueve ni gana
    sombra. */
 .pgs-class-card:hover .pgs-class-card-media img,
-.pgs-class-card:focus-visible .pgs-class-card-media img { transform: scale(1.06); }
+.pgs-class-card:focus-visible .pgs-class-card-media img { transform: scale(calc(var(--pgs-class-base-scale, 1) * 1.06)); }
 .pgs-class-card-scrim { position: absolute; inset: 0; pointer-events: none; }
 .pgs-class-card-copy {
   position: absolute;
@@ -1036,8 +1042,10 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
   color: var(--ink-900);
 }
 @media (prefers-reduced-motion: reduce) {
+  /* Sin el *1.06 extra del hover — pero conserva --pgs-class-base-scale si
+     hay desenfoque, si no el borde claro del blur queda visible. */
   .pgs-class-card:hover .pgs-class-card-media img,
-  .pgs-class-card:focus-visible .pgs-class-card-media img { transform: none; }
+  .pgs-class-card:focus-visible .pgs-class-card-media img { transform: scale(var(--pgs-class-base-scale, 1)); }
 }
 
 /* Marcas: altura fija, ancho automático, centrados — escala de grises por

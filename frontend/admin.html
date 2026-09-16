@@ -890,7 +890,10 @@
           <option value="right">Derecha</option>
         </select>
       </div>
-      <div class="field"><label for="cls_overlay">Oscurecer imagen (0-100%)</label><input id="cls_overlay" type="number" min="0" max="100" value="40"></div>
+      <div style="display:flex; gap: var(--space-2);">
+        <div class="field" style="flex:1;"><label for="cls_overlay">Oscurecer imagen (0-100%)</label><input id="cls_overlay" type="number" min="0" max="100" value="40"></div>
+        <div class="field" style="flex:1;"><label for="cls_blur">Desenfoque (0-20px)</label><input id="cls_blur" type="number" min="0" max="20" value="0"></div>
+      </div>
       <div class="field">
         <label style="display:flex; align-items:center; gap:var(--space-2);">
           <input type="checkbox" id="cls_is_active" checked> Activa (visible en el carrusel de clases)
@@ -898,7 +901,8 @@
       </div>
 
       <p class="text-caption" style="margin-bottom: var(--space-2);">Vista previa</p>
-      <div id="classPreview" style="position:relative; width:220px; height:160px; overflow:hidden; border-radius:var(--radius); background:#3A3739 center/cover no-repeat; margin-bottom:var(--space-6);">
+      <div id="classPreview" style="position:relative; width:220px; height:160px; overflow:hidden; border-radius:var(--radius); background:#3A3739; margin-bottom:var(--space-6);">
+        <div id="classPreviewImg" style="position:absolute; inset:0; background-position:center; background-size:cover; background-repeat:no-repeat;"></div>
         <div id="classPreviewScrim" style="position:absolute; inset:0; background:rgba(32,30,31,0.4);"></div>
         <div id="classPreviewInner" style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:var(--space-3); text-align:left;">
           <p id="classPreviewEyebrow" style="margin:0; color:#fff; font-family:var(--font-body); font-size:11px; font-weight:500;"></p>
@@ -1186,11 +1190,14 @@
   function updateClassPreview() {
     const imageUrl = document.getElementById('cls_image_url').value.trim();
     const overlay = Math.max(0, Math.min(100, Number(document.getElementById('cls_overlay').value) || 0)) / 100;
+    const blur = Math.max(0, Math.min(20, Number(document.getElementById('cls_blur').value) || 0));
     const position = document.getElementById('cls_text_position').value;
     const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position] || 'flex-start';
     const align = { left: 'left', center: 'center', right: 'right' }[position] || 'left';
-    const preview = document.getElementById('classPreview');
-    preview.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : 'none';
+    const previewImg = document.getElementById('classPreviewImg');
+    previewImg.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : 'none';
+    previewImg.style.filter = blur > 0 ? `blur(${blur}px)` : 'none';
+    previewImg.style.transform = blur > 0 ? 'scale(1.1)' : 'none';
     document.getElementById('classPreviewScrim').style.background = `rgba(32,30,31,${overlay})`;
     const inner = document.getElementById('classPreviewInner');
     inner.style.alignItems = justify;
@@ -1200,7 +1207,7 @@
       document.getElementById('cls_display_name').value.trim() || document.getElementById('cls_name').value.trim() || 'Nombre de la clase';
   }
 
-  ['cls_name', 'cls_display_name', 'cls_eyebrow', 'cls_image_url', 'cls_overlay', 'cls_text_position'].forEach((id) => {
+  ['cls_name', 'cls_display_name', 'cls_eyebrow', 'cls_image_url', 'cls_overlay', 'cls_blur', 'cls_text_position'].forEach((id) => {
     document.getElementById(id).addEventListener('input', updateClassPreview);
   });
 
@@ -1214,6 +1221,7 @@
     document.getElementById('cls_image_url').value = (category && category.image_url) || '';
     document.getElementById('cls_text_position').value = (category && category.text_position) || 'left';
     document.getElementById('cls_overlay').value = category ? category.overlay_darkness : 40;
+    document.getElementById('cls_blur').value = category ? category.blur : 0;
     document.getElementById('cls_is_active').checked = category ? category.is_active : true;
     updateClassPreview();
     document.getElementById('classDialog').showModal();
@@ -1234,6 +1242,7 @@
       image_url: document.getElementById('cls_image_url').value.trim() || null,
       text_position: document.getElementById('cls_text_position').value,
       overlay_darkness: Math.max(0, Math.min(100, Number(document.getElementById('cls_overlay').value) || 0)),
+      blur: Math.max(0, Math.min(20, Number(document.getElementById('cls_blur').value) || 0)),
       is_active: document.getElementById('cls_is_active').checked,
     };
     try {

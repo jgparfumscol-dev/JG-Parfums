@@ -62,6 +62,7 @@ def test_create_category_with_class_card_fields_and_defaults(client, admin_heade
         json={
             "name": "Amaderado", "slug": "amaderado", "image_url": "https://cdn.jg/amaderado.jpg",
             "eyebrow": "Perfumes", "display_name": "Amaderados", "overlay_darkness": 55, "text_position": "center",
+            "blur": 8,
         },
         headers=admin_headers,
     )
@@ -72,12 +73,14 @@ def test_create_category_with_class_card_fields_and_defaults(client, admin_heade
     assert body["display_name"] == "Amaderados"
     assert body["overlay_darkness"] == 55
     assert body["text_position"] == "center"
+    assert body["blur"] == 8
     assert body["is_active"] is True
     assert body["sort_order"] == 0
 
     defaults = client.post("/categories", json={"name": "Floral", "slug": "floral"}, headers=admin_headers).json()
     assert defaults["overlay_darkness"] == 40
     assert defaults["text_position"] == "left"
+    assert defaults["blur"] == 0
     assert defaults["image_url"] is None
     assert defaults["sort_order"] == 1
 
@@ -87,6 +90,20 @@ def test_create_category_rejects_overlay_darkness_out_of_range(client, admin_hea
         "/categories", json={"name": "Cítrico", "slug": "citrico", "overlay_darkness": 101}, headers=admin_headers
     )
     assert response.status_code == 422
+
+
+def test_create_category_rejects_blur_out_of_range(client, admin_headers):
+    response = client.post(
+        "/categories", json={"name": "Cítrico", "slug": "citrico", "blur": 21}, headers=admin_headers
+    )
+    assert response.status_code == 422
+
+
+def test_update_category_blur(client, admin_headers):
+    category = client.post("/categories", json={"name": "Oriental", "slug": "oriental"}, headers=admin_headers).json()
+    update = client.put(f"/categories/{category['id']}", json={"blur": 12}, headers=admin_headers)
+    assert update.status_code == 200
+    assert update.json()["blur"] == 12
 
 
 def test_create_category_rejects_invalid_text_position(client, admin_headers):

@@ -12,6 +12,7 @@ class CategoryResponse(BaseModel):
     display_name: str | None
     overlay_darkness: int
     text_position: str
+    blur: int
     sort_order: int
     is_active: bool
 
@@ -26,6 +27,7 @@ class CategoryCreate(BaseModel):
     display_name: str | None = None
     overlay_darkness: int = Field(default=40, ge=0, le=100)
     text_position: Literal["left", "center", "right"] = "left"
+    blur: int = Field(default=0, ge=0, le=20)
     is_active: bool = True
 
 
@@ -37,6 +39,7 @@ class CategoryUpdate(BaseModel):
     display_name: str | None = None
     overlay_darkness: int | None = Field(default=None, ge=0, le=100)
     text_position: Literal["left", "center", "right"] | None = None
+    blur: int | None = Field(default=None, ge=0, le=20)
     is_active: bool | None = None
 
 

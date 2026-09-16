@@ -30,5 +30,6 @@ class Category(Base):
     display_name = Column(String, nullable=True)  # si es null, la tarjeta usa `name`
     overlay_darkness = Column(Integer, nullable=False, default=40)  # 0-100
     text_position = Column(String, nullable=False, default="left")  # left | center | right
+    blur = Column(Integer, nullable=False, default=0)  # 0-20px, mismo rango que banner/galería
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)

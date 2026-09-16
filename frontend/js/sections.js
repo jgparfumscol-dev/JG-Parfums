@@ -699,10 +699,15 @@ function renderClassCard(cat) {
   const position = ['left', 'center', 'right'].includes(cat.text_position) ? cat.text_position : 'left';
   const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
   const name = cat.display_name || cat.name;
+  // El desenfoque va con --pgs-class-base-scale en vez de transform directo:
+  // así el hover (que multiplica ese mismo custom property, ver CSS) sigue
+  // funcionando encima sin que el estilo inline lo pise.
+  const blur = Math.max(0, Math.min(20, Number(cat.blur) || 0));
+  const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px); --pgs-class-base-scale: 1.1;"` : '';
   return `
     <a class="pgs-class-card" href="/catalogo.html?category_id=${cat.id}">
       <div class="pgs-class-card-media">
-        ${cat.image_url ? `<img src="${cat.image_url}" alt="${name}" loading="lazy">` : ''}
+        ${cat.image_url ? `<img src="${cat.image_url}" alt="${name}" loading="lazy"${imgStyle}>` : ''}
         <div class="pgs-class-card-scrim" style="background: rgba(32, 30, 31, ${overlay});"></div>
         <div class="pgs-class-card-copy" style="align-items: ${justify}; text-align: ${position};">
           ${cat.eyebrow ? `<p class="pgs-class-card-eyebrow">${cat.eyebrow}</p>` : ''}
