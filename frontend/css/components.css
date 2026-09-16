@@ -514,8 +514,9 @@
 .manifesto-strip { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) {
   .manifesto-strip { grid-template-columns: repeat(3, 1fr); gap: 0; margin-left: calc(var(--space-8) * -1); }
-  .manifesto-item { padding-left: var(--space-8); padding-right: var(--space-8); border-left: 1px solid var(--ink-100); }
+  .manifesto-item { padding-left: var(--space-8); padding-right: var(--space-8); border-left: 1px solid var(--ink-100); text-align: center; }
   .manifesto-item:first-child { border-left: none; }
+  .manifesto-mark { margin-inline: auto; }
 }
 .manifesto-heading {
   /* Jost, no Bodoni: por debajo de 28px las serifas finas de Bodoni se
