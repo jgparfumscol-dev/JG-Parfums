@@ -1561,14 +1561,14 @@
     checkout: 'Checkout', 'mi-cuenta': 'Mi cuenta', login: 'Iniciar sesión', registro: 'Registro',
     'recuperar-password': 'Recuperar contraseña', 'reset-password': 'Restablecer contraseña',
     'pedido-confirmado': 'Pedido confirmado',
-    envios: 'Envíos', politicas: 'Políticas de cambio', contacto: 'Contacto',
+    politicas: 'Envíos y políticas', contacto: 'Contacto',
   };
   const PAGE_URLS = {
     home: '/index.html', catalogo: '/catalogo.html', producto: '/producto.html', carrito: '/carrito.html',
     checkout: '/checkout.html', 'mi-cuenta': '/mi-cuenta.html', login: '/login.html', registro: '/registro.html',
     'recuperar-password': '/recuperar-password.html', 'reset-password': '/reset-password.html',
     'pedido-confirmado': '/pedido-confirmado.html',
-    envios: '/envios.html', politicas: '/politicas.html', contacto: '/contacto.html',
+    politicas: '/politicas.html', contacto: '/contacto.html',
   };
   // Para reconocer a qué página se navegó DESDE dentro del iframe (ej. el
   // admin hace clic en un link de la vista previa) — "/" también cuenta
@@ -2091,6 +2091,18 @@
             <input class="input-sm" placeholder="Texto del botón" data-bs-cta-label value="${esc(slide.cta_label)}" style="flex:1;">
             <input type="color" data-bs-cta-color value="${esc(slide.cta_color) || '#D3AE6A'}" style="height:44px; width:44px; padding:var(--space-1); cursor:pointer; flex-shrink:0;">
           </div>
+          <div style="display:flex; gap:var(--space-2); align-items:center;">
+            <label class="text-caption" style="flex-shrink:0;">Texto</label>
+            <select class="input-sm" data-bs-text-position style="flex:1;">
+              <option value="left"${(slide.text_position || 'left') === 'left' ? ' selected' : ''}>Izquierda</option>
+              <option value="center"${slide.text_position === 'center' ? ' selected' : ''}>Centro</option>
+              <option value="right"${slide.text_position === 'right' ? ' selected' : ''}>Derecha</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:var(--space-2);">
+            <input class="input-sm" type="number" min="0" max="100" placeholder="Oscurecer imagen (0-100%)" data-bs-overlay value="${slide.overlay_opacity != null ? esc(String(slide.overlay_opacity)) : '45'}" style="flex:1;">
+            <input class="input-sm" type="number" min="0" max="20" placeholder="Desenfoque (0-20px)" data-bs-blur value="${slide.blur != null ? esc(String(slide.blur)) : '0'}" style="flex:1;">
+          </div>
         </div>
         <div style="display:flex; flex-direction:column; gap:var(--space-1);">
           <button type="button" class="btn btn-secondary" data-bs-up aria-label="Subir foto" style="height:36px; width:36px; padding:var(--space-1);">↑</button>
@@ -2111,6 +2123,9 @@
         link_url: row.querySelector('[data-bs-link]').value.trim() || null,
         cta_label: row.querySelector('[data-bs-cta-label]').value.trim() || null,
         cta_color: row.querySelector('[data-bs-cta-color]').value || null,
+        text_position: row.querySelector('[data-bs-text-position]').value,
+        overlay_opacity: Math.max(0, Math.min(100, Number(row.querySelector('[data-bs-overlay]').value) || 0)),
+        blur: Math.max(0, Math.min(20, Number(row.querySelector('[data-bs-blur]').value) || 0)),
       }))
       .filter((s) => s.image_url || s.image_url_mobile || s.title || s.subtitle);
   }

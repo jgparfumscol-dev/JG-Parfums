@@ -26,7 +26,7 @@
   @media (min-width: 768px) { .decant-callout { grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; } }
 </style>
 </head>
-<body>
+<body class="home-transparent-nav">
 <a class="skip-link" href="#main">Saltar al contenido</a>
 <div id="pgs-announcement-bar"></div>
 
@@ -37,7 +37,8 @@
     </button>
     <ul class="nav-classes" id="navClasses"></ul>
     <a class="nav-logo-link" href="/index.html" aria-label="JG Parfums, inicio">
-      <img class="nav-logo" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+      <img class="nav-logo nav-logo-dark" src="/assets/logos/jg-parfums-horizontal.svg" alt="JG Parfums">
+      <img class="nav-logo nav-logo-light" src="/assets/logos/jg-parfums-horizontal-blanco.svg" alt="JG Parfums">
     </a>
     <div class="nav-bar-actions">
       <form class="nav-search" id="navSearchForm" role="search">
@@ -83,10 +84,7 @@
       <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
       <ul class="footer-links">
         <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
-        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
-        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
-        <li><a href="/envios.html" class="text-muted">Envíos</a></li>
-        <li><a href="/politicas.html" class="text-muted">Políticas de cambio</a></li>
+        <li><a href="/politicas.html" class="text-muted">Envíos y políticas</a></li>
         <li><a href="/contacto.html" class="text-muted">Contacto</a></li>
       </ul>
     </div>
@@ -186,9 +184,29 @@
     }
   }
 
+  // El header flota transparente (ver body.home-transparent-nav en
+  // components.css) sobre la barra de anuncios + banner de acá abajo, pero
+  // solo debe empezar exactamente donde termina la barra de anuncios (no
+  // taparla) — su alto varía (puede tener 1 o 2 líneas, cambiar entre
+  // mensajes al rotar, o no existir si el admin no configuró ninguna), así
+  // que se observa en vez de medir una sola vez: ResizeObserver detecta
+  // cualquier cambio de alto (resize de ventana, rotación a un mensaje más
+  // largo, etc.) y lo mantiene sincronizado solo.
+  function syncHeaderTopOffset() {
+    const bar = document.getElementById('pgs-announcement-bar');
+    document.documentElement.style.setProperty('--header-top-offset', `${bar ? bar.offsetHeight : 0}px`);
+  }
+  const announcementBarEl = document.getElementById('pgs-announcement-bar');
+  if (announcementBarEl && window.ResizeObserver) {
+    new ResizeObserver(syncHeaderTopOffset).observe(announcementBarEl);
+  } else {
+    window.addEventListener('resize', syncHeaderTopOffset);
+  }
+
   renderPageSections('home').then(() => {
     renderHeroNotes(GENERIC_NOTES);
     loadFeatured();
+    syncHeaderTopOffset();
   });
 </script>
 </body>

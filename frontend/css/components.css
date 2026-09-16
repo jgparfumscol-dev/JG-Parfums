@@ -145,7 +145,79 @@
   }
 }
 
+/* home: header transparente flotando sobre el banner en vez de la franja
+   sólida de siempre entre la barra de anuncios y el banner — ver
+   body.home-transparent-nav en index.html (solo ahí, es la única página con
+   una sección oscura pegada debajo del header). Se saca del flujo normal
+   (position:absolute, con el offset de la barra de anuncios calculado por
+   JS en --header-top-offset) para que el banner suba y quede detrás; un
+   degradado oscuro sutil (::before) hace de "sombrita" para que el logo e
+   íconos —acá en blanco— se lean sobre cualquier foto. Apenas se hace
+   scroll pasa a position:fixed y recupera el look sólido/vidrio de
+   .is-scrolled de siempre, con el logo e íconos oscuros otra vez. */
+body.home-transparent-nav .nav {
+  position: absolute;
+  top: var(--header-top-offset, 0px);
+  left: 0;
+  right: 0;
+  background: transparent;
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+body.home-transparent-nav .nav::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .4), rgba(0, 0, 0, 0));
+  pointer-events: none;
+  z-index: -1;
+}
+
+body.home-transparent-nav .nav .nav-icon-btn,
+body.home-transparent-nav .nav .nav-mobile-toggle,
+body.home-transparent-nav .nav .nav-classes a {
+  color: #FFFFFF;
+}
+body.home-transparent-nav .nav .nav-classes a:hover { color: #FFFFFF; border-bottom-color: var(--gold-400); }
+body.home-transparent-nav .nav .nav-search {
+  background: rgba(255, 255, 255, .12);
+  border-color: rgba(255, 255, 255, .4);
+}
+body.home-transparent-nav .nav .nav-search input { color: #FFFFFF; }
+body.home-transparent-nav .nav .nav-search input::placeholder { color: rgba(255, 255, 255, .7); }
+body.home-transparent-nav .nav .nav-search button { color: #FFFFFF; }
+
+/* el menú móvil abierto necesita un fondo sólido propio para leerse, sin
+   importar que el header de atrás siga transparente. */
+body.home-transparent-nav .nav-mobile-panel.is-open { background: var(--jg-paper); }
+
+body.home-transparent-nav .nav.is-scrolled {
+  position: fixed;
+  top: 0;
+}
+body.home-transparent-nav .nav.is-scrolled::before { display: none; }
+body.home-transparent-nav .nav.is-scrolled .nav-icon-btn,
+body.home-transparent-nav .nav.is-scrolled .nav-mobile-toggle,
+body.home-transparent-nav .nav.is-scrolled .nav-classes a {
+  color: var(--jg-onyx);
+}
+body.home-transparent-nav .nav.is-scrolled .nav-classes a:hover { color: var(--jg-onyx); }
+body.home-transparent-nav .nav.is-scrolled .nav-search {
+  background: var(--jg-white);
+  border-color: var(--ink-300);
+}
+body.home-transparent-nav .nav.is-scrolled .nav-search input { color: var(--jg-onyx); }
+body.home-transparent-nav .nav.is-scrolled .nav-search input::placeholder { color: var(--text-muted); }
+body.home-transparent-nav .nav.is-scrolled .nav-search button { color: var(--text-muted); }
+
 .nav-logo { height: 28px; width: auto; }
+.nav-logo-light { display: none; }
+body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-dark { display: none; }
+body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: block; }
 
 .nav-icon-btn {
   position: relative;
@@ -513,7 +585,12 @@
 /* tira de manifiesto — reemplaza la grilla de tarjetas ícono+texto */
 .manifesto-strip { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) {
-  .manifesto-strip { grid-template-columns: repeat(3, 1fr); gap: 0; margin-left: calc(var(--space-8) * -1); }
+  /* el bloque entero se centra dentro de .container (ver margin-inline:auto
+     de esa clase); el margin-left negativo que había acá antes compensaba
+     el padding del texto cuando estaba alineado a la izquierda, pero ahora
+     que el texto está centrado esa compensación desbalanceaba todo el
+     bloque hacia la izquierda — se quita. */
+  .manifesto-strip { grid-template-columns: repeat(3, 1fr); gap: 0; }
   .manifesto-item { padding-left: var(--space-8); padding-right: var(--space-8); border-left: 1px solid var(--ink-100); text-align: center; }
   .manifesto-item:first-child { border-left: none; }
   .manifesto-mark { margin-inline: auto; }

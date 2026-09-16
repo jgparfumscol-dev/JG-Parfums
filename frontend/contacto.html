@@ -11,7 +11,12 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  .contact-layout { display: grid; gap: var(--space-12); padding-bottom: var(--space-16); }
+  /* el bloque completo (título + form + whatsapp) se centra en una columna
+     más angosta que el container de 1200px, para que no quede estirado de
+     borde a borde — mismo ancho para el texto de arriba (sección CMS) y el
+     layout de acá abajo, así se lee como un solo bloque centrado. */
+  #dynamicSections .container { max-width: 760px; }
+  .contact-layout { max-width: 760px; display: grid; gap: var(--space-12); padding-bottom: var(--space-16); }
   @media (min-width: 1024px) { .contact-layout { grid-template-columns: 1fr 1fr; align-items: start; } }
   .contact-form-card { padding: var(--space-6); border: 1px solid var(--ink-100); }
   .whatsapp-card { padding: var(--space-6); background: var(--jg-onyx); color: #FFFFFF; display: flex; flex-direction: column; gap: var(--space-4); }
@@ -102,10 +107,7 @@
       <p class="text-caption" style="margin-bottom:var(--space-3);">Tienda</p>
       <ul class="footer-links">
         <li><a href="/catalogo.html" class="text-muted">Catálogo</a></li>
-        <li><a href="/mi-cuenta.html" class="text-muted">Mi cuenta</a></li>
-        <li><a href="/carrito.html" class="text-muted">Carrito</a></li>
-        <li><a href="/envios.html" class="text-muted">Envíos</a></li>
-        <li><a href="/politicas.html" class="text-muted">Políticas de cambio</a></li>
+        <li><a href="/politicas.html" class="text-muted">Envíos y políticas</a></li>
         <li><a href="/contacto.html" class="text-muted">Contacto</a></li>
       </ul>
     </div>

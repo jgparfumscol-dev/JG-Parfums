@@ -235,23 +235,30 @@ function contrastTextColor(hex) {
 function renderBannerSlide(slide, index, isFirst) {
   const s = slide || {};
   const mainImg = s.image_url || s.image_url_mobile;
+  const blur = Math.max(0, Math.min(20, Number(s.blur) || 0));
+  const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px); transform: scale(1.1);"` : '';
   const pictureHtml = mainImg
     ? `
       <picture>
         ${s.image_url_mobile ? `<source media="(max-width: 767px)" srcset="${s.image_url_mobile}">` : ''}
-        <img class="pgs-banner-media" src="${mainImg}" alt="${s.title || ''}">
+        <img class="pgs-banner-media" src="${mainImg}" alt="${s.title || ''}"${imgStyle}>
       </picture>
     `
     : '';
   const ctaStyle = s.cta_color
     ? ` style="background-color:${s.cta_color}; border-color:${s.cta_color}; color:${contrastTextColor(s.cta_color)};"`
     : '';
+  // overlay_opacity: 0-100 (%), oscurece la foto para que el texto resalte —
+  // ajustable por el admin en vez del alpha fijo que había antes.
+  const overlayOpacity = Math.max(0, Math.min(100, s.overlay_opacity == null ? 45 : Number(s.overlay_opacity))) / 100;
+  const position = ['left', 'center', 'right'].includes(s.text_position) ? s.text_position : 'left';
+  const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
   return `
     <div class="pgs-banner-slide" data-slide data-index="${index}"${isFirst ? '' : ' hidden'}>
       ${pictureHtml}
-      <div class="pgs-banner-scrim"></div>
-      <div class="pgs-banner-inner">
-        <div class="pgs-banner-copy">
+      <div class="pgs-banner-scrim" style="background-color: rgba(32, 30, 31, ${overlayOpacity});"></div>
+      <div class="pgs-banner-inner" style="justify-content: ${justify};">
+        <div class="pgs-banner-copy" style="text-align: ${position};">
           ${s.title ? `<h2 class="h2 pgs-banner-title">${s.title}</h2>` : ''}
           ${s.subtitle ? `<p class="pgs-banner-subtitle">${s.subtitle}</p>` : ''}
           ${s.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${s.link_url}">${s.cta_label || 'Ver más'}</a>` : ''}
