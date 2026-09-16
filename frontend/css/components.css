@@ -620,35 +620,158 @@
    clases propias, trae las suyas.
    ============================================================ */
 
-/* imagen de fondo: --pgs-banner-bg-mobile/-desktop las pone renderBanner()
-   inline por sección — cada tamaño usa la suya y cae a la otra si el admin
-   solo cargó una. Padding propio (no el genérico de .section): más
-   ajustado que el resto de secciones, se siente a banner promocional en
-   vez de a bloque de contenido largo, sobre todo en móvil. */
+/* banner: la altura la da la imagen, no al revés — antes era background-
+   size:cover dentro de una caja con padding fijo, así que cualquier
+   imagen que no calzara con esa proporción quedaba recortada (en móvil y
+   en escritorio). Ahora es una <img> real con su alto natural — nunca se
+   recorta — y un tope de 70vh + object-fit:contain solo como resguardo
+   para que una foto muy vertical no vuelva la sección eterna (ahí sí
+   aparecen franjas del fondo Ónix a los costados, nunca corta la imagen).
+   <picture> con la fuente para móvil (renderBanner en sections.js) hace
+   que el navegador baje una sola imagen, no las dos. */
 .pgs-banner {
   position: relative;
-  background-image: var(--pgs-banner-bg-mobile, var(--pgs-banner-bg-desktop));
-  background-size: cover;
-  background-position: center;
-  background-color: var(--jg-onyx);
+  overflow: hidden;
+  background: var(--jg-onyx);
   color: #FFFFFF;
-  padding-block: var(--space-12);
+  min-height: 320px; /* resguardo si la sección no tiene imagen (solo texto) */
 }
-@media (min-width: 768px) {
-  .pgs-banner { background-image: var(--pgs-banner-bg-desktop, var(--pgs-banner-bg-mobile)); padding-block: var(--space-16); }
+.pgs-banner picture { display: block; }
+.pgs-banner-media {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: var(--jg-onyx);
 }
-.pgs-banner::before {
-  content: '';
+.pgs-banner-scrim {
   position: absolute;
   inset: 0;
   background: rgba(32, 30, 31, .45);
+  pointer-events: none;
 }
-.pgs-banner-inner { position: relative; max-width: 480px; }
+.pgs-banner-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+@media (min-width: 1024px) {
+  .pgs-banner-inner { padding-inline: var(--space-12); }
+}
+.pgs-banner-copy { max-width: 480px; }
 .pgs-banner-title { margin: 0 0 var(--space-3); color: #FFFFFF; }
 .pgs-banner-subtitle { color: #B9B4B0; margin: 0 0 var(--space-6); font-size: 15px; }
 @media (min-width: 768px) {
   .pgs-banner-subtitle { font-size: 16px; }
 }
+
+/* galería de fotos: una imagen a todo el ancho, grilla contenida, tira
+   pegada para comparar, o carrusel de navegación manual (sin autoplay, así
+   que no hace falta botón de pausa). El texto/botón opcional flota
+   centrado sobre las fotos — pointer-events recortado para no tapar los
+   controles del carrusel que quedan debajo. */
+.pgs-gallery { position: relative; }
+
+.pgs-gallery-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(32, 30, 31, .35);
+  pointer-events: none;
+}
+.pgs-gallery-overlay-inner { max-width: 560px; padding: var(--space-6); pointer-events: auto; }
+.pgs-gallery-heading { color: #FFFFFF; margin: 0 0 var(--space-3); }
+.pgs-gallery-subtitle { color: #EDE9E3; margin: 0 0 var(--space-6); }
+
+.pgs-gallery-caption { margin: var(--space-2) 0 0; font-size: 13px; color: var(--text-muted); text-align: center; }
+
+/* single: una sola foto, a todo el ancho — mismo tratamiento sin importar
+   qué modo haya elegido el admin, si solo cargó una imagen. */
+.pgs-gallery-single img { width: 100%; max-height: 640px; object-fit: cover; display: block; }
+
+/* grid: contenida (no a todo el ancho como los otros modos) y se adapta
+   sola a la cantidad de fotos — una sola ocupa toda la fila, varias se
+   acomodan solas sin necesidad de una regla distinta por cantidad. */
+.pgs-gallery--grid .pgs-gallery-media {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+@media (min-width: 1024px) {
+  .pgs-gallery--grid .pgs-gallery-media { padding-inline: var(--space-12); }
+}
+.pgs-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+.pgs-gallery-grid-item img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+
+/* compare: pegadas, sin separación — para poner 2 a 4 fotos una al lado
+   de la otra y comparar de un vistazo. Se apilan en móvil, si no quedan
+   demasiado angostas para leerse. */
+.pgs-gallery-compare { display: flex; flex-direction: column; }
+@media (min-width: 640px) {
+  .pgs-gallery-compare { flex-direction: row; }
+}
+.pgs-gallery-compare-item { flex: 1; }
+.pgs-gallery-compare-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+@media (min-width: 640px) {
+  .pgs-gallery-compare-item img { aspect-ratio: 4 / 5; }
+}
+
+/* carrusel: navegación manual con flechas y guiones (no puntos redondos —
+   BRAND.md §11 descarta esquinas redondeadas como vocabulario de SaaS,
+   no de esta marca). Sin autoplay: no hay nada que pausar. */
+.pgs-gallery-carousel { position: relative; }
+.pgs-gallery-slide img { width: 100%; max-height: 640px; object-fit: cover; display: block; }
+.pgs-gallery-slide[hidden] { display: none; }
+
+.pgs-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(32, 30, 31, .5);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.pgs-gallery-arrow:hover { background: rgba(32, 30, 31, .75); }
+.pgs-gallery-arrow-prev { left: var(--space-4); }
+.pgs-gallery-arrow-next { right: var(--space-4); }
+
+.pgs-gallery-dots {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-2);
+}
+.pgs-gallery-dot {
+  width: 22px;
+  height: 2px;
+  background: rgba(255, 255, 255, .4);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.pgs-gallery-dot.is-active,
+.pgs-gallery-dot:hover { background: #FFFFFF; }
 
 .pgs-testimonials { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) { .pgs-testimonials { grid-template-columns: repeat(3, 1fr); } }

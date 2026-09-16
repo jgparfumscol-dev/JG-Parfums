@@ -227,24 +227,34 @@ function contrastTextColor(hex) {
   return luminance > 0.6 ? '#201E1F' : '#FFFFFF';
 }
 
-// Imagen de fondo por tamaño: el CSS decide cuál usar según el ancho de
-// pantalla (ver --pgs-banner-bg-mobile/-desktop en components.css) — si el
-// admin solo carga una, esa se usa en los dos tamaños.
+// <picture> con la fuente de móvil (si el admin cargó una): el navegador
+// baja una sola imagen según su propio ancho, no las dos. Sin imagen_url
+// de escritorio pero con la de móvil, esa hace de <img> principal también
+// — así sigue habiendo algo que mostrar en pantallas anchas.
 function renderBanner(section) {
   const c = section.content || {};
-  const bgVars = [];
-  if (c.image_url_mobile) bgVars.push(`--pgs-banner-bg-mobile:url('${c.image_url_mobile}')`);
-  if (c.image_url) bgVars.push(`--pgs-banner-bg-desktop:url('${c.image_url}')`);
-  const bgStyle = bgVars.length ? ` style="${bgVars.join('; ')}"` : '';
+  const mainImg = c.image_url || c.image_url_mobile;
+  const pictureHtml = mainImg
+    ? `
+      <picture>
+        ${c.image_url_mobile ? `<source media="(max-width: 767px)" srcset="${c.image_url_mobile}">` : ''}
+        <img class="pgs-banner-media" src="${mainImg}" alt="${c.title || ''}" loading="lazy">
+      </picture>
+    `
+    : '';
   const ctaStyle = c.cta_color
     ? ` style="background-color:${c.cta_color}; border-color:${c.cta_color}; color:${contrastTextColor(c.cta_color)};"`
     : '';
   return `
-    <section class="section pgs-banner"${bgStyle}>
-      <div class="container pgs-banner-inner">
-        ${c.title ? `<h2 class="h2 pgs-banner-title">${c.title}</h2>` : ''}
-        ${c.subtitle ? `<p class="pgs-banner-subtitle">${c.subtitle}</p>` : ''}
-        ${c.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${c.link_url}">${c.cta_label || 'Ver más'}</a>` : ''}
+    <section class="section pgs-banner">
+      ${pictureHtml}
+      <div class="pgs-banner-scrim"></div>
+      <div class="pgs-banner-inner">
+        <div class="pgs-banner-copy">
+          ${c.title ? `<h2 class="h2 pgs-banner-title">${c.title}</h2>` : ''}
+          ${c.subtitle ? `<p class="pgs-banner-subtitle">${c.subtitle}</p>` : ''}
+          ${c.link_url ? `<a class="btn btn-onDark"${ctaStyle} href="${c.link_url}">${c.cta_label || 'Ver más'}</a>` : ''}
+        </div>
       </div>
     </section>
   `;
@@ -342,6 +352,101 @@ function renderImage(section) {
       </div>
     </section>
   `;
+}
+
+/* --- Galería de fotos (gallery) ---
+   Una o varias imágenes. Con una sola foto siempre se muestra igual (a
+   todo el ancho) sin importar qué modo haya elegido el admin — carrusel o
+   comparar no tienen sentido con un solo elemento. El carrusel navega
+   manual, con flechas y guiones — sin autoplay no hace falta botón de
+   pausa (misma lección que la barra de anuncios: un control que nadie
+   pidió ensucia el diseño). El texto/botón opcional se ve superpuesto
+   sobre las fotos, con pointer-events recortado para no tapar los
+   controles del carrusel que quedan debajo. */
+function renderGallery(section) {
+  const c = section.content || {};
+  const images = (c.images || []).filter((img) => img && img.url);
+  if (images.length === 0) return '';
+
+  const layout = images.length === 1 ? 'single' : (['carousel', 'compare'].includes(c.layout) ? c.layout : 'grid');
+  const hasOverlay = Boolean(c.heading || c.subtitle || (c.cta_link && c.cta_label));
+
+  function imgTag(img) {
+    const tag = `<img src="${img.url}" alt="${img.alt || ''}" loading="lazy">`;
+    return img.link_url ? `<a href="${img.link_url}">${tag}</a>` : tag;
+  }
+
+  let mediaHtml;
+  if (layout === 'single') {
+    mediaHtml = `<div class="pgs-gallery-single">${imgTag(images[0])}</div>`;
+  } else if (layout === 'carousel') {
+    const slides = images
+      .map((img, i) => `<div class="pgs-gallery-slide" data-slide data-index="${i}"${i === 0 ? '' : ' hidden'}>${imgTag(img)}</div>`)
+      .join('');
+    const dots = images
+      .map((_, i) => `<button type="button" class="pgs-gallery-dot${i === 0 ? ' is-active' : ''}" data-dot="${i}" aria-label="Ir a la foto ${i + 1}"></button>`)
+      .join('');
+    mediaHtml = `
+      <div class="pgs-gallery-carousel" data-carousel>
+        <div class="pgs-gallery-viewport" data-viewport>${slides}</div>
+        <button type="button" class="pgs-gallery-arrow pgs-gallery-arrow-prev" data-prev aria-label="Foto anterior">${ICON_PREV}</button>
+        <button type="button" class="pgs-gallery-arrow pgs-gallery-arrow-next" data-next aria-label="Foto siguiente">${ICON_NEXT}</button>
+        <div class="pgs-gallery-dots">${dots}</div>
+      </div>
+    `;
+  } else if (layout === 'compare') {
+    mediaHtml = `<div class="pgs-gallery-compare">${images
+      .map((img) => `<div class="pgs-gallery-compare-item">${imgTag(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
+      .join('')}</div>`;
+  } else {
+    mediaHtml = `<div class="pgs-gallery-grid">${images
+      .map((img) => `<div class="pgs-gallery-grid-item">${imgTag(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
+      .join('')}</div>`;
+  }
+
+  const overlayHtml = hasOverlay
+    ? `
+      <div class="pgs-gallery-overlay">
+        <div class="pgs-gallery-overlay-inner">
+          ${c.heading ? `<h2 class="h2 pgs-gallery-heading">${c.heading}</h2>` : ''}
+          ${c.subtitle ? `<p class="pgs-gallery-subtitle">${c.subtitle}</p>` : ''}
+          ${c.cta_link && c.cta_label ? `<a class="btn btn-onDark" href="${c.cta_link}">${c.cta_label}</a>` : ''}
+        </div>
+      </div>
+    `
+    : '';
+
+  return `
+    <section class="section pgs-gallery pgs-gallery--${layout}" data-section-id="${section.id}">
+      <div class="pgs-gallery-media">${mediaHtml}</div>
+      ${overlayHtml}
+    </section>
+  `;
+}
+
+function initGallery(el) {
+  const carousel = el.querySelector('[data-carousel]');
+  if (!carousel) return;
+  const slides = Array.from(carousel.querySelectorAll('[data-slide]'));
+  if (slides.length <= 1) return;
+  let current = 0;
+
+  function show(index) {
+    const next = (index + slides.length) % slides.length;
+    if (next === current) return;
+    slides[current].hidden = true;
+    current = next;
+    slides[current].hidden = false;
+    carousel.querySelectorAll('[data-dot]').forEach((dot, i) => dot.classList.toggle('is-active', i === current));
+  }
+
+  const prevBtn = carousel.querySelector('[data-prev]');
+  const nextBtn = carousel.querySelector('[data-next]');
+  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1));
+  carousel.querySelectorAll('[data-dot]').forEach((dot) => {
+    dot.addEventListener('click', () => show(Number(dot.dataset.dot)));
+  });
 }
 
 function renderTestimonials(section) {
@@ -509,6 +614,7 @@ const SECTION_RENDERERS = {
   section_heading: renderSectionHeading,
   decant_callout: renderDecantCallout,
   manifesto: renderManifesto,
+  gallery: renderGallery,
 };
 
 async function renderPageSections(pageKey, mountId = 'dynamicSections') {
@@ -556,6 +662,7 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
         const section = freeform.find((s) => String(s.id) === el.dataset.sectionId);
         if (section) initAnnouncementBar(el, section);
       });
+      mount.querySelectorAll('.pgs-gallery[data-section-id]').forEach((el) => initGallery(el));
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.
