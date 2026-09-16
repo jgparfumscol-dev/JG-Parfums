@@ -124,7 +124,7 @@
           "frontend/index.html"
         ],
         "createdAt": "2026-09-15T21:01:57.261Z",
-        "reason": "false positive: --jg-paper (Marfil #F7F5F1), the documented brand background token from BRAND.md §3.2, predates this session — already covered by a broader frontend/*.html ignore from 2026-09-09 but flagged again, adding an explicit entry for this file"
+        "reason": "Marfil/--jg-paper es un token de marca documentado en BRAND.md §3.2, no un default de IA por reflejo; ya suprimido para otros archivos del frontend."
       }
     ]
   }
