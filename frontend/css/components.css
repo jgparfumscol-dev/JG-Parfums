@@ -722,8 +722,17 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 @media (max-width: 767px) {
   .pgs-banner { aspect-ratio: 4 / 5; }
 }
-.pgs-banner-slide { position: absolute; inset: 0; }
-.pgs-banner-slide[hidden] { display: none; }
+/* transición de "empuje": todas las fotos están apiladas y se reposicionan
+   con transform (ver initBanner en sections.js) — la que sale se desliza
+   hacia un lado y la que entra desde el otro, a la vez y de forma suave. */
+.pgs-banner-slide {
+  position: absolute;
+  inset: 0;
+  transition: transform 550ms cubic-bezier(.4, 0, .2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pgs-banner-slide { transition: none; }
+}
 .pgs-banner picture { display: block; width: 100%; height: 100%; }
 .pgs-banner-media {
   display: block;
@@ -800,6 +809,24 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 .pgs-gallery-subtitle { color: #EDE9E3; margin: 0 0 var(--space-6); }
 
 .pgs-gallery-caption { margin: var(--space-2) 0 0; font-size: 13px; color: var(--text-muted); text-align: center; }
+
+/* texto/botón por foto (distinto del overlay de toda la galería de arriba):
+   cada imagen puede traer su propio título/subtítulo/botón, oscurecido y
+   desenfoque — mismo criterio que el banner (rgba dinámico + filter:blur
+   por foto, ver renderGalleryImageMedia en sections.js). */
+.pgs-gallery-img-wrap { position: relative; overflow: hidden; }
+.pgs-gallery-img-wrap img { display: block; }
+.pgs-gallery-img-scrim { position: absolute; inset: 0; pointer-events: none; }
+.pgs-gallery-img-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-4);
+}
+.pgs-gallery-img-copy { max-width: 100%; }
+.pgs-gallery-img-title { margin: 0 0 var(--space-1); color: #FFFFFF; font-size: 18px; }
+.pgs-gallery-img-subtitle { margin: 0 0 var(--space-3); color: #EDE9E3; font-size: 13px; }
 
 /* single: una sola foto, a todo el ancho — mismo tratamiento sin importar
    qué modo haya elegido el admin, si solo cargó una imagen. */
@@ -931,15 +958,25 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
   .announcement-bar-inner { padding-inline: var(--space-12); }
 }
 
-.announcement-bar-viewport { flex: 1; position: relative; }
+.announcement-bar-viewport { flex: 1; position: relative; overflow: hidden; }
 
+/* todas las diapositivas quedan apiladas (position:absolute) y se
+   reposicionan con transform/opacity vía JS (ver initAnnouncementBar en
+   sections.js) — mismo mecanismo que el banner, así la que sale y la que
+   entra se animan juntas y de forma suave, no una brusca detrás de otra. */
 .announcement-bar-slide {
+  position: absolute;
+  inset: 0;
   padding-block: var(--space-2);
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   text-align: center;
+  transition: transform 380ms ease, opacity 380ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .announcement-bar-slide { transition: none; }
 }
 
 .announcement-bar-slide[hidden] { display: none; }
@@ -964,20 +1001,6 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
   min-height: 44px;
   align-items: center;
   justify-content: center;
-}
-
-.announcement-bar-slide.is-entering-fade { animation: announcement-fade 300ms ease; }
-@keyframes announcement-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* deslizamiento horizontal: el mensaje que entra viene desde la derecha al
-   avanzar y desde la izquierda al retroceder (--slide-dir, puesto en JS). */
-.announcement-bar-slide.is-entering-slide { animation: announcement-slide 320ms ease; }
-@keyframes announcement-slide {
-  from { opacity: 0; transform: translateX(calc(var(--slide-dir, 1) * 28px)); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 .announcement-bar-controls { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }

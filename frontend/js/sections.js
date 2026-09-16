@@ -28,6 +28,7 @@ function renderAnnouncementBar(section) {
 
   const variant = ['onyx', 'paper', 'gold-soft'].includes(c.variant) ? c.variant : 'onyx';
   const transition = c.transition === 'slide' ? 'slide' : 'fade';
+  const slideDirection = c.slide_direction === 'left' ? 'left' : 'right';
   const interval = Math.min(10, Math.max(3, Number(c.rotation_interval) || 5));
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const canRotate = messages.length > 1;
@@ -48,7 +49,7 @@ function renderAnnouncementBar(section) {
   }
 
   return `
-    <aside class="announcement-bar announcement-bar--${variant}" aria-label="Anuncios" data-section-id="${section.id}" data-transition="${transition}" data-interval="${interval}" data-can-rotate="${canRotate && !reduceMotion}">
+    <aside class="announcement-bar announcement-bar--${variant}" aria-label="Anuncios" data-section-id="${section.id}" data-transition="${transition}" data-slide-direction="${slideDirection}" data-interval="${interval}" data-can-rotate="${canRotate && !reduceMotion}">
       <div class="announcement-bar-inner">
         <div class="announcement-bar-viewport" data-viewport aria-live="off">${slides}</div>
         ${controls.length ? `<div class="announcement-bar-controls">${controls.join('')}</div>` : ''}
@@ -151,34 +152,70 @@ function initAnnouncementBar(el, section) {
 
   const viewport = el.querySelector('[data-viewport]');
   const slides = Array.from(el.querySelectorAll('[data-slide]'));
+  const n = slides.length;
   const transition = el.dataset.transition;
+  // 'right' = el mensaje siguiente entra desde la derecha (empuja el actual
+  // hacia la izquierda); 'left' = al revés. Ver el mismo cálculo de "camino
+  // más corto" que usa el banner (renderBanner/initBanner) para que la
+  // vuelta del último mensaje al primero también entre por el lado que
+  // corresponde, sin arrastrarse por los del medio.
+  const baseDir = el.dataset.slideDirection === 'left' ? -1 : 1;
   let current = 0;
 
-  // dir 1 = entra desde la derecha (avanzando), -1 = entra desde la
-  // izquierda (retrocediendo) — solo importa para el deslizamiento
-  // horizontal, el fundido lo ignora.
-  function show(index, { announce = false, dir = 1 } = {}) {
-    const next = (index + slides.length) % slides.length;
+  // Todas las diapositivas quedan apiladas (position:absolute) — hace
+  // falta un alto fijo en el viewport para que no colapse a 0 (algunos
+  // mensajes ocupan 1 línea, otros 2). Se mide una sola vez con el
+  // contenido ya armado, y de nuevo si la ventana cambia de tamaño (el
+  // quiebre a 2 líneas depende del ancho disponible).
+  function syncHeight() {
+    let max = 0;
+    slides.forEach((slide) => {
+      slide.hidden = false;
+      max = Math.max(max, slide.scrollHeight);
+    });
+    slides.forEach((slide, i) => { slide.hidden = i !== current; });
+    viewport.style.height = `${max}px`;
+  }
+
+  function layout(instant) {
+    slides.forEach((slide, i) => {
+      slide.hidden = false;
+      let rel = i - current;
+      if (rel > n / 2) rel -= n;
+      if (rel < -n / 2) rel += n;
+      const isCurrent = i === current;
+      if (instant) slide.style.transition = 'none';
+      if (transition === 'slide') {
+        slide.style.transform = `translateX(${rel * baseDir * 100}%)`;
+      } else {
+        slide.style.opacity = isCurrent ? '1' : '0';
+      }
+      if (instant) {
+        void slide.offsetWidth; // fuerza reflow: el próximo cambio sí anima
+        slide.style.transition = '';
+      }
+      slide.setAttribute('aria-hidden', isCurrent ? 'false' : 'true');
+      const link = slide.querySelector('a');
+      if (link) link.tabIndex = isCurrent ? 0 : -1;
+    });
+  }
+
+  syncHeight();
+  layout(true);
+  window.addEventListener('resize', syncHeight);
+
+  function show(index, { announce = false } = {}) {
+    const next = ((index % n) + n) % n;
     if (next === current) return;
-    slides[current].hidden = true;
     current = next;
-    const entering = slides[current];
-    entering.hidden = false;
-    if (transition === 'slide') {
-      entering.style.setProperty('--slide-dir', String(dir));
-      entering.classList.add('is-entering-slide');
-      entering.addEventListener('animationend', () => entering.classList.remove('is-entering-slide'), { once: true });
-    } else {
-      entering.classList.add('is-entering-fade');
-      entering.addEventListener('animationend', () => entering.classList.remove('is-entering-fade'), { once: true });
-    }
+    layout(false);
     viewport.setAttribute('aria-live', announce ? 'polite' : 'off');
   }
 
   const prevBtn = el.querySelector('[data-prev]');
   const nextBtn = el.querySelector('[data-next]');
-  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1, { announce: true, dir: -1 }));
-  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1, { announce: true, dir: 1 }));
+  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1, { announce: true }));
+  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1, { announce: true }));
 
   if (el.dataset.canRotate !== 'true') return; // reduced motion: solo flechas, sin autoplay
 
@@ -186,7 +223,7 @@ function initAnnouncementBar(el, section) {
   let timer = null;
 
   function tick() {
-    show(current + 1, { dir: 1 });
+    show(current + 1);
   }
   function start() {
     stop();
@@ -254,7 +291,7 @@ function renderBannerSlide(slide, index, isFirst) {
   const position = ['left', 'center', 'right'].includes(s.text_position) ? s.text_position : 'left';
   const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
   return `
-    <div class="pgs-banner-slide" data-slide data-index="${index}"${isFirst ? '' : ' hidden'}>
+    <div class="pgs-banner-slide" data-slide data-index="${index}" aria-hidden="${isFirst ? 'false' : 'true'}">
       ${pictureHtml}
       <div class="pgs-banner-scrim" style="background-color: rgba(32, 30, 31, ${overlayOpacity});"></div>
       <div class="pgs-banner-inner" style="justify-content: ${justify};">
@@ -296,15 +333,36 @@ function renderBanner(section) {
 // (ahí los puntos siguen sirviendo para navegar a mano).
 function initBanner(el) {
   const slides = Array.from(el.querySelectorAll('[data-slide]'));
-  if (slides.length <= 1) return;
+  const n = slides.length;
+  if (n <= 1) return;
   let current = 0;
 
+  // Todas las fotos están apiladas (position:absolute) y se reposicionan
+  // con transform en vez de aparecer de golpe. Siempre toma el camino más
+  // corto del círculo (pos > n/2 se reposiciona al otro lado) para que la
+  // vuelta de la última foto a la primera también entre suave y por el
+  // lado que corresponde, sin arrastrarse por todas las de en medio.
+  function layout(instant) {
+    slides.forEach((slide, i) => {
+      let pos = i - current;
+      if (pos > n / 2) pos -= n;
+      if (pos < -n / 2) pos += n;
+      if (instant) slide.style.transition = 'none';
+      slide.style.transform = `translateX(${pos * 100}%)`;
+      if (instant) {
+        void slide.offsetWidth; // fuerza reflow: el próximo cambio sí anima
+        slide.style.transition = '';
+      }
+      slide.setAttribute('aria-hidden', i === current ? 'false' : 'true');
+    });
+  }
+  layout(true);
+
   function show(index) {
-    const next = (index + slides.length) % slides.length;
+    const next = ((index % n) + n) % n;
     if (next === current) return;
-    slides[current].hidden = true;
     current = next;
-    slides[current].hidden = false;
+    layout(false);
     el.querySelectorAll('[data-dot]').forEach((dot, i) => dot.classList.toggle('is-active', i === current));
   }
 
@@ -446,6 +504,45 @@ function renderImage(section) {
    pidió ensucia el diseño). El texto/botón opcional se ve superpuesto
    sobre las fotos, con pointer-events recortado para no tapar los
    controles del carrusel que quedan debajo. */
+
+// Una foto de la galería, con su texto/botón opcional encima (distinto del
+// overlay de toda la sección, de arriba) — mismos controles que el banner:
+// posición del texto, oscurecido y desenfoque por foto. Si hay botón (link
+// + cta_label) no se envuelve la foto entera en <a> para no anidar
+// enlaces; si hay link_url pero no botón, se mantiene el comportamiento
+// de siempre (toda la foto es clicable).
+function renderGalleryImageMedia(img) {
+  const g = img || {};
+  const blur = Math.max(0, Math.min(20, Number(g.blur) || 0));
+  const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px); transform: scale(1.1);"` : '';
+  const imgTagHtml = `<img src="${g.url}" alt="${g.alt || ''}" loading="lazy"${imgStyle}>`;
+
+  const hasCta = Boolean(g.link_url && g.cta_label);
+  const hasOverlayText = Boolean(g.title || g.subtitle || hasCta);
+  const overlayOpacity = Math.max(0, Math.min(100, Number(g.overlay_opacity) || 0)) / 100;
+  const position = ['left', 'center', 'right'].includes(g.text_position) ? g.text_position : 'left';
+  const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
+  const ctaStyle = g.cta_color
+    ? ` style="background-color:${g.cta_color}; border-color:${g.cta_color}; color:${contrastTextColor(g.cta_color)};"`
+    : '';
+  const overlayHtml = hasOverlayText
+    ? `
+      <div class="pgs-gallery-img-scrim" style="background-color: rgba(32, 30, 31, ${overlayOpacity});"></div>
+      <div class="pgs-gallery-img-inner" style="justify-content: ${justify};">
+        <div class="pgs-gallery-img-copy" style="text-align: ${position};">
+          ${g.title ? `<h3 class="h3 pgs-gallery-img-title">${g.title}</h3>` : ''}
+          ${g.subtitle ? `<p class="pgs-gallery-img-subtitle">${g.subtitle}</p>` : ''}
+          ${hasCta ? `<a class="btn btn-onDark"${ctaStyle} href="${g.link_url}">${g.cta_label}</a>` : ''}
+        </div>
+      </div>
+    `
+    : '';
+
+  const body = imgTagHtml + overlayHtml;
+  const wrapInLink = g.link_url && !hasCta;
+  return `<div class="pgs-gallery-img-wrap">${wrapInLink ? `<a href="${g.link_url}">${body}</a>` : body}</div>`;
+}
+
 function renderGallery(section) {
   const c = section.content || {};
   const images = (c.images || []).filter((img) => img && img.url);
@@ -454,17 +551,12 @@ function renderGallery(section) {
   const layout = images.length === 1 ? 'single' : (['carousel', 'compare'].includes(c.layout) ? c.layout : 'grid');
   const hasOverlay = Boolean(c.heading || c.subtitle || (c.cta_link && c.cta_label));
 
-  function imgTag(img) {
-    const tag = `<img src="${img.url}" alt="${img.alt || ''}" loading="lazy">`;
-    return img.link_url ? `<a href="${img.link_url}">${tag}</a>` : tag;
-  }
-
   let mediaHtml;
   if (layout === 'single') {
-    mediaHtml = `<div class="pgs-gallery-single">${imgTag(images[0])}</div>`;
+    mediaHtml = `<div class="pgs-gallery-single">${renderGalleryImageMedia(images[0])}</div>`;
   } else if (layout === 'carousel') {
     const slides = images
-      .map((img, i) => `<div class="pgs-gallery-slide" data-slide data-index="${i}"${i === 0 ? '' : ' hidden'}>${imgTag(img)}</div>`)
+      .map((img, i) => `<div class="pgs-gallery-slide" data-slide data-index="${i}"${i === 0 ? '' : ' hidden'}>${renderGalleryImageMedia(img)}</div>`)
       .join('');
     const dots = images
       .map((_, i) => `<button type="button" class="pgs-gallery-dot${i === 0 ? ' is-active' : ''}" data-dot="${i}" aria-label="Ir a la foto ${i + 1}"></button>`)
@@ -479,11 +571,11 @@ function renderGallery(section) {
     `;
   } else if (layout === 'compare') {
     mediaHtml = `<div class="pgs-gallery-compare">${images
-      .map((img) => `<div class="pgs-gallery-compare-item">${imgTag(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
+      .map((img) => `<div class="pgs-gallery-compare-item">${renderGalleryImageMedia(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
       .join('')}</div>`;
   } else {
     mediaHtml = `<div class="pgs-gallery-grid">${images
-      .map((img) => `<div class="pgs-gallery-grid-item">${imgTag(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
+      .map((img) => `<div class="pgs-gallery-grid-item">${renderGalleryImageMedia(img)}${img.caption ? `<p class="pgs-gallery-caption">${img.caption}</p>` : ''}</div>`)
       .join('')}</div>`;
   }
 

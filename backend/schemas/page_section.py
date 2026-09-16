@@ -133,6 +133,7 @@ class AnnouncementBarContent(BaseModel):
     position: Literal["top", "inline"] = "inline"
     rotation_interval: int = Field(default=5, ge=3, le=10)
     transition: Literal["fade", "slide"] = "fade"
+    slide_direction: Literal["left", "right"] = "right"
     closable: bool = False
     variant: Literal["onyx", "paper", "gold-soft"] = "onyx"
 
