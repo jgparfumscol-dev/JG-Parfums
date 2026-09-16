@@ -238,7 +238,7 @@ function renderBanner(section) {
     ? `
       <picture>
         ${c.image_url_mobile ? `<source media="(max-width: 767px)" srcset="${c.image_url_mobile}">` : ''}
-        <img class="pgs-banner-media" src="${mainImg}" alt="${c.title || ''}" loading="lazy">
+        <img class="pgs-banner-media" src="${mainImg}" alt="${c.title || ''}">
       </picture>
     `
     : '';
