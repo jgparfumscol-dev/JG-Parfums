@@ -638,6 +638,12 @@
             <option value="slide">Deslizamiento</option>
           </select>
         </div>
+        <div class="field"><label for="s_ab_slide_direction">Dirección del deslizamiento</label>
+          <select id="s_ab_slide_direction">
+            <option value="right">Hacia la derecha</option>
+            <option value="left">Hacia la izquierda</option>
+          </select>
+        </div>
         <div class="field"><label for="s_ab_interval">Intervalo de rotación (3 a 10 segundos)</label>
           <input type="number" id="s_ab_interval" min="3" max="10" value="5">
         </div>
@@ -1561,14 +1567,14 @@
     checkout: 'Checkout', 'mi-cuenta': 'Mi cuenta', login: 'Iniciar sesión', registro: 'Registro',
     'recuperar-password': 'Recuperar contraseña', 'reset-password': 'Restablecer contraseña',
     'pedido-confirmado': 'Pedido confirmado',
-    politicas: 'Envíos y políticas', contacto: 'Contacto',
+    'quienes-somos': 'Quiénes somos', politicas: 'Envíos y políticas', contacto: 'Contacto',
   };
   const PAGE_URLS = {
     home: '/index.html', catalogo: '/catalogo.html', producto: '/producto.html', carrito: '/carrito.html',
     checkout: '/checkout.html', 'mi-cuenta': '/mi-cuenta.html', login: '/login.html', registro: '/registro.html',
     'recuperar-password': '/recuperar-password.html', 'reset-password': '/reset-password.html',
     'pedido-confirmado': '/pedido-confirmado.html',
-    politicas: '/politicas.html', contacto: '/contacto.html',
+    'quienes-somos': '/quienes-somos.html', politicas: '/politicas.html', contacto: '/contacto.html',
   };
   // Para reconocer a qué página se navegó DESDE dentro del iframe (ej. el
   // admin hace clic en un link de la vista previa) — "/" también cuenta
@@ -2005,8 +2011,26 @@
         <div style="flex:1; display:flex; flex-direction:column; gap:var(--space-2); min-width:0;">
           <input class="input-sm" placeholder="URL de la imagen" data-gi-url value="${esc(img.url)}">
           <input class="input-sm" placeholder="Texto alternativo" data-gi-alt value="${esc(img.alt)}">
-          <input class="input-sm" placeholder="Pie de foto (opcional)" data-gi-caption value="${esc(img.caption)}">
-          <input class="input-sm" placeholder="Enlace (opcional): /producto.html?slug=... o https://..." data-gi-link value="${esc(img.link_url)}">
+          <input class="input-sm" placeholder="Pie de foto (opcional, debajo de la imagen)" data-gi-caption value="${esc(img.caption)}">
+          <input class="input-sm" placeholder="Título encima de la foto (opcional)" data-gi-title value="${esc(img.title)}">
+          <input class="input-sm" placeholder="Subtítulo encima de la foto (opcional)" data-gi-subtitle value="${esc(img.subtitle)}">
+          <input class="input-sm" placeholder="Enlace (opcional): si agregas texto de botón se ve como botón, si no, toda la foto queda clicable" data-gi-link value="${esc(img.link_url)}">
+          <div style="display:flex; gap:var(--space-2);">
+            <input class="input-sm" placeholder="Texto del botón (opcional)" data-gi-cta-label value="${esc(img.cta_label)}" style="flex:1;">
+            <input type="color" data-gi-cta-color value="${esc(img.cta_color) || '#D3AE6A'}" style="height:44px; width:44px; padding:var(--space-1); cursor:pointer; flex-shrink:0;">
+          </div>
+          <div style="display:flex; gap:var(--space-2); align-items:center;">
+            <label class="text-caption" style="flex-shrink:0;">Texto</label>
+            <select class="input-sm" data-gi-text-position style="flex:1;">
+              <option value="left"${(img.text_position || 'left') === 'left' ? ' selected' : ''}>Izquierda</option>
+              <option value="center"${img.text_position === 'center' ? ' selected' : ''}>Centro</option>
+              <option value="right"${img.text_position === 'right' ? ' selected' : ''}>Derecha</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:var(--space-2);">
+            <input class="input-sm" type="number" min="0" max="100" placeholder="Oscurecer imagen (0-100%)" data-gi-overlay value="${img.overlay_opacity != null ? esc(String(img.overlay_opacity)) : '0'}" style="flex:1;">
+            <input class="input-sm" type="number" min="0" max="20" placeholder="Desenfoque (0-20px)" data-gi-blur value="${img.blur != null ? esc(String(img.blur)) : '0'}" style="flex:1;">
+          </div>
         </div>
         <div style="display:flex; flex-direction:column; gap:var(--space-1);">
           <button type="button" class="btn btn-secondary" data-gi-up aria-label="Subir foto" style="height:36px; width:36px; padding:var(--space-1);">↑</button>
@@ -2023,7 +2047,14 @@
         url: row.querySelector('[data-gi-url]').value.trim(),
         alt: row.querySelector('[data-gi-alt]').value.trim() || null,
         caption: row.querySelector('[data-gi-caption]').value.trim() || null,
+        title: row.querySelector('[data-gi-title]').value.trim() || null,
+        subtitle: row.querySelector('[data-gi-subtitle]').value.trim() || null,
         link_url: row.querySelector('[data-gi-link]').value.trim() || null,
+        cta_label: row.querySelector('[data-gi-cta-label]').value.trim() || null,
+        cta_color: row.querySelector('[data-gi-cta-color]').value || null,
+        text_position: row.querySelector('[data-gi-text-position]').value,
+        overlay_opacity: Math.max(0, Math.min(100, Number(row.querySelector('[data-gi-overlay]').value) || 0)),
+        blur: Math.max(0, Math.min(20, Number(row.querySelector('[data-gi-blur]').value) || 0)),
       }))
       .filter((img) => img.url);
   }
@@ -2219,6 +2250,7 @@
       document.getElementById('s_ab_position').value = c.position || 'inline';
       document.getElementById('s_ab_variant').value = c.variant || 'onyx';
       document.getElementById('s_ab_transition').value = c.transition || 'fade';
+      document.getElementById('s_ab_slide_direction').value = c.slide_direction || 'right';
       document.getElementById('s_ab_interval').value = c.rotation_interval || 5;
       document.getElementById('s_ab_closable').checked = Boolean(c.closable);
       document.getElementById('announcementMessageList').innerHTML = (c.messages && c.messages.length ? c.messages : [{}]).map(announcementMessageRowHtml).join('');
@@ -2324,6 +2356,7 @@
         position: document.getElementById('s_ab_position').value,
         variant: document.getElementById('s_ab_variant').value,
         transition: document.getElementById('s_ab_transition').value,
+        slide_direction: document.getElementById('s_ab_slide_direction').value,
         rotation_interval: Number(document.getElementById('s_ab_interval').value) || 5,
         closable: document.getElementById('s_ab_closable').checked,
       };

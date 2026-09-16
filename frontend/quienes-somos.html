@@ -3,26 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contacto — JG Parfums</title>
-<meta name="description" content="Escríbenos y te respondemos lo antes posible.">
+<title>Quiénes somos — JG Parfums</title>
+<meta name="description" content="JG Parfums: perfumería original de nicho en Cali, Colombia.">
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/components.css">
 <style>
-  /* el bloque completo (título + form + whatsapp) se centra en una columna
-     más angosta que el container de 1200px, para que no quede estirado de
-     borde a borde — mismo ancho para el texto de arriba (sección CMS) y el
-     layout de acá abajo, así se lee como un solo bloque centrado. */
+  /* mismo criterio que /contacto.html: el bloque de texto se centra en una
+     columna angosta en vez de estirarse a todo el container de 1200px. */
   #dynamicSections .container { max-width: 760px; }
-  .contact-layout { max-width: 760px; display: grid; gap: var(--space-12); padding-bottom: var(--space-16); }
-  @media (min-width: 1024px) { .contact-layout { grid-template-columns: 1fr 1fr; align-items: start; } }
-  .contact-form-card { padding: var(--space-6); border: 1px solid var(--ink-100); }
-  .whatsapp-card { padding: var(--space-6); background: var(--jg-onyx); color: #FFFFFF; display: flex; flex-direction: column; gap: var(--space-4); }
-  .whatsapp-card[hidden] { display: none; }
-  .whatsapp-card p { color: #B9B4B0; margin: 0; }
-  .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 </style>
 </head>
 <body>
@@ -69,31 +60,6 @@
 
 <main id="main">
   <div id="dynamicSections"></div>
-  <div class="container contact-layout">
-    <div class="contact-form-card">
-      <form id="contactForm">
-        <p class="form-error" id="contactFormError" hidden></p>
-        <p class="text-small" id="contactFormSuccess" style="color:var(--success); margin-bottom: var(--space-4);" hidden>Gracias, recibimos tu mensaje. Te contactamos pronto.</p>
-        <div class="field">
-          <label for="contact_name">Nombre</label>
-          <input id="contact_name" name="name" required autocomplete="name">
-        </div>
-        <div class="field">
-          <label for="contact_contact">Correo o teléfono</label>
-          <input id="contact_contact" name="contact" required autocomplete="email">
-        </div>
-        <div class="field">
-          <label for="contact_message">Mensaje</label>
-          <textarea id="contact_message" name="message" rows="5" required></textarea>
-        </div>
-        <button class="btn btn-primary btn-block" type="submit">Enviar mensaje</button>
-      </form>
-    </div>
-    <div class="whatsapp-card" id="whatsappCard" hidden>
-      <p>¿Prefieres escribirnos directo?</p>
-      <a class="btn btn-onDark" id="whatsappLink" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
-    </div>
-  </div>
 </main>
 
 <footer class="site-footer">
@@ -136,37 +102,7 @@
 <script src="/js/sections.js"></script>
 <script src="/js/reveal.js"></script>
 <script>
-  renderPageSections('contacto');
-
-  getSiteSettings().then((settings) => {
-    if (!settings.whatsapp_number) return;
-    document.getElementById('whatsappLink').href = `https://wa.me/${encodeURIComponent(settings.whatsapp_number)}`;
-    document.getElementById('whatsappCard').hidden = false;
-  });
-
-  document.getElementById('contactForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const errorEl = document.getElementById('contactFormError');
-    const successEl = document.getElementById('contactFormSuccess');
-    errorEl.hidden = true;
-    successEl.hidden = true;
-    const form = new FormData(event.target);
-    try {
-      await apiFetch('/contact-messages', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: form.get('name'),
-          contact: form.get('contact'),
-          message: form.get('message'),
-        }),
-      });
-      event.target.reset();
-      successEl.hidden = false;
-    } catch (err) {
-      errorEl.textContent = err.message;
-      errorEl.hidden = false;
-    }
-  });
+  renderPageSections('quienes-somos');
 </script>
 </body>
 </html>
