@@ -35,6 +35,7 @@ def list_products(
     min_price: int | None = Query(default=None, ge=0),
     max_price: int | None = Query(default=None, ge=0),
     has_decant: bool = False,
+    is_featured: bool | None = None,
     include_inactive: bool = False,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=24, ge=1, le=100),
@@ -54,6 +55,8 @@ def list_products(
         query = query.filter(Product.price <= max_price)
     if has_decant:
         query = query.filter(Product.variants.any(ProductVariant.is_active.is_(True)))
+    if is_featured is not None:
+        query = query.filter(Product.is_featured.is_(is_featured))
 
     total = query.count()
     items = query.order_by(Product.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
@@ -89,7 +92,14 @@ def update_product(
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    # La ficha destacada del home solo puede mostrar un producto a la vez:
+    # marcar este como destacado desmarca cualquier otro que lo estuviera.
+    if data.get("is_featured") is True:
+        db.query(Product).filter(Product.id != product_id, Product.is_featured.is_(True)).update(
+            {"is_featured": False}
+        )
+    for field, value in data.items():
         setattr(product, field, value)
     db.commit()
     db.refresh(product)

@@ -162,19 +162,22 @@
   // renderPageSections/sections.js, no este script. Acá solo queda pisar
   // el texto del hero con los datos del producto destacado, una vez que
   // esa sección ya exista en el DOM.
+  //
+  // El hero es una ficha educativa ("así se lee un perfume"), no la vitrina
+  // de un producto cualquiera: solo se pisa su copy genérico (de la sección
+  // home_hero) con los datos de un perfume real si el admin marcó explícita-
+  // mente ese producto con la estrella de "destacado" en el panel. Si ningún
+  // producto está marcado, se deja el texto genérico de la sección tal cual
+  // (puede hablar de la tienda, no de una marca de perfume puntual) con la
+  // escalera de notas genérica.
   async function loadFeatured() {
     try {
-      const data = await apiFetch('/products?page_size=9');
+      const data = await apiFetch('/products?is_featured=true&page_size=1');
       if (data.items.length === 0) {
         renderHeroNotes(GENERIC_NOTES);
         return;
       }
-
-      // El destacado debe poder demostrar la escalera de notas: se prefiere
-      // el más reciente que ya tenga notas cargadas, y solo se cae al más
-      // reciente sin notas si ninguno las tiene todavía.
-      const featured = data.items.find((p) => p.notes && p.notes.length > 0) || data.items[0];
-      renderHeroProduct(featured);
+      renderHeroProduct(data.items[0]);
     } catch (err) {
       renderHeroNotes(GENERIC_NOTES);
     }

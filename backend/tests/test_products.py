@@ -107,3 +107,40 @@ def test_hard_delete_keeps_order_history(client, admin_headers):
     item = fetched.json()["items"][0]
     assert item["product_name"] == "Oud Royal"
     assert item["product_id"] is None
+
+
+def test_new_product_is_not_featured_by_default(client, admin_headers):
+    client.post("/products", json=_product_payload(), headers=admin_headers)
+    product = client.get("/products/oud-royal").json()
+    assert product["is_featured"] is False
+
+
+def test_marking_product_featured_unmarks_previous_one(client, admin_headers):
+    client.post("/products", json=_product_payload("oud-royal"), headers=admin_headers)
+    client.post("/products", json=_product_payload("arab-tonka"), headers=admin_headers)
+    first = client.get("/products/oud-royal").json()
+    second = client.get("/products/arab-tonka").json()
+
+    client.put(f"/products/{first['id']}", json={"is_featured": True}, headers=admin_headers)
+    response = client.put(f"/products/{second['id']}", json={"is_featured": True}, headers=admin_headers)
+    assert response.status_code == 200
+    assert response.json()["is_featured"] is True
+
+    first_again = client.get("/products/oud-royal").json()
+    assert first_again["is_featured"] is False
+
+
+def test_filter_products_by_is_featured(client, admin_headers):
+    client.post("/products", json=_product_payload("oud-royal"), headers=admin_headers)
+    client.post("/products", json=_product_payload("arab-tonka"), headers=admin_headers)
+    featured = client.get("/products/arab-tonka").json()
+    client.put(f"/products/{featured['id']}", json={"is_featured": True}, headers=admin_headers)
+
+    response = client.get("/products?is_featured=true")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["slug"] == "arab-tonka"
+
+    response_false = client.get("/products?is_featured=false")
+    assert response_false.json()["items"][0]["slug"] == "oud-royal"

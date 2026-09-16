@@ -76,6 +76,7 @@ class ProductBase(BaseModel):
     price: int = Field(gt=0)
     stock: int = Field(ge=0, default=0)
     is_active: bool = True
+    is_featured: bool = False
 
 
 class ProductCreate(ProductBase):
@@ -92,6 +93,7 @@ class ProductUpdate(BaseModel):
     price: int | None = Field(default=None, gt=0)
     stock: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
+    is_featured: bool | None = None
 
 
 class ProductResponse(ProductBase):

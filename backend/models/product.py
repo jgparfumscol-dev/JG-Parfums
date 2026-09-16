@@ -22,6 +22,10 @@ class Product(Base):
     price = Column(Integer, nullable=False)  # COP, pesos enteros (sin centavos)
     stock = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
+    # Producto que se muestra en la ficha "destacada" del home (diagrama de
+    # notas). Solo uno puede estar marcado a la vez — se hace cumplir en la
+    # ruta, no con una constraint de DB (ver update_product).
+    is_featured = Column(Boolean, nullable=False, default=False)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
