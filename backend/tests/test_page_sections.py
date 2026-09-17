@@ -250,6 +250,51 @@ def test_create_classes_carousel_full_layout(client, admin_headers):
     assert create.json()["content"]["layout"] == "full"
 
 
+def test_create_classes_carousel_spacing_and_card_ratio_with_defaults(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {}},
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["spacing"] == "normal"
+    assert content["card_ratio_w"] == 3
+    assert content["card_ratio_h"] == 4
+
+    custom = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "classes_carousel",
+            "content": {"spacing": "flush", "card_ratio_w": 16, "card_ratio_h": 9},
+        },
+        headers=admin_headers,
+    )
+    assert custom.status_code == 201
+    custom_content = custom.json()["content"]
+    assert custom_content["spacing"] == "flush"
+    assert custom_content["card_ratio_w"] == 16
+    assert custom_content["card_ratio_h"] == 9
+
+
+def test_create_classes_carousel_rejects_invalid_spacing(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"spacing": "huge"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_classes_carousel_rejects_zero_card_ratio(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"card_ratio_w": 0}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
 def test_create_classes_carousel_rejects_invalid_layout(client, admin_headers):
     response = client.post(
         "/page-sections",

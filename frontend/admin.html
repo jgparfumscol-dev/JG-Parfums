@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260916b">
-<link rel="stylesheet" href="/css/components.css?v=20260916b">
+<link rel="stylesheet" href="/css/tokens.css?v=20260916c">
+<link rel="stylesheet" href="/css/components.css?v=20260916c">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -733,6 +733,19 @@
           </select>
         </div>
         <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Con una sola foto se muestra igual sin importar el modo que elijas acá.</p>
+        <div class="field"><label for="s_gallery_spacing">Espaciado de la sección</label>
+          <select id="s_gallery_spacing">
+            <option value="normal">Normal</option>
+            <option value="compact">Compacto</option>
+            <option value="flush">Mínimo (pegado a lo de arriba/abajo)</option>
+          </select>
+        </div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Proporción de las fotos (ancho : alto, opcional) — vacío deja el recorte por defecto de cada modo; más chico el segundo número, más finas quedan</p>
+        <div style="display:flex; gap: var(--space-2); align-items:center; margin-bottom: var(--space-4);">
+          <input class="input-sm" id="s_gallery_ratio_w" type="number" min="1" max="20" step="0.5" placeholder="Auto" style="flex:1;">
+          <span class="text-muted">:</span>
+          <input class="input-sm" id="s_gallery_ratio_h" type="number" min="1" max="20" step="0.5" placeholder="Auto" style="flex:1;">
+        </div>
 
         <p class="text-caption" style="margin-bottom: var(--space-2);">Texto sobre las fotos (opcional)</p>
         <div class="field"><label for="s_gallery_heading">Título</label><input id="s_gallery_heading"></div>
@@ -765,6 +778,19 @@
             <option value="contained">Contenido (angosto, con márgenes)</option>
             <option value="full">Ancho completo (todo el bloque)</option>
           </select>
+        </div>
+        <div class="field"><label for="s_classcar_spacing">Espaciado de la sección</label>
+          <select id="s_classcar_spacing">
+            <option value="normal">Normal</option>
+            <option value="compact">Compacto</option>
+            <option value="flush">Mínimo (pegado a lo de arriba/abajo)</option>
+          </select>
+        </div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Proporción de la tarjeta (ancho : alto) — más chico el segundo número, más finas quedan las fotos</p>
+        <div style="display:flex; gap: var(--space-2); align-items:center;">
+          <input class="input-sm" id="s_classcar_ratio_w" type="number" min="1" max="20" step="0.5" value="3" style="flex:1;">
+          <span class="text-muted">:</span>
+          <input class="input-sm" id="s_classcar_ratio_h" type="number" min="1" max="20" step="0.5" value="4" style="flex:1;">
         </div>
         <p id="classCarouselEmptyNotice" class="text-muted text-small" style="color:var(--danger);" hidden>Todavía no hay clases activas. Créalas en la pestaña Clases.</p>
         <div id="classCarouselPickerWrap" hidden>
@@ -956,7 +982,7 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260916b"></script>
+<script src="/js/api.js?v=20260916c"></script>
 <script>
   let editingProductId = null;
 
@@ -2737,6 +2763,9 @@
       document.getElementById('s_image_link').value = c.link_url || '';
     } else if (type === 'gallery') {
       document.getElementById('s_gallery_layout').value = c.layout || 'grid';
+      document.getElementById('s_gallery_spacing').value = c.spacing || 'normal';
+      document.getElementById('s_gallery_ratio_w').value = c.image_ratio_w || '';
+      document.getElementById('s_gallery_ratio_h').value = c.image_ratio_h || '';
       document.getElementById('s_gallery_heading').value = c.heading || '';
       document.getElementById('s_gallery_subtitle').value = c.subtitle || '';
       document.getElementById('s_gallery_cta_label').value = c.cta_label || '';
@@ -2781,6 +2810,9 @@
       document.getElementById('s_classcar_mode').value = c.mode || 'all';
       document.getElementById('classCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
       document.getElementById('s_classcar_layout').value = c.layout || 'contained';
+      document.getElementById('s_classcar_spacing').value = c.spacing || 'normal';
+      document.getElementById('s_classcar_ratio_w').value = c.card_ratio_w != null ? c.card_ratio_w : 3;
+      document.getElementById('s_classcar_ratio_h').value = c.card_ratio_h != null ? c.card_ratio_h : 4;
       document.getElementById('s_classcar_mobile').value = c.cards_mobile != null ? c.cards_mobile : 1.3;
       document.getElementById('s_classcar_tablet').value = c.cards_tablet != null ? c.cards_tablet : 3;
       document.getElementById('s_classcar_desktop').value = c.cards_desktop != null ? c.cards_desktop : 4;
@@ -2884,6 +2916,9 @@
       content = {
         images: collectGalleryImages(),
         layout: document.getElementById('s_gallery_layout').value,
+        spacing: document.getElementById('s_gallery_spacing').value,
+        image_ratio_w: Number(document.getElementById('s_gallery_ratio_w').value) || null,
+        image_ratio_h: Number(document.getElementById('s_gallery_ratio_h').value) || null,
         heading: document.getElementById('s_gallery_heading').value.trim() || null,
         subtitle: document.getElementById('s_gallery_subtitle').value.trim() || null,
         cta_label: document.getElementById('s_gallery_cta_label').value.trim() || null,
@@ -2932,6 +2967,9 @@
         mode: document.getElementById('s_classcar_mode').value,
         category_ids: collectClassCarouselIds(),
         layout: document.getElementById('s_classcar_layout').value,
+        spacing: document.getElementById('s_classcar_spacing').value,
+        card_ratio_w: Math.max(0.1, Number(document.getElementById('s_classcar_ratio_w').value) || 3),
+        card_ratio_h: Math.max(0.1, Number(document.getElementById('s_classcar_ratio_h').value) || 4),
         cards_mobile: Number(document.getElementById('s_classcar_mobile').value) || 1.3,
         cards_tablet: Number(document.getElementById('s_classcar_tablet').value) || 3,
         cards_desktop: Number(document.getElementById('s_classcar_desktop').value) || 4,

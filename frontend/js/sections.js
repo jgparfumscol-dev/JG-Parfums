@@ -660,9 +660,17 @@ function renderGallery(section) {
     `
     : '';
 
+  // spacing: mismo criterio que el carrusel de clases — normal (de
+  // siempre), compact o flush. Proporción de foto opcional: si el admin
+  // pone ancho y alto, pisa el recorte por defecto de cada layout (ver
+  // --pgs-gallery-img-ratio en components.css); sin eso, cada layout se
+  // queda con el suyo de siempre.
+  const spacingClass = c.spacing && c.spacing !== 'normal' ? ` section--${c.spacing}` : '';
+  const ratioStyle = c.image_ratio_w && c.image_ratio_h ? ` style="--pgs-gallery-img-ratio: ${c.image_ratio_w} / ${c.image_ratio_h};"` : '';
+
   return `
-    <section class="section pgs-gallery pgs-gallery--${layout}" data-section-id="${section.id}">
-      <div class="pgs-gallery-media">${mediaHtml}</div>
+    <section class="section${spacingClass} pgs-gallery pgs-gallery--${layout}" data-section-id="${section.id}">
+      <div class="pgs-gallery-media"${ratioStyle}>${mediaHtml}</div>
       ${overlayHtml}
     </section>
   `;
@@ -816,9 +824,14 @@ async function renderClassesCarousel(section) {
     // pantalla (el título se queda alineado con el resto del sitio,
     // adentro del container) — "contained" es el ancho angosto de siempre.
     const isFull = c.layout === 'full';
+    // spacing: cuánto aire arriba/abajo de la sección — normal (de
+    // siempre), compact o flush (pegada a lo de arriba/abajo).
+    const spacingClass = c.spacing && c.spacing !== 'normal' ? ` section--${c.spacing}` : '';
+    const cardRatioW = Number(c.card_ratio_w) || 3;
+    const cardRatioH = Number(c.card_ratio_h) || 4;
     return `
-      <section class="section pgs-classes-carousel${isFull ? ' pgs-classes-carousel--full' : ''}" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
-        style="--pgs-cards-mobile:${c.cards_mobile || 1.3}; --pgs-cards-tablet:${c.cards_tablet || 3}; --pgs-cards-desktop:${c.cards_desktop || 4};">
+      <section class="section${spacingClass} pgs-classes-carousel${isFull ? ' pgs-classes-carousel--full' : ''}" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
+        style="--pgs-cards-mobile:${c.cards_mobile || 1.3}; --pgs-cards-tablet:${c.cards_tablet || 3}; --pgs-cards-desktop:${c.cards_desktop || 4}; --pgs-card-ratio: ${cardRatioW} / ${cardRatioH};">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
           ${isFull ? '' : carouselHtml}

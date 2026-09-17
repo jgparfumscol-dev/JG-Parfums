@@ -161,6 +161,9 @@ class ClassesCarouselContent(BaseModel):
     mode: Literal["all", "manual"] = "all"
     category_ids: list[int] = Field(default_factory=list)
     layout: Literal["contained", "full"] = "contained"
+    spacing: Literal["normal", "compact", "flush"] = "normal"
+    card_ratio_w: float = Field(default=3, gt=0, le=20)
+    card_ratio_h: float = Field(default=4, gt=0, le=20)
     cards_mobile: float = Field(default=1.3, ge=1, le=4)
     cards_tablet: int = Field(default=3, ge=1, le=6)
     cards_desktop: int = Field(default=4, ge=1, le=8)

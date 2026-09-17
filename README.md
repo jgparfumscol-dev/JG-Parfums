@@ -51,7 +51,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (119 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (122 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
@@ -166,7 +166,7 @@ flowchart LR
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (119) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (122) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -176,6 +176,7 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Espaciado de sección y proporción de foto configurables en el carrusel de clases y la galería: `spacing` (normal / compact / flush, mismas variantes `.section--compact`/`.section--flush` para ambas) para achicar el aire arriba/abajo del bloque, y proporción ancho:alto de la foto (`card_ratio_w`/`card_ratio_h` en clases, `image_ratio_w`/`image_ratio_h` opcional en galería) para recortarlas más finas — ambos vía `aspect-ratio` con custom properties, sin tocar el resto de secciones. 4 tests nuevos (122 en total).
 - Galería de fotos: posición vertical del texto superpuesto (arriba/medio/abajo, sumada a la horizontal que ya existía) y zoom leve en hover/foco sobre la imagen, misma excepción acotada que las tarjetas de clase. Banner: se navega arrastrando con el dedo o el mouse (Pointer Events) además de con flechas nuevas. Carrusel de clases: opción de ancho del bloque (contenido, de siempre, o ancho completo — rompe el container y toca los bordes de la pantalla). 2 tests nuevos (119 en total).
 - Menú de clases del header rehecho: la fila de links en línea (se veía apretada con más de 3-4 clases) pasa a un botón que abre un panel flotante, solo en escritorio — el panel móvil sigue igual. Flechas de los carruseles de clases/marcas rediseñadas sin caja (antes un cuadro blanco) y siempre en bucle. En el camino se encontró y corrigió un bug real: un comentario CSS con `(--pgs-cards-*/--pgs-logos-*)` se cerraba solo por el `*/` accidental en medio del texto, así que el navegador descartaba la regla completa de `.pgs-carousel-wrap { position: relative; }` — las flechas del carrusel de clases quedaban ancladas arriba de la página en vez de centradas en las fotos. Se agrega además versión (`?v=`) a los `<link>`/`<script>` de CSS/JS compartidos: sin eso, un deploy nuevo podía tardar hasta 4 horas en verse para quien ya había visitado el sitio (`max-age=14400` del CDN).
 
@@ -243,7 +244,7 @@ flowchart LR
 │   ├── services/           # Wompi, Mercado Pago, email
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (119 tests)
+│   └── tests/                   # pytest, SQLite en memoria (122 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño

@@ -125,6 +125,16 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
   .section { padding-top: var(--space-24); padding-bottom: var(--space-24); }
 }
 
+/* Variantes de espaciado vertical — por ahora solo las usan el carrusel de
+   clases y la galería de fotos (ver renderClassesCarousel/renderGallery en
+   sections.js), pero el nombre es genérico por si otra sección lo necesita
+   después. */
+.section--compact { padding-top: var(--space-8); padding-bottom: var(--space-8); }
+@media (min-width: 1024px) {
+  .section--compact { padding-top: var(--space-12); padding-bottom: var(--space-12); }
+}
+.section--flush { padding-top: 0; padding-bottom: 0; }
+
 .section-title {
   position: relative;
   padding-bottom: var(--space-3);
