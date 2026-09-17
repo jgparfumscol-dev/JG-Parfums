@@ -761,6 +761,12 @@
           </select>
         </div>
         <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Con una sola foto se muestra igual sin importar el modo que elijas acá.</p>
+        <div class="field"><label for="s_gallery_width">Ancho del bloque</label>
+          <select id="s_gallery_width">
+            <option value="contained">Contenido (angosto, con márgenes)</option>
+            <option value="full">Ancho completo (todo el bloque)</option>
+          </select>
+        </div>
         <div class="field"><label for="s_gallery_spacing">Espaciado de la sección</label>
           <select id="s_gallery_spacing">
             <option value="normal">Normal</option>
@@ -843,6 +849,13 @@
             <option value="right">Derecha (sale por la derecha, entra por la izquierda)</option>
           </select>
         </div>
+        <div class="field" id="s_classcar_speed_field" hidden><label for="s_classcar_speed">Velocidad</label>
+          <select id="s_classcar_speed">
+            <option value="slow">Lenta</option>
+            <option value="normal">Normal</option>
+            <option value="fast">Rápida</option>
+          </select>
+        </div>
         <div class="field" id="s_classcar_arrows_field">
           <label style="display:flex; align-items:center; gap:var(--space-2);">
             <input type="checkbox" id="s_classcar_arrows" checked> Mostrar flechas
@@ -872,7 +885,14 @@
         <div class="field" style="margin-top: var(--space-4);"><label for="s_brandcar_carousel_mode">Modo</label>
           <select id="s_brandcar_carousel_mode">
             <option value="arrows">Flechas (manual)</option>
-            <option value="continuous">Continuo (deslizamiento infinito lento)</option>
+            <option value="continuous">Continuo (deslizamiento infinito, sin parar)</option>
+          </select>
+        </div>
+        <div class="field" id="s_brandcar_speed_field" hidden><label for="s_brandcar_speed">Velocidad</label>
+          <select id="s_brandcar_speed">
+            <option value="slow">Lenta</option>
+            <option value="normal">Normal</option>
+            <option value="fast">Rápida</option>
           </select>
         </div>
         <div class="field"><label for="s_brandcar_color">Color de los logos</label>
@@ -2525,17 +2545,27 @@
   });
 
   // Continuo (desplazamiento infinito) reemplaza las flechas/autoavance por
-  // la animación CSS — así que esos campos se esconden y el de sentido
-  // aparece, y viceversa con flechas.
+  // el deslizamiento automático propio — así que esos campos se esconden y
+  // los de sentido/velocidad aparecen, y viceversa con flechas.
   function updateClassCarouselModeFields(mode) {
     const continuous = mode === 'continuous';
     document.getElementById('s_classcar_direction_field').hidden = !continuous;
+    document.getElementById('s_classcar_speed_field').hidden = !continuous;
     document.getElementById('s_classcar_arrows_field').hidden = continuous;
     document.getElementById('s_classcar_autoplay_field').hidden = continuous;
     document.getElementById('s_classcar_interval_field').hidden = continuous;
   }
   document.getElementById('s_classcar_carousel_mode').addEventListener('change', (event) => {
     updateClassCarouselModeFields(event.target.value);
+  });
+
+  // Mismo criterio que arriba, para el carrusel de marcas (sin sentido, ese
+  // toggle solo lo tiene el de clases).
+  function updateBrandCarouselModeFields(mode) {
+    document.getElementById('s_brandcar_speed_field').hidden = mode !== 'continuous';
+  }
+  document.getElementById('s_brandcar_carousel_mode').addEventListener('change', (event) => {
+    updateBrandCarouselModeFields(event.target.value);
   });
 
   function testimonialRowHtml(t = {}) {
@@ -2984,6 +3014,11 @@
       document.getElementById('s_image_link').value = c.link_url || '';
     } else if (type === 'gallery') {
       document.getElementById('s_gallery_layout').value = c.layout || 'grid';
+      // Mismo default por modo que renderGallery en sections.js: si nunca
+      // se guardó "width" (secciones creadas antes de que existiera esta
+      // opción), la grilla ya venía contenida y el resto a todo el ancho —
+      // así el selector no le miente al admin sobre lo que se ve hoy.
+      document.getElementById('s_gallery_width').value = c.width || ((c.layout || 'grid') === 'grid' ? 'contained' : 'full');
       document.getElementById('s_gallery_spacing').value = c.spacing || 'normal';
       document.getElementById('s_gallery_ratio_w').value = c.image_ratio_w || '';
       document.getElementById('s_gallery_ratio_h').value = c.image_ratio_h || '';
@@ -3042,6 +3077,7 @@
       document.getElementById('s_classcar_interval').value = c.autoplay_interval || 5;
       document.getElementById('s_classcar_carousel_mode').value = c.carousel_mode || 'arrows';
       document.getElementById('s_classcar_direction').value = c.carousel_direction || 'left';
+      document.getElementById('s_classcar_speed').value = c.carousel_speed || 'normal';
       updateClassCarouselModeFields(c.carousel_mode || 'arrows');
       renderClassCarouselPicker(c.category_ids || []);
       updateClassCarouselEmptyNotice();
@@ -3050,6 +3086,8 @@
       document.getElementById('s_brandcar_mode').value = c.mode || 'all';
       document.getElementById('brandCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
       document.getElementById('s_brandcar_carousel_mode').value = c.carousel_mode || 'arrows';
+      document.getElementById('s_brandcar_speed').value = c.carousel_speed || 'normal';
+      updateBrandCarouselModeFields(c.carousel_mode || 'arrows');
       document.getElementById('s_brandcar_color').value = c.logo_color || 'grayscale';
       document.getElementById('s_brandcar_mobile').value = c.logos_mobile || 3;
       document.getElementById('s_brandcar_tablet').value = c.logos_tablet || 5;
@@ -3140,6 +3178,7 @@
       content = {
         images: collectGalleryImages(),
         layout: document.getElementById('s_gallery_layout').value,
+        width: document.getElementById('s_gallery_width').value,
         spacing: document.getElementById('s_gallery_spacing').value,
         image_ratio_w: Number(document.getElementById('s_gallery_ratio_w').value) || null,
         image_ratio_h: Number(document.getElementById('s_gallery_ratio_h').value) || null,
@@ -3202,6 +3241,7 @@
         autoplay_interval: Number(document.getElementById('s_classcar_interval').value) || 5,
         carousel_mode: document.getElementById('s_classcar_carousel_mode').value,
         carousel_direction: document.getElementById('s_classcar_direction').value,
+        carousel_speed: document.getElementById('s_classcar_speed').value,
       };
     } else if (type === 'brands_carousel') {
       content = {
@@ -3209,6 +3249,7 @@
         mode: document.getElementById('s_brandcar_mode').value,
         brand_ids: collectBrandCarouselIds(),
         carousel_mode: document.getElementById('s_brandcar_carousel_mode').value,
+        carousel_speed: document.getElementById('s_brandcar_speed').value,
         logo_color: document.getElementById('s_brandcar_color').value,
         logos_mobile: Number(document.getElementById('s_brandcar_mobile').value) || 3,
         logos_tablet: Number(document.getElementById('s_brandcar_tablet').value) || 5,

@@ -667,9 +667,16 @@ function renderGallery(section) {
   // queda con el suyo de siempre.
   const spacingClass = c.spacing && c.spacing !== 'normal' ? ` section--${c.spacing}` : '';
   const ratioStyle = c.image_ratio_w && c.image_ratio_h ? ` style="--pgs-gallery-img-ratio: ${c.image_ratio_w} / ${c.image_ratio_h};"` : '';
+  // width: ancho del bloque — mismo criterio que "layout" en el carrusel de
+  // clases (contenido/ancho completo), pero acá el default depende del modo
+  // de visualización para no cambiarle el aspecto a nada ya guardado antes
+  // de que existiera esta opción: grid ya venía siempre contenida, el resto
+  // (carrusel/comparar/una sola foto) siempre a todo el ancho.
+  const width = c.width === 'contained' || c.width === 'full' ? c.width : (layout === 'grid' ? 'contained' : 'full');
+  const containedClass = width === 'contained' ? ' pgs-gallery--contained' : '';
 
   return `
-    <section class="section${spacingClass} pgs-gallery pgs-gallery--${layout}" data-section-id="${section.id}">
+    <section class="section${spacingClass} pgs-gallery pgs-gallery--${layout}${containedClass}" data-section-id="${section.id}">
       <div class="pgs-gallery-media"${ratioStyle}>${mediaHtml}</div>
       ${overlayHtml}
     </section>
@@ -828,7 +835,7 @@ async function renderClassesCarousel(section) {
     const trackHtml = continuous ? cardsHtml + cardsHtml : cardsHtml;
     const trackClass = continuous ? ' pgs-class-track--continuous' : '';
     const carouselHtml = `
-      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-direction="${reverse ? 'right' : 'left'}"` : ''}>
+      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-direction="${reverse ? 'right' : 'left'}" data-speed="${c.carousel_speed || 'normal'}"` : ''}>
         <div class="pgs-carousel-track${trackClass}" data-track>${trackHtml}</div>
         ${arrowsHtml}
       </div>
@@ -857,6 +864,13 @@ async function renderClassesCarousel(section) {
   }
 }
 
+// px/seg por velocidad — fijo independiente de cuántas tarjetas/logos haya
+// (a diferencia de la duración por @keyframes de antes), así se siente
+// igual sea un carrusel de tarjetas grandes o de logos chicos. Configurable
+// desde el admin (carousel_speed, ver ClassesCarouselContent/
+// BrandsCarouselContent en el backend).
+const PGS_CAROUSEL_SPEED_PX = { slow: 25, normal: 45, fast: 70 };
+
 // Carrusel continuo (clases y marcas): la pista avanza sola con
 // requestAnimationFrame en vez de @keyframes — así JS controla la posición
 // exacta en todo momento y el visitante puede arrastrarla con el dedo o el
@@ -866,10 +880,7 @@ function initContinuousCarousel(wrap) {
   const track = wrap.querySelector('[data-track]');
   if (!track) return;
   const direction = wrap.dataset.direction === 'right' ? 1 : -1;
-  // px/seg fijo — a diferencia de la duración por @keyframes de antes, la
-  // velocidad se siente igual sea un carrusel de tarjetas grandes o de
-  // logos chicos, sin importar cuántos haya.
-  const speed = 45;
+  const speed = PGS_CAROUSEL_SPEED_PX[wrap.dataset.speed] || PGS_CAROUSEL_SPEED_PX.normal;
 
   // scrollWidth/2 es el ancho real de una copia (la pista está duplicada,
   // ver renderClassesCarousel/renderBrandsCarousel): moverse exactamente
@@ -999,7 +1010,7 @@ async function renderBrandsCarousel(section) {
         style="--pgs-logos-mobile:${c.logos_mobile || 3}; --pgs-logos-tablet:${c.logos_tablet || 5}; --pgs-logos-desktop:${c.logos_desktop || 7};">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
-          <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}">
+          <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-speed="${c.carousel_speed || 'normal'}"` : ''}>
             <div class="pgs-carousel-track pgs-brand-track${continuous ? ' pgs-brand-track--continuous' : ''}" data-track>${trackHtml}</div>
             ${arrowsHtml}
           </div>

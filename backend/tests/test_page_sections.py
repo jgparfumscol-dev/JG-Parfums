@@ -346,6 +346,28 @@ def test_create_classes_carousel_rejects_invalid_carousel_direction(client, admi
     assert response.status_code == 422
 
 
+def test_create_classes_carousel_continuous_speed(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "classes_carousel",
+            "content": {"carousel_mode": "continuous", "carousel_speed": "fast"},
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    assert create.json()["content"]["carousel_speed"] == "fast"
+
+
+def test_create_classes_carousel_rejects_invalid_carousel_speed(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"carousel_speed": "turbo"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
 def test_update_classes_carousel_validates_content(client, admin_headers):
     section = client.post(
         "/page-sections", json={"page": "home", "type": "classes_carousel", "content": {}}, headers=admin_headers
@@ -394,6 +416,28 @@ def test_create_brands_carousel_rejects_invalid_carousel_mode(client, admin_head
     response = client.post(
         "/page-sections",
         json={"page": "home", "type": "brands_carousel", "content": {"carousel_mode": "fade"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_brands_carousel_continuous_speed(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "brands_carousel",
+            "content": {"carousel_mode": "continuous", "carousel_speed": "slow"},
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    assert create.json()["content"]["carousel_speed"] == "slow"
+
+
+def test_create_brands_carousel_rejects_invalid_carousel_speed(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {"carousel_speed": "turbo"}},
         headers=admin_headers,
     )
     assert response.status_code == 422

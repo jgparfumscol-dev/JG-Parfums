@@ -946,16 +946,18 @@ body.pgs-ready .site-footer { opacity: 1; }
    alto natural de la foto (con el tope de max-height de siempre). */
 .pgs-gallery-single img { width: 100%; aspect-ratio: var(--pgs-gallery-img-ratio, auto); max-height: 640px; object-fit: cover; display: block; }
 
-/* grid: contenida (no a todo el ancho como los otros modos) y se adapta
-   sola a la cantidad de fotos — una sola ocupa toda la fila, varias se
-   acomodan solas sin necesidad de una regla distinta por cantidad. */
-.pgs-gallery--grid .pgs-gallery-media {
+/* Ancho del bloque "contenido" (ver renderGallery/width en sections.js):
+   angosto, con los mismos márgenes que el resto del sitio, en vez de a todo
+   el ancho de la pantalla. Por defecto lo trae la grilla (así se adapta
+   sola a la cantidad de fotos sin quedar gigante); el admin puede activarlo
+   también en carrusel/comparar/una sola foto, o apagarlo acá. */
+.pgs-gallery--contained .pgs-gallery-media {
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--space-6);
 }
 @media (min-width: 1024px) {
-  .pgs-gallery--grid .pgs-gallery-media { padding-inline: var(--space-12); }
+  .pgs-gallery--contained .pgs-gallery-media { padding-inline: var(--space-12); }
 }
 .pgs-gallery-grid {
   display: grid;
