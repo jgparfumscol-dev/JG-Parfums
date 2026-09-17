@@ -125,6 +125,15 @@
         ],
         "createdAt": "2026-09-15T21:01:57.261Z",
         "reason": "Marfil/--jg-paper es un token de marca documentado en BRAND.md §3.2, no un default de IA por reflejo; ya suprimido para otros archivos del frontend."
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "frontend/producto.html"
+        ],
+        "createdAt": "2026-09-17T17:05:07.300Z",
+        "reason": "user explicitly requested infinite, non-stopping auto-scroll for the addable 'carrusel de clases' section (left-to-right or reverse, admin-selectable), mirroring the existing brands_carousel continuous mode already shipped in production; mitigated with pause-on-hover/focus and prefers-reduced-motion fallback to the arrow carousel"
       }
     ]
   }

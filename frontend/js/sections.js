@@ -807,16 +807,30 @@ async function renderClassesCarousel(section) {
     }
     if (items.length === 0) return '';
 
-    const showArrows = c.show_arrows !== false;
+    // Modo continuo: mismo criterio que renderBrandsCarousel — pista
+    // duplicada que se desliza sola por CSS (ver pgs-class-marquee), sin
+    // parar nunca y con pausa en hover/foco. Con prefers-reduced-motion
+    // cae al carrusel de flechas de siempre, sin duplicar la pista.
+    const continuous = c.carousel_mode === 'continuous' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reverse = c.carousel_direction === 'right';
+    const showArrows = c.show_arrows !== false && !continuous;
     const arrowsHtml = showArrows
       ? `
         <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-prev" data-prev aria-label="Clase anterior">${ICON_PREV}</button>
         <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente clase">${ICON_NEXT}</button>
       `
       : '';
+    const cardsHtml = items.map(renderClassCard).join('');
+    // La pista duplicada anima translateX(-50%): a mitad de camino queda
+    // exactamente donde empezó la copia, así el "salto" para volver a 0%
+    // es invisible. La duración escala con la cantidad de tarjetas para
+    // que la velocidad (px/seg) se sienta igual sin importar cuántas haya.
+    const trackHtml = continuous ? cardsHtml + cardsHtml : cardsHtml;
+    const trackStyle = continuous ? ` style="--pgs-class-marquee-duration: ${Math.max(20, items.length * 6)}s;"` : '';
+    const trackClass = continuous ? ` pgs-class-track--continuous${reverse ? ' pgs-carousel-track--reverse' : ''}` : '';
     const carouselHtml = `
-      <div class="pgs-carousel-wrap">
-        <div class="pgs-carousel-track" data-track>${items.map(renderClassCard).join('')}</div>
+      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}">
+        <div class="pgs-carousel-track${trackClass}" data-track${trackStyle}>${trackHtml}</div>
         ${arrowsHtml}
       </div>
     `;
@@ -830,7 +844,7 @@ async function renderClassesCarousel(section) {
     const cardRatioW = Number(c.card_ratio_w) || 3;
     const cardRatioH = Number(c.card_ratio_h) || 4;
     return `
-      <section class="section${spacingClass} pgs-classes-carousel${isFull ? ' pgs-classes-carousel--full' : ''}" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
+      <section class="section${spacingClass} pgs-classes-carousel${isFull ? ' pgs-classes-carousel--full' : ''}" data-section-id="${section.id}" data-carousel-mode="${continuous ? 'continuous' : 'arrows'}" data-autoplay-interval="${!continuous && c.autoplay ? (c.autoplay_interval || 5) : ''}"
         style="--pgs-cards-mobile:${c.cards_mobile || 1.3}; --pgs-cards-tablet:${c.cards_tablet || 3}; --pgs-cards-desktop:${c.cards_desktop || 4}; --pgs-card-ratio: ${cardRatioW} / ${cardRatioH};">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
@@ -847,6 +861,9 @@ async function renderClassesCarousel(section) {
 function initClassesCarousel(el) {
   const wrap = el.querySelector('.pgs-carousel-wrap');
   if (!wrap) return;
+  // Modo continuo: la animación es puro CSS (pista duplicada + @keyframes),
+  // no necesita el manejo de flechas/autoavance por JS — ver initBrandsCarousel.
+  if (el.dataset.carouselMode === 'continuous') return;
   const interval = Number(el.dataset.autoplayInterval) || 0;
   // Siempre en bucle: seguir dando a la misma flecha vuelve al principio
   // (o al final, desde la primera) en vez de quedarse deshabilitada en la

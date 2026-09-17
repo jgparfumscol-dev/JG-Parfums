@@ -1189,6 +1189,29 @@ body.pgs-ready .site-footer { opacity: 1; }
   .pgs-class-card:focus-visible .pgs-class-card-media img { transform: scale(var(--pgs-class-base-scale, 1)); }
 }
 
+/* Modo continuo del carrusel de clases: mismo criterio que el de marcas
+   (ver más abajo) — pista duplicada (renderClassesCarousel) que se desliza
+   sola con @keyframes y se pausa en hover/foco. La duración la pone
+   renderClassesCarousel inline según la cantidad de tarjetas, así la
+   velocidad (px/seg) se siente igual sin importar cuántas clases haya.
+   --pgs-carousel-track--reverse invierte el sentido (derecha a izquierda
+   en vez de izquierda a derecha) para el toggle de dirección del admin. */
+.pgs-class-track--continuous {
+  overflow: visible;
+  animation: pgs-class-marquee var(--pgs-class-marquee-duration, 40s) linear infinite;
+}
+.pgs-class-track--continuous.pgs-carousel-track--reverse {
+  animation-direction: reverse;
+}
+.pgs-carousel-wrap--continuous:hover .pgs-class-track--continuous,
+.pgs-carousel-wrap--continuous:focus-within .pgs-class-track--continuous {
+  animation-play-state: paused;
+}
+@keyframes pgs-class-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 /* Marcas: altura fija, ancho automático, centrados — escala de grises por
    defecto (franja de logos de pago, ver BRAND.md). */
 .pgs-brands-carousel .pgs-carousel-track { --pgs-logos: var(--pgs-logos-mobile, 3); }

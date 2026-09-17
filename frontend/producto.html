@@ -57,13 +57,18 @@
   .breadcrumb a:hover { color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; }
 
   /* Descripción a todo el ancho, debajo de la ficha (galería + info) en vez
-     de al lado de la imagen — se lee más cómodo en un bloque propio. */
+     de al lado de la imagen — se lee más cómodo en un bloque propio. Menos
+     margen arriba (queda más cerca de la ficha) y más margen abajo, para
+     que no quede pegada al acordeón/media que sigue o, si el producto no
+     tiene ninguno de los dos, al footer. */
   .product-description-block {
-    margin-top: var(--space-12);
-    padding-top: var(--space-8);
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-16);
+    padding-top: var(--space-6);
     border-top: 1px solid var(--ink-100);
     max-width: 72ch;
   }
+  .product-description-block .section-title { margin-bottom: var(--space-4); }
   .product-description-block p { color: var(--text-muted); }
 
   /* Listados desplegables (acordeón) con info específica del perfume. */
@@ -372,6 +377,7 @@
       </div>
 
       <div class="product-description-block">
+        <h2 class="h2 section-title">Descripción</h2>
         <p>${product.description}</p>
       </div>
 

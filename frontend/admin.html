@@ -831,17 +831,29 @@
           <div class="field" style="flex:1;"><label for="s_classcar_tablet">Tablet</label><input id="s_classcar_tablet" type="number" min="1" max="6" value="3"></div>
           <div class="field" style="flex:1;"><label for="s_classcar_desktop">Escritorio</label><input id="s_classcar_desktop" type="number" min="1" max="8" value="4"></div>
         </div>
-        <div class="field">
+        <div class="field" style="margin-top: var(--space-4);"><label for="s_classcar_carousel_mode">Modo</label>
+          <select id="s_classcar_carousel_mode">
+            <option value="arrows">Flechas (manual, con autoavance opcional)</option>
+            <option value="continuous">Continuo (desplazamiento infinito, sin parar)</option>
+          </select>
+        </div>
+        <div class="field" id="s_classcar_direction_field" hidden><label for="s_classcar_direction">Sentido del desplazamiento</label>
+          <select id="s_classcar_direction">
+            <option value="left">Izquierda (sale por la izquierda, entra por la derecha)</option>
+            <option value="right">Derecha (sale por la derecha, entra por la izquierda)</option>
+          </select>
+        </div>
+        <div class="field" id="s_classcar_arrows_field">
           <label style="display:flex; align-items:center; gap:var(--space-2);">
             <input type="checkbox" id="s_classcar_arrows" checked> Mostrar flechas
           </label>
         </div>
-        <div class="field">
+        <div class="field" id="s_classcar_autoplay_field">
           <label style="display:flex; align-items:center; gap:var(--space-2);">
             <input type="checkbox" id="s_classcar_autoplay"> Autoavance
           </label>
         </div>
-        <div class="field"><label for="s_classcar_interval">Intervalo de autoavance (3 a 10 segundos)</label><input id="s_classcar_interval" type="number" min="3" max="10" value="5"></div>
+        <div class="field" id="s_classcar_interval_field"><label for="s_classcar_interval">Intervalo de autoavance (3 a 10 segundos)</label><input id="s_classcar_interval" type="number" min="3" max="10" value="5"></div>
       </div>
 
       <div id="sectionFieldsBrandsCarousel" hidden>
@@ -2258,7 +2270,8 @@
       case 'manifesto': return `${(c.items || []).length} columna(s)`;
       case 'classes_carousel': {
         const modeLabel = c.mode === 'manual' ? `${(c.category_ids || []).length} clase(s) seleccionadas` : 'todas las activas';
-        return c.heading || modeLabel;
+        const carouselLabel = c.carousel_mode === 'continuous' ? 'continuo' : 'flechas';
+        return `${c.heading || modeLabel} · ${carouselLabel}`;
       }
       case 'brands_carousel': {
         const modeLabel = c.mode === 'manual' ? `${(c.brand_ids || []).length} marca(s) seleccionadas` : 'todas las activas';
@@ -2509,6 +2522,20 @@
   });
   document.getElementById('s_brandcar_mode').addEventListener('change', (event) => {
     document.getElementById('brandCarouselPickerWrap').hidden = event.target.value !== 'manual';
+  });
+
+  // Continuo (desplazamiento infinito) reemplaza las flechas/autoavance por
+  // la animación CSS — así que esos campos se esconden y el de sentido
+  // aparece, y viceversa con flechas.
+  function updateClassCarouselModeFields(mode) {
+    const continuous = mode === 'continuous';
+    document.getElementById('s_classcar_direction_field').hidden = !continuous;
+    document.getElementById('s_classcar_arrows_field').hidden = continuous;
+    document.getElementById('s_classcar_autoplay_field').hidden = continuous;
+    document.getElementById('s_classcar_interval_field').hidden = continuous;
+  }
+  document.getElementById('s_classcar_carousel_mode').addEventListener('change', (event) => {
+    updateClassCarouselModeFields(event.target.value);
   });
 
   function testimonialRowHtml(t = {}) {
@@ -3013,6 +3040,9 @@
       document.getElementById('s_classcar_arrows').checked = c.show_arrows != null ? c.show_arrows : true;
       document.getElementById('s_classcar_autoplay').checked = Boolean(c.autoplay);
       document.getElementById('s_classcar_interval').value = c.autoplay_interval || 5;
+      document.getElementById('s_classcar_carousel_mode').value = c.carousel_mode || 'arrows';
+      document.getElementById('s_classcar_direction').value = c.carousel_direction || 'left';
+      updateClassCarouselModeFields(c.carousel_mode || 'arrows');
       renderClassCarouselPicker(c.category_ids || []);
       updateClassCarouselEmptyNotice();
     } else if (type === 'brands_carousel') {
@@ -3170,6 +3200,8 @@
         show_arrows: document.getElementById('s_classcar_arrows').checked,
         autoplay: document.getElementById('s_classcar_autoplay').checked,
         autoplay_interval: Number(document.getElementById('s_classcar_interval').value) || 5,
+        carousel_mode: document.getElementById('s_classcar_carousel_mode').value,
+        carousel_direction: document.getElementById('s_classcar_direction').value,
       };
     } else if (type === 'brands_carousel') {
       content = {
