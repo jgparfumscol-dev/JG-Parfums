@@ -1029,12 +1029,13 @@ body.pgs-ready .site-footer { opacity: 1; }
    con custom properties (--pgs-cards-* y --pgs-logos-*) que pone cada sección
    inline, según lo que configuró el admin — acá solo se leen. */
 .pgs-carousel-wrap { position: relative; }
-/* Modo continuo (clases y marcas, ver más abajo): la pista se duplica para
-   el loop y queda el doble de ancha que su caja — sin este overflow:hidden
-   esa mitad de más se sale del wrap y empuja el ancho de toda la página
-   (aparece scroll horizontal). El recorte va acá, no en la pista (que
-   necesita overflow:visible para que la animación no le meta su propia
-   barra de scroll encima). */
+/* Modo continuo (clases y marcas, ver initContinuousCarousel en
+   sections.js): la pista se duplica para el loop y queda el doble de ancha
+   que su caja — sin este overflow:hidden esa mitad de más se sale del wrap
+   y empuja el ancho de toda la página (aparece scroll horizontal). El
+   recorte va acá, no en la pista (que necesita overflow:visible para que
+   el JS pueda moverla libremente sin que le aparezca su propia barra de
+   scroll encima). */
 .pgs-carousel-wrap--continuous { overflow: hidden; }
 .pgs-carousel-track {
   display: flex;
@@ -1197,27 +1198,17 @@ body.pgs-ready .site-footer { opacity: 1; }
 }
 
 /* Modo continuo del carrusel de clases: mismo criterio que el de marcas
-   (ver más abajo) — pista duplicada (renderClassesCarousel) que se desliza
-   sola con @keyframes y se pausa en hover/foco. La duración la pone
-   renderClassesCarousel inline según la cantidad de tarjetas, así la
-   velocidad (px/seg) se siente igual sin importar cuántas clases haya.
-   --pgs-carousel-track--reverse invierte el sentido (derecha a izquierda
-   en vez de izquierda a derecha) para el toggle de dirección del admin. */
+   (ver más abajo) — pista duplicada (renderClassesCarousel) que
+   initContinuousCarousel (sections.js) desliza sola por JS, se congela en
+   hover/foco y se puede arrastrar con el dedo o el cursor en cualquier
+   momento. touch-action:pan-y deja que el dedo siga haciendo scroll
+   vertical de la página; solo el arrastre horizontal lo toma el carrusel. */
 .pgs-class-track--continuous {
   overflow: visible;
-  animation: pgs-class-marquee var(--pgs-class-marquee-duration, 40s) linear infinite;
+  touch-action: pan-y;
+  cursor: grab;
 }
-.pgs-class-track--continuous.pgs-carousel-track--reverse {
-  animation-direction: reverse;
-}
-.pgs-carousel-wrap--continuous:hover .pgs-class-track--continuous,
-.pgs-carousel-wrap--continuous:focus-within .pgs-class-track--continuous {
-  animation-play-state: paused;
-}
-@keyframes pgs-class-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
+.pgs-class-track--continuous.is-dragging { cursor: grabbing; }
 
 /* Marcas: altura fija, ancho automático, centrados — escala de grises por
    defecto (franja de logos de pago, ver BRAND.md). */
@@ -1257,24 +1248,20 @@ body.pgs-ready .site-footer { opacity: 1; }
   .pgs-brand-logo-link:focus-visible .pgs-brand-logo { transform: none; }
 }
 
-/* Modo continuo: pista duplicada (ver renderBrandsCarousel) que se desliza
-   sola con @keyframes; se pausa en hover/foco. Las flechas quedan en el DOM
-   por accesibilidad pero ocultas acá — sections.js ya no marca la sección
-   como "continuous" cuando prefers-reduced-motion está activo, así que esta
-   regla nunca convive con la animación desactivada. */
+/* Modo continuo: pista duplicada (ver renderBrandsCarousel) que
+   initContinuousCarousel (sections.js) desliza por JS, igual que el
+   carrusel de clases de más arriba — se congela en hover/foco y se puede
+   arrastrar. Las flechas quedan en el DOM por accesibilidad pero ocultas
+   acá — sections.js ya no marca la sección como "continuous" cuando
+   prefers-reduced-motion está activo, así que esta regla nunca convive con
+   el movimiento desactivado. */
 .pgs-carousel-wrap--continuous .pgs-carousel-arrow { display: none; }
 .pgs-brand-track--continuous {
   overflow: visible;
-  animation: pgs-brand-marquee 30s linear infinite;
+  touch-action: pan-y;
+  cursor: grab;
 }
-.pgs-carousel-wrap--continuous:hover .pgs-brand-track--continuous,
-.pgs-carousel-wrap--continuous:focus-within .pgs-brand-track--continuous {
-  animation-play-state: paused;
-}
-@keyframes pgs-brand-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
+.pgs-brand-track--continuous.is-dragging { cursor: grabbing; }
 
 .pgs-testimonials { display: grid; gap: var(--space-8); }
 @media (min-width: 768px) { .pgs-testimonials { grid-template-columns: repeat(3, 1fr); } }

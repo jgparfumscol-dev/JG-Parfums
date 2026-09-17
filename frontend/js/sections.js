@@ -808,8 +808,9 @@ async function renderClassesCarousel(section) {
     if (items.length === 0) return '';
 
     // Modo continuo: mismo criterio que renderBrandsCarousel — pista
-    // duplicada que se desliza sola por CSS (ver pgs-class-marquee), sin
-    // parar nunca y con pausa en hover/foco. Con prefers-reduced-motion
+    // duplicada que se desliza sola (ver initContinuousCarousel, por JS con
+    // requestAnimationFrame en vez de @keyframes, para poder arrastrarla),
+    // sin parar nunca y con pausa en hover/foco. Con prefers-reduced-motion
     // cae al carrusel de flechas de siempre, sin duplicar la pista.
     const continuous = c.carousel_mode === 'continuous' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const reverse = c.carousel_direction === 'right';
@@ -821,16 +822,14 @@ async function renderClassesCarousel(section) {
       `
       : '';
     const cardsHtml = items.map(renderClassCard).join('');
-    // La pista duplicada anima translateX(-50%): a mitad de camino queda
-    // exactamente donde empezó la copia, así el "salto" para volver a 0%
-    // es invisible. La duración escala con la cantidad de tarjetas para
-    // que la velocidad (px/seg) se sienta igual sin importar cuántas haya.
+    // La pista duplicada se desliza hasta la mitad de su ancho real
+    // (scrollWidth/2, ver initContinuousCarousel): ahí queda exactamente
+    // donde empezó la copia, así el "salto" de vuelta es invisible.
     const trackHtml = continuous ? cardsHtml + cardsHtml : cardsHtml;
-    const trackStyle = continuous ? ` style="--pgs-class-marquee-duration: ${Math.max(20, items.length * 6)}s;"` : '';
-    const trackClass = continuous ? ` pgs-class-track--continuous${reverse ? ' pgs-carousel-track--reverse' : ''}` : '';
+    const trackClass = continuous ? ' pgs-class-track--continuous' : '';
     const carouselHtml = `
-      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}">
-        <div class="pgs-carousel-track${trackClass}" data-track${trackStyle}>${trackHtml}</div>
+      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-direction="${reverse ? 'right' : 'left'}"` : ''}>
+        <div class="pgs-carousel-track${trackClass}" data-track>${trackHtml}</div>
         ${arrowsHtml}
       </div>
     `;
@@ -858,12 +857,108 @@ async function renderClassesCarousel(section) {
   }
 }
 
+// Carrusel continuo (clases y marcas): la pista avanza sola con
+// requestAnimationFrame en vez de @keyframes — así JS controla la posición
+// exacta en todo momento y el visitante puede arrastrarla con el dedo o el
+// cursor, se haya congelado por hover/foco o no. Al soltar sigue
+// deslizándose sola desde donde quedó, en la misma dirección de siempre.
+function initContinuousCarousel(wrap) {
+  const track = wrap.querySelector('[data-track]');
+  if (!track) return;
+  const direction = wrap.dataset.direction === 'right' ? 1 : -1;
+  // px/seg fijo — a diferencia de la duración por @keyframes de antes, la
+  // velocidad se siente igual sea un carrusel de tarjetas grandes o de
+  // logos chicos, sin importar cuántos haya.
+  const speed = 45;
+
+  // scrollWidth/2 es el ancho real de una copia (la pista está duplicada,
+  // ver renderClassesCarousel/renderBrandsCarousel): moverse exactamente
+  // esa distancia deja la copia en el lugar donde empezó el original, así
+  // que envolver ahí (en vez de dejar crecer translateX sin límite) es
+  // invisible para quien mira.
+  let half = track.scrollWidth / 2;
+  window.addEventListener('resize', () => { half = track.scrollWidth / 2; });
+
+  let position = 0;
+  let paused = false;
+  let dragging = false;
+  let dragStartX = 0;
+  let dragStartPosition = 0;
+  let dragMoved = false;
+  let lastTime = null;
+
+  function normalize(p) {
+    if (!half) return 0;
+    p %= half;
+    if (p > 0) p -= half;
+    return p;
+  }
+
+  function render() {
+    track.style.transform = `translateX(${position}px)`;
+  }
+
+  function tick(now) {
+    if (lastTime == null) lastTime = now;
+    const dt = now - lastTime;
+    lastTime = now;
+    if (!paused && !dragging) {
+      position = normalize(position + direction * speed * (dt / 1000));
+      render();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Mismo criterio de pausa que el resto de carruseles con autoavance (ver
+  // initSnapCarousel): hover, foco o pestaña oculta la congelan. El
+  // arrastre (abajo) es independiente de esto — se puede arrastrar tanto
+  // congelada como en movimiento.
+  wrap.addEventListener('mouseenter', () => { paused = true; });
+  wrap.addEventListener('mouseleave', () => { paused = false; });
+  wrap.addEventListener('focusin', () => { paused = true; });
+  wrap.addEventListener('focusout', () => { paused = false; });
+  document.addEventListener('visibilitychange', () => {
+    paused = document.hidden || wrap.matches(':hover') || wrap.matches(':focus-within');
+  });
+
+  function onPointerDown(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    dragging = true;
+    dragMoved = false;
+    dragStartX = e.clientX;
+    dragStartPosition = position;
+    track.classList.add('is-dragging');
+    track.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    if (Math.abs(dx) > 4) dragMoved = true;
+    position = normalize(dragStartPosition + dx);
+    render();
+  }
+  function onPointerUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('is-dragging');
+    try { track.releasePointerCapture(e.pointerId); } catch (_err) { /* ya liberado */ }
+  }
+  track.addEventListener('pointerdown', onPointerDown);
+  track.addEventListener('pointermove', onPointerMove);
+  track.addEventListener('pointerup', onPointerUp);
+  track.addEventListener('pointercancel', onPointerUp);
+  // Si de verdad arrastró (no fue un simple clic), que no navegue el link
+  // de la tarjeta/logo que quedó debajo del dedo o el cursor al soltar.
+  track.addEventListener('click', (e) => {
+    if (dragMoved) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+}
+
 function initClassesCarousel(el) {
   const wrap = el.querySelector('.pgs-carousel-wrap');
   if (!wrap) return;
-  // Modo continuo: la animación es puro CSS (pista duplicada + @keyframes),
-  // no necesita el manejo de flechas/autoavance por JS — ver initBrandsCarousel.
-  if (el.dataset.carouselMode === 'continuous') return;
+  if (el.dataset.carouselMode === 'continuous') { initContinuousCarousel(wrap); return; }
   const interval = Number(el.dataset.autoplayInterval) || 0;
   // Siempre en bucle: seguir dando a la misma flecha vuelve al principio
   // (o al final, desde la primera) en vez de quedarse deshabilitada en la
@@ -919,12 +1014,12 @@ async function renderBrandsCarousel(section) {
 function initBrandsCarousel(el) {
   const wrap = el.querySelector('.pgs-carousel-wrap');
   if (!wrap) return;
-  // Modo continuo: la animación es puro CSS (pista duplicada + @keyframes,
-  // pausa en :hover/:focus-within) — no necesita JS. Las flechas quedan en
-  // el DOM pero ocultas por CSS, salvo que el usuario prefiera menos
-  // movimiento (ver renderBrandsCarousel), caso en el que ya no se marca
-  // como "continuous" y cae acá igual, en modo manual normal.
-  if (el.dataset.carouselMode === 'continuous') return;
+  // Modo continuo: mismo motor por JS que el carrusel de clases, ver
+  // initContinuousCarousel. Las flechas quedan en el DOM pero ocultas por
+  // CSS, salvo que el usuario prefiera menos movimiento (ver
+  // renderBrandsCarousel), caso en el que ya no se marca como "continuous"
+  // y cae acá igual, en modo manual normal.
+  if (el.dataset.carouselMode === 'continuous') { initContinuousCarousel(wrap); return; }
   initSnapCarousel(wrap, { loop: true });
 }
 
