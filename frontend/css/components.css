@@ -1029,6 +1029,13 @@ body.pgs-ready .site-footer { opacity: 1; }
    con custom properties (--pgs-cards-* y --pgs-logos-*) que pone cada sección
    inline, según lo que configuró el admin — acá solo se leen. */
 .pgs-carousel-wrap { position: relative; }
+/* Modo continuo (clases y marcas, ver más abajo): la pista se duplica para
+   el loop y queda el doble de ancha que su caja — sin este overflow:hidden
+   esa mitad de más se sale del wrap y empuja el ancho de toda la página
+   (aparece scroll horizontal). El recorte va acá, no en la pista (que
+   necesita overflow:visible para que la animación no le meta su propia
+   barra de scroll encima). */
+.pgs-carousel-wrap--continuous { overflow: hidden; }
 .pgs-carousel-track {
   display: flex;
   gap: var(--space-4);
