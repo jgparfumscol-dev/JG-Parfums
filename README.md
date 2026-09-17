@@ -6,7 +6,7 @@
 
 Autenticación · Catálogo · Categorías · Decants (5ml/10ml) · Carrito · Checkout (registrado e invitado) · Pagos (Wompi + Mercado Pago) · Panel administrativo con tienda en vivo editable
 
-### 🔗 [jg-parfums.pages.dev](https://jg-parfums.pages.dev) — frontend y backend en línea, en construcción
+### 🔗 [jgparfums.com.co](https://jgparfums.com.co) — frontend y backend en línea, en construcción
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -62,14 +62,16 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Producto destacado del home seleccionable con una estrella en el panel (en vez de elegirse solo, al azar) | ✅ Construido y probado |
 | Páginas institucionales editables desde el panel: Envíos y políticas, Contacto (con formulario que guarda mensajes revisables en el panel) y Quiénes somos | ✅ Construido y probado |
 | Frontend (tienda, cuenta, panel admin) | ✅ Construido — sistema de diseño documentado (`DESIGN.md`), tipografía de títulos Newsreader (legible en cualquier densidad de pantalla), acentos circulares para romper la retícula sin tocar el radio duro de botones/tarjetas |
-| Frontend desplegado (Cloudflare Pages) | ✅ En línea — [jg-parfums.pages.dev](https://jg-parfums.pages.dev) |
+| Frontend desplegado (Cloudflare Pages) | ✅ En línea — dominio propio [jgparfums.com.co](https://jgparfums.com.co) |
+| Home: carrusel de clases y carrusel de marcas, galería de fotos y banner con arrastre táctil/mouse, ancho y espaciado de sección configurables | ✅ Backend, panel admin y sitio público construidos y probados |
+| Fricción básica contra copiar/descargar fotos en la tienda pública (sin clic derecho, sin arrastrar, sin guardar al mantener presionado en celular) | ✅ Construido — el panel admin no se ve afectado |
 | CORS frontend ↔ backend | ✅ Verificado con petición real |
 | Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
 | Pago con Wompi | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
 | Pago con Mercado Pago | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
 | Catálogo con productos reales | ⏳ Productos de prueba cargados — falta contenido y fotografía real del cliente |
 | Política de tratamiento de datos / términos | ❌ Pendiente (obligatorio en Colombia, Ley 1581 de 2012) |
-| Dominio propio | ❌ Pendiente — usando `*.pages.dev` / `*.up.railway.app` por ahora |
+| Dominio propio | ⏳ Frontend ya en [jgparfums.com.co](https://jgparfums.com.co) — el backend sigue en el subdominio de Railway (`*.up.railway.app`) |
 
 ## Qué falta antes de lanzar
 
@@ -82,7 +84,8 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 - [ ] Borrar la cuenta admin y los productos de prueba antes de lanzar
 - [ ] Confirmar tono "tú/usted" del copy (hoy en "tú" por defecto)
 - [ ] Cargar el costo de envío real en Ajustes (el campo ya existe y el checkout ya lo suma; hoy está en 0 por defecto)
-- [ ] Dominio propio (ej. `jgparfums.com`) en vez de los subdominios de Railway/Cloudflare
+- [ ] Dominio propio para el backend (hoy `*.up.railway.app`) — el del frontend ya está listo (`jgparfums.com.co`)
+- [ ] Revisar las fotos del carrusel de clases del home: algunas quedaron apuntando a enlaces de resultados de imágenes de Google/Brave en vez de a fotos propias hospedadas — no son estables para hotlinking (pueden dejar de verse sin aviso) y conviene reemplazarlas por las fotos reales del cliente subidas a un storage propio
 
 ## Arquitectura
 
@@ -299,8 +302,8 @@ pytest tests/test_payments.py -v   # un archivo puntual
 
 ## Despliegue
 
-- **Backend** → Railway, en línea en `jg-parfums-production.up.railway.app`
-- **Frontend** → Cloudflare Pages, en línea en [jg-parfums.pages.dev](https://jg-parfums.pages.dev)
+- **Backend** → Railway, en línea en `jg-parfums-production.up.railway.app` (sin dominio propio todavía)
+- **Frontend** → Cloudflare Pages, en línea en [jgparfums.com.co](https://jgparfums.com.co) (dominio propio del cliente, apuntando al proyecto de Cloudflare Pages)
 - **Base de datos** → PostgreSQL en Railway, esquema ya migrado
 - **Correos transaccionales** → Resend, con remitente de pruebas (`onboarding@resend.dev`) hasta verificar un dominio propio
 - **Seguridad** → CORS con orígenes explícitos, rate limiting por IP en auth/checkout, sin enumeración de cuentas en registro/login/forgot-password
