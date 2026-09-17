@@ -53,6 +53,16 @@ class Product(Base):
         cascade="all, delete-orphan",
         order_by="ProductNote.position",
     )
+    detail_sections = relationship(
+        "ProductDetailSection",
+        cascade="all, delete-orphan",
+        order_by="ProductDetailSection.position",
+    )
+    media_items = relationship(
+        "ProductMediaItem",
+        cascade="all, delete-orphan",
+        order_by="ProductMediaItem.position",
+    )
     order_items = relationship("OrderItem", back_populates="product")
     category = relationship("Category")
 

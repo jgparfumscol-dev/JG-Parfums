@@ -44,6 +44,26 @@ def test_adding_variant_requires_admin(client, admin_headers):
     assert response.status_code == 401
 
 
+def test_admin_can_add_variant_with_image(client, admin_headers):
+    product = _create_product(client, admin_headers)
+
+    response = client.post(
+        f"/products/{product['id']}/variants",
+        json={"size_ml": 5, "price": 45000, "stock": 10, "image_url": "https://cdn.example.com/decant-5ml.jpg"},
+        headers=admin_headers,
+    )
+    assert response.status_code == 201
+    assert response.json()["image_url"] == "https://cdn.example.com/decant-5ml.jpg"
+
+    update = client.put(
+        f"/products/variants/{response.json()['id']}",
+        json={"image_url": "https://cdn.example.com/decant-5ml-v2.jpg"},
+        headers=admin_headers,
+    )
+    assert update.status_code == 200
+    assert update.json()["image_url"] == "https://cdn.example.com/decant-5ml-v2.jpg"
+
+
 def test_admin_can_update_and_delete_variant(client, admin_headers):
     product = _create_product(client, admin_headers)
     variant = client.post(

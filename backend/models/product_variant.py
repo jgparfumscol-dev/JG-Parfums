@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -20,5 +20,8 @@ class ProductVariant(Base):
     price = Column(Integer, nullable=False)  # COP, pesos enteros
     stock = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
+    # Foto propia de la presentación (ej. el frasco de 5ml junto a su caja).
+    # Opcional: si no se define, la ficha sigue mostrando la galería del producto.
+    image_url = Column(String, nullable=True)
 
     product = relationship("Product", back_populates="variants")

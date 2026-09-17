@@ -111,6 +111,11 @@
   .table-wrap { overflow-x: auto; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3); }
   dialog { border: none; border-radius: var(--radius); padding: 0; max-width: 520px; width: 90vw; }
+  #productDialog { max-width: 640px; }
+  .media-item-card { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); margin-bottom: var(--space-3); }
+  .media-item-preview { width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius); margin-bottom: var(--space-2); background: var(--bg); }
+  .media-item-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+  .media-item-actions .btn { flex: 1; }
   dialog::backdrop { background: rgba(32,30,31,.5); }
   .dialog-inner { padding: var(--space-8); max-height: 80vh; overflow-y: auto; }
   .dialog-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-6); }
@@ -610,14 +615,37 @@
       </div>
 
       <div id="variantSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
-        <p class="text-caption" style="margin-bottom: var(--space-2);">Decants (5ml / 10ml)</p>
-        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Mismo perfume, presentación de prueba. Precio y stock son propios de cada tamaño.</p>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Presentaciones (decants, 5ml / 10ml, etc.)</p>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Mismo perfume, otro tamaño. Precio, stock y foto son propios de cada presentación — la foto es opcional, si no se pone se usa la galería del producto.</p>
         <div id="variantList"></div>
         <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
           <input id="newVariantSize" type="number" min="1" placeholder="ml" class="input-sm" style="width:70px;">
           <input id="newVariantPrice" type="number" min="1" placeholder="Precio COP" class="input-sm" style="width:120px;">
           <input id="newVariantStock" type="number" min="0" placeholder="Stock" class="input-sm" style="width:90px;">
+          <input id="newVariantImage" placeholder="URL de foto (opcional)" class="input-sm" style="flex:1; min-width:160px;">
           <button class="btn btn-secondary" type="button" id="addVariantBtn">Agregar</button>
+        </div>
+      </div>
+
+      <div id="detailSectionSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Listados desplegables</p>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Bloques tipo acordeón para info específica del perfume (modo de uso, ingredientes, cuidados, etc.). Se muestran debajo de la descripción.</p>
+        <div id="detailSectionList"></div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
+          <input id="newDetailTitle" placeholder="Título (ej. Modo de uso)" class="input-sm" style="flex:1; min-width:160px;">
+          <textarea id="newDetailBody" placeholder="Contenido" class="input-sm" style="flex-basis:100%; min-height:60px;"></textarea>
+          <button class="btn btn-secondary" type="button" id="addDetailSectionBtn">Agregar</button>
+        </div>
+      </div>
+
+      <div id="mediaSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Medios (fotos, GIFs o animaciones)</p>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-3);">Franjas grandes debajo de la descripción, con texto opcional encima. Ajusta posición del texto, oscurecido, desenfoque, alto y ancho de cada una.</p>
+        <div id="mediaList"></div>
+        <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
+          <input id="newMediaUrl" placeholder="URL de imagen o GIF" class="input-sm" style="flex:1; min-width:160px;">
+          <input id="newMediaAlt" placeholder="Texto alternativo" class="input-sm" style="flex:1; min-width:160px;">
+          <button class="btn btn-secondary" type="button" id="addMediaBtn">Agregar</button>
         </div>
       </div>
 
@@ -1514,11 +1542,17 @@
       renderNotes(product);
       document.getElementById('variantSection').hidden = false;
       renderVariants(product);
+      document.getElementById('detailSectionSection').hidden = false;
+      renderDetailSections(product);
+      document.getElementById('mediaSection').hidden = false;
+      renderMediaItems(product);
     } else {
       form.slug.disabled = false;
       document.getElementById('imageSection').hidden = true;
       document.getElementById('noteSection').hidden = true;
       document.getElementById('variantSection').hidden = true;
+      document.getElementById('detailSectionSection').hidden = true;
+      document.getElementById('mediaSection').hidden = true;
     }
     document.getElementById('productDialog').showModal();
   }
@@ -1611,20 +1645,23 @@
   function renderVariants(product) {
     document.getElementById('variantList').innerHTML = product.variants.map((v) => `
       <div class="image-row">
+        ${v.image_url ? `<img src="${v.image_url}" alt="">` : ''}
         <span style="width:48px;">${v.size_ml} ml</span>
-        <input type="number" min="1" value="${v.price}" data-variant-price="${v.id}" class="input-sm" style="flex:1;" aria-label="Precio del decant de ${v.size_ml}ml">
-        <input type="number" min="0" value="${v.stock}" data-variant-stock="${v.id}" class="input-sm" style="width:70px;" aria-label="Stock del decant de ${v.size_ml}ml">
+        <input type="number" min="1" value="${v.price}" data-variant-price="${v.id}" class="input-sm" style="flex:1; min-width:90px;" aria-label="Precio de la presentación de ${v.size_ml}ml">
+        <input type="number" min="0" value="${v.stock}" data-variant-stock="${v.id}" class="input-sm" style="width:70px;" aria-label="Stock de la presentación de ${v.size_ml}ml">
+        <input value="${v.image_url || ''}" data-variant-image="${v.id}" class="input-sm" placeholder="URL de foto (opcional)" style="flex:1; min-width:140px;" aria-label="Foto de la presentación de ${v.size_ml}ml">
         <button type="button" data-save-variant="${v.id}" class="btn btn-secondary" style="height:44px; padding:0 var(--space-3);">Guardar</button>
         <button type="button" data-remove-variant="${v.id}" class="remove-btn">Quitar</button>
       </div>
-    `).join('') || '<p class="text-muted text-small">Todavía no hay decants para este producto.</p>';
+    `).join('') || '<p class="text-muted text-small">Todavía no hay presentaciones para este producto.</p>';
 
     document.querySelectorAll('[data-save-variant]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.saveVariant;
         const price = Number(document.querySelector(`[data-variant-price="${id}"]`).value);
         const stock = Number(document.querySelector(`[data-variant-stock="${id}"]`).value);
-        await apiFetch(`/products/variants/${id}`, { method: 'PUT', body: JSON.stringify({ price, stock }) });
+        const image_url = document.querySelector(`[data-variant-image="${id}"]`).value.trim() || null;
+        await apiFetch(`/products/variants/${id}`, { method: 'PUT', body: JSON.stringify({ price, stock, image_url }) });
         const updated = await apiFetch(`/products/${product.slug}`);
         renderVariants(updated);
       });
@@ -1642,17 +1679,174 @@
     const size_ml = Number(document.getElementById('newVariantSize').value);
     const price = Number(document.getElementById('newVariantPrice').value);
     const stock = Number(document.getElementById('newVariantStock').value) || 0;
+    const image_url = document.getElementById('newVariantImage').value.trim() || null;
     if (!size_ml || !price || !editingProductId) return;
     await apiFetch(`/products/${editingProductId}/variants`, {
       method: 'POST',
-      body: JSON.stringify({ size_ml, price, stock }),
+      body: JSON.stringify({ size_ml, price, stock, image_url }),
     });
     document.getElementById('newVariantSize').value = '';
     document.getElementById('newVariantPrice').value = '';
     document.getElementById('newVariantStock').value = '';
+    document.getElementById('newVariantImage').value = '';
     const slug = document.getElementById('p_slug').value;
     const updated = await apiFetch(`/products/${slug}`);
     renderVariants(updated);
+  });
+
+  function renderDetailSections(product) {
+    document.getElementById('detailSectionList').innerHTML = (product.detail_sections || []).map((s, index) => `
+      <div class="media-item-card">
+        <input value="${s.title}" data-detail-title="${s.id}" class="input-sm" style="width:100%; margin-bottom:var(--space-2);" aria-label="Título del listado">
+        <textarea data-detail-body="${s.id}" class="input-sm" style="width:100%; min-height:60px; margin-bottom:var(--space-2);" aria-label="Contenido del listado">${s.body}</textarea>
+        <div class="media-item-actions">
+          <button type="button" data-detail-save="${s.id}" class="btn btn-secondary">Guardar</button>
+          <button type="button" data-detail-up="${s.id}" class="editor-icon-btn" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
+          <button type="button" data-detail-down="${s.id}" class="editor-icon-btn" ${index === (product.detail_sections || []).length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
+          <button type="button" data-detail-remove="${s.id}" class="remove-btn">Quitar</button>
+        </div>
+      </div>
+    `).join('') || '<p class="text-muted text-small">Todavía no hay listados desplegables para este producto.</p>';
+
+    document.querySelectorAll('[data-detail-save]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.detailSave;
+        const title = document.querySelector(`[data-detail-title="${id}"]`).value.trim();
+        const body = document.querySelector(`[data-detail-body="${id}"]`).value.trim();
+        if (!title || !body) return;
+        await apiFetch(`/products/detail-sections/${id}`, { method: 'PUT', body: JSON.stringify({ title, body }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderDetailSections(updated);
+      });
+    });
+    document.querySelectorAll('[data-detail-up]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/detail-sections/${btn.dataset.detailUp}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'up' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderDetailSections(updated);
+      });
+    });
+    document.querySelectorAll('[data-detail-down]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/detail-sections/${btn.dataset.detailDown}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'down' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderDetailSections(updated);
+      });
+    });
+    document.querySelectorAll('[data-detail-remove]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/detail-sections/${btn.dataset.detailRemove}`, { method: 'DELETE' });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderDetailSections(updated);
+      });
+    });
+  }
+
+  document.getElementById('addDetailSectionBtn').addEventListener('click', async () => {
+    const title = document.getElementById('newDetailTitle').value.trim();
+    const body = document.getElementById('newDetailBody').value.trim();
+    if (!title || !body || !editingProductId) return;
+    await apiFetch(`/products/${editingProductId}/detail-sections`, { method: 'POST', body: JSON.stringify({ title, body }) });
+    document.getElementById('newDetailTitle').value = '';
+    document.getElementById('newDetailBody').value = '';
+    const slug = document.getElementById('p_slug').value;
+    const updated = await apiFetch(`/products/${slug}`);
+    renderDetailSections(updated);
+  });
+
+  function renderMediaItems(product) {
+    document.getElementById('mediaList').innerHTML = (product.media_items || []).map((m, index) => `
+      <div class="media-item-card">
+        ${m.url ? `<img src="${m.url}" alt="" class="media-item-preview">` : ''}
+        <input value="${m.url}" data-media-url="${m.id}" class="input-sm" placeholder="URL de imagen o GIF" style="width:100%; margin-bottom:var(--space-2);" aria-label="URL del medio">
+        <input value="${m.alt_text || ''}" data-media-alt="${m.id}" class="input-sm" placeholder="Texto alternativo" style="width:100%; margin-bottom:var(--space-2);" aria-label="Texto alternativo">
+        <div class="grid-2" style="margin-bottom:var(--space-2);">
+          <input value="${m.title || ''}" data-media-title="${m.id}" class="input-sm" placeholder="Título encima (opcional)" aria-label="Título superpuesto">
+          <input value="${m.subtitle || ''}" data-media-subtitle="${m.id}" class="input-sm" placeholder="Subtítulo (opcional)" aria-label="Subtítulo superpuesto">
+        </div>
+        <div class="grid-2" style="margin-bottom:var(--space-2);">
+          <select data-media-hpos="${m.id}" class="input-sm" aria-label="Posición horizontal del texto">
+            <option value="left" ${m.text_position === 'left' ? 'selected' : ''}>Texto: izquierda</option>
+            <option value="center" ${m.text_position === 'center' ? 'selected' : ''}>Texto: centro</option>
+            <option value="right" ${m.text_position === 'right' ? 'selected' : ''}>Texto: derecha</option>
+          </select>
+          <select data-media-vpos="${m.id}" class="input-sm" aria-label="Posición vertical del texto">
+            <option value="top" ${m.text_position_vertical === 'top' ? 'selected' : ''}>Arriba</option>
+            <option value="center" ${m.text_position_vertical === 'center' ? 'selected' : ''}>Centro</option>
+            <option value="bottom" ${m.text_position_vertical === 'bottom' ? 'selected' : ''}>Abajo</option>
+          </select>
+        </div>
+        <div class="grid-2" style="margin-bottom:var(--space-2);">
+          <input type="number" min="0" max="100" value="${m.overlay_opacity}" data-media-darken="${m.id}" class="input-sm" placeholder="Oscurecido % (0-100)" aria-label="Oscurecido">
+          <input type="number" min="0" max="20" value="${m.blur}" data-media-blur="${m.id}" class="input-sm" placeholder="Desenfoque (0-20)" aria-label="Desenfoque">
+        </div>
+        <div class="grid-2" style="margin-bottom:var(--space-2);">
+          <input type="number" min="120" max="1200" value="${m.height_px}" data-media-height="${m.id}" class="input-sm" placeholder="Alto (px)" aria-label="Alto en píxeles">
+          <input type="number" min="20" max="100" value="${m.width_pct}" data-media-width="${m.id}" class="input-sm" placeholder="Ancho (%)" aria-label="Ancho en porcentaje">
+        </div>
+        <div class="media-item-actions">
+          <button type="button" data-media-save="${m.id}" class="btn btn-secondary">Guardar</button>
+          <button type="button" data-media-up="${m.id}" class="editor-icon-btn" ${index === 0 ? 'disabled' : ''} aria-label="Mover arriba">↑</button>
+          <button type="button" data-media-down="${m.id}" class="editor-icon-btn" ${index === (product.media_items || []).length - 1 ? 'disabled' : ''} aria-label="Mover abajo">↓</button>
+          <button type="button" data-media-remove="${m.id}" class="remove-btn">Quitar</button>
+        </div>
+      </div>
+    `).join('') || '<p class="text-muted text-small">Todavía no hay medios para este producto.</p>';
+
+    document.querySelectorAll('[data-media-save]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.mediaSave;
+        const payload = {
+          url: document.querySelector(`[data-media-url="${id}"]`).value.trim(),
+          alt_text: document.querySelector(`[data-media-alt="${id}"]`).value.trim(),
+          title: document.querySelector(`[data-media-title="${id}"]`).value.trim() || null,
+          subtitle: document.querySelector(`[data-media-subtitle="${id}"]`).value.trim() || null,
+          text_position: document.querySelector(`[data-media-hpos="${id}"]`).value,
+          text_position_vertical: document.querySelector(`[data-media-vpos="${id}"]`).value,
+          overlay_opacity: Number(document.querySelector(`[data-media-darken="${id}"]`).value) || 0,
+          blur: Number(document.querySelector(`[data-media-blur="${id}"]`).value) || 0,
+          height_px: Number(document.querySelector(`[data-media-height="${id}"]`).value) || 480,
+          width_pct: Number(document.querySelector(`[data-media-width="${id}"]`).value) || 100,
+        };
+        if (!payload.url) return;
+        await apiFetch(`/products/media/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderMediaItems(updated);
+      });
+    });
+    document.querySelectorAll('[data-media-up]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/media/${btn.dataset.mediaUp}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'up' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderMediaItems(updated);
+      });
+    });
+    document.querySelectorAll('[data-media-down]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/media/${btn.dataset.mediaDown}/move`, { method: 'PUT', body: JSON.stringify({ direction: 'down' }) });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderMediaItems(updated);
+      });
+    });
+    document.querySelectorAll('[data-media-remove]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiFetch(`/products/media/${btn.dataset.mediaRemove}`, { method: 'DELETE' });
+        const updated = await apiFetch(`/products/${product.slug}`);
+        renderMediaItems(updated);
+      });
+    });
+  }
+
+  document.getElementById('addMediaBtn').addEventListener('click', async () => {
+    const url = document.getElementById('newMediaUrl').value.trim();
+    const alt_text = document.getElementById('newMediaAlt').value.trim();
+    if (!url || !editingProductId) return;
+    await apiFetch(`/products/${editingProductId}/media`, { method: 'POST', body: JSON.stringify({ url, alt_text }) });
+    document.getElementById('newMediaUrl').value = '';
+    document.getElementById('newMediaAlt').value = '';
+    const slug = document.getElementById('p_slug').value;
+    const updated = await apiFetch(`/products/${slug}`);
+    renderMediaItems(updated);
   });
 
   document.getElementById('newProductBtn').addEventListener('click', () => openProductDialog(null));

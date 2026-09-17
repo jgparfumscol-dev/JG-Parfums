@@ -4,14 +4,24 @@ from sqlalchemy.orm import Session
 from database import get_db
 from middleware.auth import get_current_admin, get_optional_user
 from models.product import Product, ProductImage
+from models.product_detail_section import ProductDetailSection
+from models.product_media_item import ProductMediaItem
 from models.product_note import ProductNote
 from models.product_variant import ProductVariant
 from models.user import User
 from schemas.product import (
     ProductCreate,
+    ProductDetailSectionCreate,
+    ProductDetailSectionMove,
+    ProductDetailSectionResponse,
+    ProductDetailSectionUpdate,
     ProductImageCreate,
     ProductImageResponse,
     ProductListResponse,
+    ProductMediaItemCreate,
+    ProductMediaItemMove,
+    ProductMediaItemResponse,
+    ProductMediaItemUpdate,
     ProductNoteCreate,
     ProductNoteMove,
     ProductNoteResponse,
@@ -276,4 +286,170 @@ def delete_product_note(note_id: int, db: Session = Depends(get_db), _admin: Use
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nota no encontrada")
     # hard delete: igual que las presentaciones, sin pedidos que referencien la nota.
     db.delete(note)
+    db.commit()
+
+
+@router.post(
+    "/{product_id}/detail-sections",
+    response_model=ProductDetailSectionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_product_detail_section(
+    product_id: int,
+    payload: ProductDetailSectionCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    max_position = (
+        db.query(ProductDetailSection.position)
+        .filter(ProductDetailSection.product_id == product_id)
+        .order_by(ProductDetailSection.position.desc())
+        .first()
+    )
+    next_position = (max_position[0] + 1) if max_position else 0
+
+    section = ProductDetailSection(product_id=product_id, position=next_position, **payload.model_dump())
+    db.add(section)
+    db.commit()
+    db.refresh(section)
+    return section
+
+
+@router.put("/detail-sections/{section_id}", response_model=ProductDetailSectionResponse)
+def update_product_detail_section(
+    section_id: int,
+    payload: ProductDetailSectionUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    section = db.query(ProductDetailSection).filter(ProductDetailSection.id == section_id).first()
+    if section is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sección no encontrada")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(section, field, value)
+    db.commit()
+    db.refresh(section)
+    return section
+
+
+@router.put("/detail-sections/{section_id}/move", response_model=ProductDetailSectionResponse)
+def move_product_detail_section(
+    section_id: int,
+    payload: ProductDetailSectionMove,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    section = db.query(ProductDetailSection).filter(ProductDetailSection.id == section_id).first()
+    if section is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sección no encontrada")
+
+    siblings = (
+        db.query(ProductDetailSection)
+        .filter(ProductDetailSection.product_id == section.product_id)
+        .order_by(ProductDetailSection.position)
+        .all()
+    )
+    index = next(i for i, s in enumerate(siblings) if s.id == section.id)
+    neighbor_index = index - 1 if payload.direction == "up" else index + 1
+    if 0 <= neighbor_index < len(siblings):
+        neighbor = siblings[neighbor_index]
+        section.position, neighbor.position = neighbor.position, section.position
+        db.commit()
+        db.refresh(section)
+    return section
+
+
+@router.delete("/detail-sections/{section_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_detail_section(
+    section_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)
+):
+    section = db.query(ProductDetailSection).filter(ProductDetailSection.id == section_id).first()
+    if section is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sección no encontrada")
+    db.delete(section)
+    db.commit()
+
+
+@router.post("/{product_id}/media", response_model=ProductMediaItemResponse, status_code=status.HTTP_201_CREATED)
+def add_product_media_item(
+    product_id: int,
+    payload: ProductMediaItemCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
+
+    max_position = (
+        db.query(ProductMediaItem.position)
+        .filter(ProductMediaItem.product_id == product_id)
+        .order_by(ProductMediaItem.position.desc())
+        .first()
+    )
+    next_position = (max_position[0] + 1) if max_position else 0
+
+    item = ProductMediaItem(product_id=product_id, position=next_position, **payload.model_dump())
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/media/{item_id}", response_model=ProductMediaItemResponse)
+def update_product_media_item(
+    item_id: int,
+    payload: ProductMediaItemUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    item = db.query(ProductMediaItem).filter(ProductMediaItem.id == item_id).first()
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bloque de medio no encontrado")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/media/{item_id}/move", response_model=ProductMediaItemResponse)
+def move_product_media_item(
+    item_id: int,
+    payload: ProductMediaItemMove,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
+    item = db.query(ProductMediaItem).filter(ProductMediaItem.id == item_id).first()
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bloque de medio no encontrado")
+
+    siblings = (
+        db.query(ProductMediaItem)
+        .filter(ProductMediaItem.product_id == item.product_id)
+        .order_by(ProductMediaItem.position)
+        .all()
+    )
+    index = next(i for i, m in enumerate(siblings) if m.id == item.id)
+    neighbor_index = index - 1 if payload.direction == "up" else index + 1
+    if 0 <= neighbor_index < len(siblings):
+        neighbor = siblings[neighbor_index]
+        item.position, neighbor.position = neighbor.position, item.position
+        db.commit()
+        db.refresh(item)
+    return item
+
+
+@router.delete("/media/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_media_item(item_id: int, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    item = db.query(ProductMediaItem).filter(ProductMediaItem.id == item_id).first()
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bloque de medio no encontrado")
+    db.delete(item)
     db.commit()

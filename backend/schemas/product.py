@@ -27,6 +27,7 @@ class ProductVariantResponse(BaseModel):
     price: int
     stock: int
     is_active: bool
+    image_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -35,12 +36,84 @@ class ProductVariantCreate(BaseModel):
     size_ml: int = Field(gt=0)
     price: int = Field(gt=0)
     stock: int = Field(ge=0, default=0)
+    image_url: str | None = None
 
 
 class ProductVariantUpdate(BaseModel):
     price: int | None = Field(default=None, gt=0)
     stock: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
+    image_url: str | None = None
+
+
+class ProductDetailSectionResponse(BaseModel):
+    id: int
+    title: str
+    body: str
+    position: int
+
+    model_config = {"from_attributes": True}
+
+
+class ProductDetailSectionCreate(BaseModel):
+    title: str = Field(min_length=1)
+    body: str = Field(min_length=1)
+
+
+class ProductDetailSectionUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1)
+    body: str | None = Field(default=None, min_length=1)
+
+
+class ProductDetailSectionMove(BaseModel):
+    direction: Literal["up", "down"]
+
+
+class ProductMediaItemResponse(BaseModel):
+    id: int
+    url: str
+    alt_text: str
+    title: str | None = None
+    subtitle: str | None = None
+    text_position: str
+    text_position_vertical: str
+    overlay_opacity: int
+    blur: int
+    height_px: int
+    width_pct: int
+    position: int
+
+    model_config = {"from_attributes": True}
+
+
+class ProductMediaItemCreate(BaseModel):
+    url: str = Field(min_length=1)
+    alt_text: str = ""
+    title: str | None = None
+    subtitle: str | None = None
+    text_position: Literal["left", "center", "right"] = "left"
+    text_position_vertical: Literal["top", "center", "bottom"] = "bottom"
+    overlay_opacity: int = Field(default=0, ge=0, le=100)
+    blur: int = Field(default=0, ge=0, le=20)
+    height_px: int = Field(default=480, gt=0, le=1200)
+    width_pct: int = Field(default=100, ge=20, le=100)
+
+
+class ProductMediaItemUpdate(BaseModel):
+    url: str | None = Field(default=None, min_length=1)
+    alt_text: str | None = None
+    title: str | None = None
+    subtitle: str | None = None
+    text_position: Literal["left", "center", "right"] | None = None
+    text_position_vertical: Literal["top", "center", "bottom"] | None = None
+    overlay_opacity: int | None = Field(default=None, ge=0, le=100)
+    blur: int | None = Field(default=None, ge=0, le=20)
+    height_px: int | None = Field(default=None, gt=0, le=1200)
+    width_pct: int | None = Field(default=None, ge=20, le=100)
+
+
+class ProductMediaItemMove(BaseModel):
+    direction: Literal["up", "down"]
 
 
 class ProductNoteResponse(BaseModel):
@@ -104,6 +177,8 @@ class ProductResponse(ProductBase):
     images: list[ProductImageResponse] = []
     variants: list[ProductVariantResponse] = []
     notes: list[ProductNoteResponse] = []
+    detail_sections: list[ProductDetailSectionResponse] = []
+    media_items: list[ProductMediaItemResponse] = []
     category: CategoryResponse | None = None
 
     model_config = {"from_attributes": True}

@@ -38,7 +38,6 @@
   }
   .product-house { color: var(--text-muted); margin-bottom: var(--space-1); }
   .product-price { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin-top: var(--space-4); margin-bottom: 0; }
-  .product-description { margin-top: var(--space-4); margin-bottom: 0; }
 
   .product-notes {
     margin-top: var(--space-8);
@@ -51,10 +50,51 @@
   .qty-control { display: flex; align-items: center; border: 1px solid var(--ink-300); border-radius: var(--radius); }
   .qty-control button { width: 44px; height: 44px; border: none; background: none; font-size: 18px; cursor: pointer; }
   .qty-control span { width: 32px; text-align: center; }
+  .buy-now-btn { margin-top: var(--space-3); }
 
   .breadcrumb { padding-top: var(--space-6); }
   .breadcrumb a { color: var(--text-muted); font-size: 14px; text-decoration: none; }
   .breadcrumb a:hover { color: var(--jg-onyx); text-decoration: underline; text-decoration-color: var(--gold-600); text-underline-offset: 3px; }
+
+  /* Descripción a todo el ancho, debajo de la ficha (galería + info) en vez
+     de al lado de la imagen — se lee más cómodo en un bloque propio. */
+  .product-description-block {
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--ink-100);
+    max-width: 72ch;
+  }
+  .product-description-block p { color: var(--text-muted); }
+
+  /* Listados desplegables (acordeón) con info específica del perfume. */
+  .product-accordion { margin-top: var(--space-8); max-width: 72ch; }
+  .product-accordion details {
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .product-accordion summary {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding-block: var(--space-4); cursor: pointer; font-weight: 600; list-style: none;
+  }
+  .product-accordion summary::-webkit-details-marker { display: none; }
+  .product-accordion .accordion-chevron { flex-shrink: 0; transition: transform .2s ease; }
+  .product-accordion details[open] .accordion-chevron { transform: rotate(180deg); }
+  .product-accordion .accordion-body { padding-bottom: var(--space-4); margin: 0; }
+  .product-accordion .accordion-body p { color: var(--text-muted); margin: 0 0 var(--space-3); }
+  .product-accordion .accordion-body p:last-child { margin-bottom: 0; }
+
+  /* Franjas de medio (foto/GIF) debajo de la descripción — cada una con su
+     propio texto superpuesto, oscurecido, desenfoque, alto y ancho, todo
+     configurable desde el admin (ver ProductMediaItem). */
+  .product-media { margin-top: var(--space-12); display: flex; flex-direction: column; gap: var(--space-6); }
+  .product-media-block { position: relative; overflow: hidden; margin-inline: auto; }
+  .product-media-block img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .product-media-scrim { position: absolute; inset: 0; pointer-events: none; }
+  .product-media-inner {
+    position: absolute; inset: 0; display: flex; padding: var(--space-8);
+  }
+  .product-media-copy { max-width: 32ch; }
+  .product-media-copy-title { margin: 0 0 var(--space-1); color: #FFFFFF; font-size: 22px; }
+  .product-media-copy-subtitle { margin: 0; color: #EDE9E3; font-size: 14px; }
 
   .related-section { border-top: 1px solid var(--ink-100); }
 </style>
@@ -110,7 +150,7 @@
 <main id="main">
   <div class="container">
     <p class="breadcrumb"><a href="/catalogo.html">← Volver al catálogo</a></p>
-    <div id="productContent" class="product-layout"></div>
+    <div id="productContent"></div>
     <p class="empty-state" id="notFound" hidden>No encontramos este producto. <a class="link" href="/catalogo.html">Vuelve al catálogo</a>.</p>
   </div>
   <div class="container related-section section" id="relatedSection" hidden>
@@ -193,6 +233,7 @@
       label: `${product.size_ml} ml — frasco completo`,
       price: product.price,
       stock: product.stock,
+      image_url: null,
     };
     const decants = (product.variants || [])
       .filter((v) => v.is_active)
@@ -202,8 +243,69 @@
         label: `Decant ${v.size_ml} ml — prueba antes de llevar el frasco completo`,
         price: v.price,
         stock: v.stock,
+        image_url: v.image_url || null,
       }));
     return [fullBottle, ...decants];
+  }
+
+  // Listados desplegables (acordeón) con info específica del perfume —
+  // mismo criterio que renderText en sections.js: una línea en blanco separa
+  // párrafos.
+  function renderProductAccordion(sections) {
+    if (!sections || sections.length === 0) return '';
+    return `
+      <div class="product-accordion">
+        ${sections.map((s) => `
+          <details>
+            <summary>
+              ${s.title}
+              <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="accordion-body">
+              ${s.body.split('\n').filter((p) => p.trim()).map((p) => `<p>${p}</p>`).join('')}
+            </div>
+          </details>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Franjas de foto/GIF debajo de la descripción, con texto opcional
+  // superpuesto — mismo patrón que renderGalleryImageMedia en sections.js
+  // (oscurecido + desenfoque + posición del texto), pero cada bloque
+  // controla también su propio alto (finura) y ancho en pantalla.
+  function renderProductMedia(items) {
+    if (!items || items.length === 0) return '';
+    return `
+      <div class="product-media">
+        ${items.map((m) => {
+          const blur = Math.max(0, Math.min(20, Number(m.blur) || 0));
+          const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px);"` : '';
+          const overlayOpacity = Math.max(0, Math.min(100, Number(m.overlay_opacity) || 0)) / 100;
+          const hPosition = ['left', 'center', 'right'].includes(m.text_position) ? m.text_position : 'left';
+          const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[hPosition];
+          const vPosition = ['top', 'center', 'bottom'].includes(m.text_position_vertical) ? m.text_position_vertical : 'bottom';
+          const alignItems = { top: 'flex-start', center: 'center', bottom: 'flex-end' }[vPosition];
+          const hasText = Boolean(m.title || m.subtitle);
+          const height = Math.max(120, Number(m.height_px) || 480);
+          const width = Math.max(20, Math.min(100, Number(m.width_pct) || 100));
+          return `
+            <div class="product-media-block" style="height:${height}px; width:${width}%;">
+              <img src="${m.url}" alt="${m.alt_text || ''}" loading="lazy"${imgStyle}>
+              ${overlayOpacity > 0 ? `<div class="product-media-scrim" style="background-color: rgba(32, 30, 31, ${overlayOpacity});"></div>` : ''}
+              ${hasText ? `
+                <div class="product-media-inner" style="justify-content:${justify}; align-items:${alignItems}; text-align:${hPosition};">
+                  <div class="product-media-copy">
+                    ${m.title ? `<h3 class="product-media-copy-title">${m.title}</h3>` : ''}
+                    ${m.subtitle ? `<p class="product-media-copy-subtitle">${m.subtitle}</p>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   function renderProduct(product) {
@@ -214,58 +316,68 @@
     const selected = sizes[selectedSizeIndex];
 
     document.getElementById('productContent').innerHTML = `
-      <div class="product-gallery">
-        <div class="product-gallery-main">
-          ${images[0].url ? `<img id="mainImage" src="${images[0].url}" alt="${images[0].alt_text}">` : ''}
+      <div class="product-layout">
+        <div class="product-gallery">
+          <div class="product-gallery-main">
+            ${images[0].url ? `<img id="mainImage" src="${images[0].url}" alt="${images[0].alt_text}">` : ''}
+          </div>
+          ${images.length > 1 ? `<div class="product-thumbs">
+            ${images.map((img) => `<img src="${img.url}" alt="${img.alt_text}" data-full="${img.url}">`).join('')}
+          </div>` : ''}
         </div>
-        ${images.length > 1 ? `<div class="product-thumbs">
-          ${images.map((img) => `<img src="${img.url}" alt="${img.alt_text}" data-full="${img.url}">`).join('')}
-        </div>` : ''}
-      </div>
-      <div class="product-info">
-        ${product.house ? `<p class="product-house text-small">${product.house}</p>` : ''}
-        <h1 class="h1">${product.name}</h1>
-        <p class="product-price" id="selectedPrice">${formatCOP(selected.price)}</p>
-        <p class="text-muted product-description">${product.description}</p>
+        <div class="product-info">
+          ${product.house ? `<p class="product-house text-small">${product.house}</p>` : ''}
+          <h1 class="h1">${product.name}</h1>
+          <p class="product-price" id="selectedPrice">${formatCOP(selected.price)}</p>
 
-        <p class="badge" id="stockBadge" style="margin-top:var(--space-4);"></p>
+          <p class="badge" id="stockBadge" style="margin-top:var(--space-4);"></p>
 
-        <div class="product-notes">
-          <p class="product-notes-heading">Notas</p>
-          ${renderNotesStaircase(product.notes)}
-          <dl class="spec-list">
-            ${product.concentration ? `<div class="spec-row"><dt>Concentración</dt><dd>${product.concentration}</dd></div>` : ''}
-            <div class="spec-row"><dt>Tamaño</dt><dd>${product.size_ml} ml</dd></div>
-          </dl>
-        </div>
-
-        ${sizes.length > 1 ? `
           <div class="product-notes">
-            <p class="product-notes-heading">Presentación</p>
-            <p class="text-muted text-small" style="margin-bottom:var(--space-3);">¿No estás seguro? Prueba primero un decant — es el mismo perfume, en frasco de prueba.</p>
-            <div class="option-list" id="sizeOptions">
-              ${sizes.map((size, index) => `
-                <label class="option-row">
-                  <span class="option-row-label">
-                    <input type="radio" name="size" value="${index}" ${index === 0 ? 'checked' : ''} ${size.stock === 0 ? 'disabled' : ''}>
-                    ${size.label}${size.stock === 0 ? ' — agotado' : ''}
-                  </span>
-                  <span class="option-row-price">${formatCOP(size.price)}</span>
-                </label>
-              `).join('')}
+            <p class="product-notes-heading">Notas</p>
+            ${renderNotesStaircase(product.notes)}
+            <dl class="spec-list">
+              ${product.concentration ? `<div class="spec-row"><dt>Concentración</dt><dd>${product.concentration}</dd></div>` : ''}
+              <div class="spec-row"><dt>Tamaño</dt><dd>${product.size_ml} ml</dd></div>
+            </dl>
+          </div>
+
+          ${sizes.length > 1 ? `
+            <div class="product-notes">
+              <p class="product-notes-heading">Presentación</p>
+              <p class="text-muted text-small" style="margin-bottom:var(--space-3);">¿No estás seguro? Prueba primero un decant — es el mismo perfume, en frasco de prueba.</p>
+              <div class="option-list" id="sizeOptions">
+                ${sizes.map((size, index) => `
+                  <label class="option-row">
+                    <span class="option-row-label">
+                      <input type="radio" name="size" value="${index}" ${index === 0 ? 'checked' : ''} ${size.stock === 0 ? 'disabled' : ''}>
+                      ${size.label}${size.stock === 0 ? ' — agotado' : ''}
+                    </span>
+                    <span class="option-row-price">${formatCOP(size.price)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="qty-row">
+            <div class="qty-control">
+              <button type="button" id="qtyMinus" aria-label="Restar cantidad">−</button>
+              <span id="qtyValue">1</span>
+              <button type="button" id="qtyPlus" aria-label="Sumar cantidad">+</button>
             </div>
           </div>
-        ` : ''}
-
-        <div class="qty-row">
-          <div class="qty-control">
-            <button type="button" id="qtyMinus" aria-label="Restar cantidad">−</button>
-            <span id="qtyValue">1</span>
-            <button type="button" id="qtyPlus" aria-label="Sumar cantidad">+</button>
-          </div>
+          <button class="btn btn-primary btn-block" id="addToCartBtn">Agregar al carrito</button>
+          <button class="btn btn-secondary btn-block buy-now-btn" id="buyNowBtn">Comprar ahora</button>
         </div>
-        <button class="btn btn-primary btn-block" id="addToCartBtn">Agregar al carrito</button>
       </div>
+
+      <div class="product-description-block">
+        <p>${product.description}</p>
+      </div>
+
+      ${renderProductAccordion(product.detail_sections)}
+
+      ${renderProductMedia(product.media_items)}
     `;
 
     document.querySelectorAll('.product-thumbs img').forEach((thumb) => {
@@ -279,6 +391,13 @@
       quantity = Math.min(quantity, Math.max(size.stock, 1));
       document.getElementById('qtyValue').textContent = quantity;
       document.getElementById('selectedPrice').textContent = formatCOP(size.price);
+
+      // Si la presentación elegida tiene foto propia (ej. el decant en su
+      // caja), la ficha la muestra; si no, se queda con la galería de siempre.
+      const mainImage = document.getElementById('mainImage');
+      if (mainImage) {
+        mainImage.src = size.image_url || images[0].url;
+      }
 
       const badge = document.getElementById('stockBadge');
       badge.className = 'badge';
@@ -295,6 +414,7 @@
       const addBtn = document.getElementById('addToCartBtn');
       addBtn.disabled = size.stock === 0;
       addBtn.textContent = size.stock === 0 ? 'Agotado' : 'Agregar al carrito';
+      document.getElementById('buyNowBtn').disabled = size.stock === 0;
     }
 
     document.querySelectorAll('#sizeOptions input[name="size"]').forEach((input) => {
@@ -319,6 +439,12 @@
       addToCart(product, quantity, variant);
       document.getElementById('addToCartBtn').textContent = 'Agregado ✓';
       setTimeout(() => applySelection(), 1500);
+    });
+    document.getElementById('buyNowBtn').addEventListener('click', () => {
+      const size = sizes[selectedSizeIndex];
+      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, stock: size.stock } : null;
+      addToCart(product, quantity, variant);
+      window.location.href = '/checkout.html';
     });
 
     applySelection();
