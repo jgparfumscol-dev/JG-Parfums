@@ -51,7 +51,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (115 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (119 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
@@ -128,9 +128,9 @@ flowchart LR
 
 - Home: producto destacado (elegido con una estrella en el panel, no al azar) como ficha técnica interactiva, con sus notas olfativas reales en una escalera de barras (más fuerte abajo), grilla de recién llegados, bloque de decants; sin ningún producto marcado, la ficha se queda con copy genérico de la tienda en vez de mostrar una marca de perfume puntual
 - Header transparente en la portada, flotando sobre el banner (degradado sutil + logo/íconos en blanco) hasta que se hace scroll, donde pasa al header sólido de vidrio esmerilado de siempre
-- Banner con una o varias fotos: rotación configurable, transición de "empuje" suave entre fotos, posición del texto (izquierda/centro/derecha), oscurecido y desenfoque por foto, proporción fija (sin marco nunca, se recorta si hace falta)
-- Sección de galería de fotos (grid, carrusel manual, comparar una al lado de la otra, o una sola foto), con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner
-- Carrusel de clases (categorías con foto, eyebrow, oscurecido, desenfoque y posición de texto configurables) que enlaza cada tarjeta al catálogo ya filtrado, y carrusel de marcas (logos en escala de grises, modo flechas o deslizamiento continuo) — ambos con zoom en hover/foco sobre la imagen, deslizamiento nativo al dedo en móvil y respeto de `prefers-reduced-motion`
+- Banner con una o varias fotos: rotación configurable, transición de "empuje" suave entre fotos, arrastre con el dedo o el mouse además de flechas, posición del texto (izquierda/centro/derecha), oscurecido y desenfoque por foto, proporción fija (sin marco nunca, se recorta si hace falta)
+- Sección de galería de fotos (grid, carrusel manual, comparar una al lado de la otra, o una sola foto), con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner más posición vertical del texto (arriba/medio/abajo) y zoom leve en hover/foco
+- Carrusel de clases (categorías con foto, eyebrow, oscurecido, desenfoque y posición de texto configurables, ancho del bloque contenido o completo) que enlaza cada tarjeta al catálogo ya filtrado, y carrusel de marcas (logos en escala de grises, modo flechas o deslizamiento continuo) — ambos con zoom en hover/foco sobre la imagen, deslizamiento nativo al dedo en móvil, siempre en bucle, y respeto de `prefers-reduced-motion`
 - Barra de anuncios con rotación (fundido real o deslizamiento direccional configurable), variantes de color, y mensajes con fecha de vigencia
 - Catálogo con filtros (categoría, rango de precio, búsqueda, orden por precio, solo con decant disponible)
 - Ficha de producto: galería, notas olfativas en escalera, selector de presentación (frasco completo o decant de 5ml/10ml), stock por presentación
@@ -166,7 +166,7 @@ flowchart LR
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (115) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (119) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -176,6 +176,7 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Galería de fotos: posición vertical del texto superpuesto (arriba/medio/abajo, sumada a la horizontal que ya existía) y zoom leve en hover/foco sobre la imagen, misma excepción acotada que las tarjetas de clase. Banner: se navega arrastrando con el dedo o el mouse (Pointer Events) además de con flechas nuevas. Carrusel de clases: opción de ancho del bloque (contenido, de siempre, o ancho completo — rompe el container y toca los bordes de la pantalla). 2 tests nuevos (119 en total).
 - Menú de clases del header rehecho: la fila de links en línea (se veía apretada con más de 3-4 clases) pasa a un botón que abre un panel flotante, solo en escritorio — el panel móvil sigue igual. Flechas de los carruseles de clases/marcas rediseñadas sin caja (antes un cuadro blanco) y siempre en bucle. En el camino se encontró y corrigió un bug real: un comentario CSS con `(--pgs-cards-*/--pgs-logos-*)` se cerraba solo por el `*/` accidental en medio del texto, así que el navegador descartaba la regla completa de `.pgs-carousel-wrap { position: relative; }` — las flechas del carrusel de clases quedaban ancladas arriba de la página en vez de centradas en las fotos. Se agrega además versión (`?v=`) a los `<link>`/`<script>` de CSS/JS compartidos: sin eso, un deploy nuevo podía tardar hasta 4 horas en verse para quien ya había visitado el sitio (`max-age=14400` del CDN).
 
 - Dos secciones nuevas para el editor de "tienda en vivo": carrusel de clases (`classes_carousel`) y carrusel de marcas (`brands_carousel`), pensado este último para ir justo debajo del de clases. `Category` se extiende con foto/eyebrow/nombre de tarjeta/oscurecido/posición de texto/orden/activo (pestaña del panel renombrada de "Categorías" a "Clases", sin tocar la tabla ni la ruta); tabla `brands` nueva con el mismo patrón de admin, sin datos de ejemplo precargados. Ambos carruseles comparten un módulo de scroll-snap en `sections.js` (deslizamiento nativo al dedo, flechas que se deshabilitan en los extremos), con zoom en hover/foco sobre la imagen —excepción acotada a estas tarjetas de la regla general "nunca transform en hover", documentada en `DESIGN.md`— y respeto de `prefers-reduced-motion` (el modo "continuo" de marcas cae a manual sin animación). El catálogo no tiene filtro estructurado por marca hoy (`Product.house` es texto libre): el enlace de cada logo es `link_url` libre, no un filtro automático. 24 tests nuevos (115 en total).
@@ -242,7 +243,7 @@ flowchart LR
 │   ├── services/           # Wompi, Mercado Pago, email
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (115 tests)
+│   └── tests/                   # pytest, SQLite en memoria (119 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño

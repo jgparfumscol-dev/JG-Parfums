@@ -319,9 +319,17 @@ function renderBanner(section) {
           .map((_, i) => `<button type="button" class="pgs-banner-dot${i === 0 ? ' is-active' : ''}" data-dot="${i}" aria-label="Ir a la foto ${i + 1}"></button>`)
           .join('')}</div>`
       : '';
+  const arrowsHtml =
+    slides.length > 1
+      ? `
+        <button type="button" class="pgs-banner-arrow pgs-banner-arrow-prev" data-prev aria-label="Foto anterior">${ICON_PREV}</button>
+        <button type="button" class="pgs-banner-arrow pgs-banner-arrow-next" data-next aria-label="Foto siguiente">${ICON_NEXT}</button>
+      `
+      : '';
   return `
     <section class="section pgs-banner" data-section-id="${section.id}" data-interval="${interval}">
       ${slidesHtml}
+      ${arrowsHtml}
       ${dotsHtml}
     </section>
   `;
@@ -369,6 +377,61 @@ function initBanner(el) {
   el.querySelectorAll('[data-dot]').forEach((dot) => {
     dot.addEventListener('click', () => show(Number(dot.dataset.dot)));
   });
+
+  const prevBtn = el.querySelector('[data-prev]');
+  const nextBtn = el.querySelector('[data-next]');
+  if (prevBtn) prevBtn.addEventListener('click', () => show(current - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => show(current + 1));
+
+  // --- arrastre con el dedo o con el mouse (Pointer Events cubre ambos) ---
+  // Sigue el dedo/cursor en vivo (misma pista transform que layout(), con un
+  // offset en px encima) y al soltar decide si cambia de foto o vuelve a su
+  // lugar, según qué tan lejos se arrastró. Empieza solo si el gesto no
+  // arrancó sobre un botón/enlace (flechas, puntos, CTA), para no robarles
+  // el clic.
+  let dragging = false;
+  let dragStartX = 0;
+  let dragDeltaX = 0;
+  let dragWidth = el.clientWidth || 1;
+
+  function dragLayout(offsetPx) {
+    slides.forEach((slide, i) => {
+      let pos = i - current;
+      if (pos > n / 2) pos -= n;
+      if (pos < -n / 2) pos += n;
+      slide.style.transition = 'none';
+      slide.style.transform = `translateX(calc(${pos * 100}% + ${offsetPx}px))`;
+    });
+  }
+
+  function onPointerDown(event) {
+    if (event.target.closest('a, button')) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dragging = true;
+    dragStartX = event.clientX;
+    dragDeltaX = 0;
+    dragWidth = el.clientWidth || 1;
+    el.setPointerCapture(event.pointerId);
+  }
+  function onPointerMove(event) {
+    if (!dragging) return;
+    dragDeltaX = event.clientX - dragStartX;
+    dragLayout(dragDeltaX);
+  }
+  function onPointerUp() {
+    if (!dragging) return;
+    dragging = false;
+    slides.forEach((slide) => { slide.style.transition = ''; });
+    const threshold = dragWidth * 0.15;
+    if (dragDeltaX <= -threshold) show(current + 1);
+    else if (dragDeltaX >= threshold) show(current - 1);
+    else layout(false);
+  }
+
+  el.addEventListener('pointerdown', onPointerDown);
+  el.addEventListener('pointermove', onPointerMove);
+  el.addEventListener('pointerup', onPointerUp);
+  el.addEventListener('pointercancel', onPointerUp);
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -514,7 +577,11 @@ function renderImage(section) {
 function renderGalleryImageMedia(img) {
   const g = img || {};
   const blur = Math.max(0, Math.min(20, Number(g.blur) || 0));
-  const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px); transform: scale(1.1);"` : '';
+  // --pgs-gallery-base-scale (no transform directo): así el zoom en hover
+  // (que multiplica ese mismo custom property, ver CSS) sigue funcionando
+  // encima sin que el estilo inline lo pise — mismo criterio que las
+  // tarjetas del carrusel de clases.
+  const imgStyle = blur > 0 ? ` style="filter: blur(${blur}px); --pgs-gallery-base-scale: 1.1;"` : '';
   const imgTagHtml = `<img src="${g.url}" alt="${g.alt || ''}" loading="lazy"${imgStyle}>`;
 
   const hasCta = Boolean(g.link_url && g.cta_label);
@@ -522,13 +589,15 @@ function renderGalleryImageMedia(img) {
   const overlayOpacity = Math.max(0, Math.min(100, Number(g.overlay_opacity) || 0)) / 100;
   const position = ['left', 'center', 'right'].includes(g.text_position) ? g.text_position : 'left';
   const justify = { left: 'flex-start', center: 'center', right: 'flex-end' }[position];
+  const vPosition = ['top', 'center', 'bottom'].includes(g.text_position_vertical) ? g.text_position_vertical : 'bottom';
+  const alignItems = { top: 'flex-start', center: 'center', bottom: 'flex-end' }[vPosition];
   const ctaStyle = g.cta_color
     ? ` style="background-color:${g.cta_color}; border-color:${g.cta_color}; color:${contrastTextColor(g.cta_color)};"`
     : '';
   const overlayHtml = hasOverlayText
     ? `
       <div class="pgs-gallery-img-scrim" style="background-color: rgba(32, 30, 31, ${overlayOpacity});"></div>
-      <div class="pgs-gallery-img-inner" style="justify-content: ${justify};">
+      <div class="pgs-gallery-img-inner" style="justify-content: ${justify}; align-items: ${alignItems};">
         <div class="pgs-gallery-img-copy" style="text-align: ${position};">
           ${g.title ? `<h3 class="h3 pgs-gallery-img-title">${g.title}</h3>` : ''}
           ${g.subtitle ? `<p class="pgs-gallery-img-subtitle">${g.subtitle}</p>` : ''}
@@ -737,16 +806,24 @@ async function renderClassesCarousel(section) {
         <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente clase">${ICON_NEXT}</button>
       `
       : '';
+    const carouselHtml = `
+      <div class="pgs-carousel-wrap">
+        <div class="pgs-carousel-track" data-track>${items.map(renderClassCard).join('')}</div>
+        ${arrowsHtml}
+      </div>
+    `;
+    // "full": el bloque rompe el container y ocupa todo el ancho de la
+    // pantalla (el título se queda alineado con el resto del sitio,
+    // adentro del container) — "contained" es el ancho angosto de siempre.
+    const isFull = c.layout === 'full';
     return `
-      <section class="section pgs-classes-carousel" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
+      <section class="section pgs-classes-carousel${isFull ? ' pgs-classes-carousel--full' : ''}" data-section-id="${section.id}" data-autoplay-interval="${c.autoplay ? (c.autoplay_interval || 5) : ''}"
         style="--pgs-cards-mobile:${c.cards_mobile || 1.3}; --pgs-cards-tablet:${c.cards_tablet || 3}; --pgs-cards-desktop:${c.cards_desktop || 4};">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
-          <div class="pgs-carousel-wrap">
-            <div class="pgs-carousel-track" data-track>${items.map(renderClassCard).join('')}</div>
-            ${arrowsHtml}
-          </div>
+          ${isFull ? '' : carouselHtml}
         </div>
+        ${isFull ? carouselHtml : ''}
       </section>
     `;
   } catch (_err) {

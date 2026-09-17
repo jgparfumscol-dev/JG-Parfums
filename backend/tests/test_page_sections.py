@@ -207,6 +207,7 @@ def test_create_classes_carousel_with_defaults(client, admin_headers):
     assert content["heading"] == "Explora por clase"
     assert content["mode"] == "all"
     assert content["category_ids"] == []
+    assert content["layout"] == "contained"
     assert content["cards_mobile"] == 1.3
     assert content["cards_tablet"] == 3
     assert content["cards_desktop"] == 4
@@ -234,6 +235,25 @@ def test_create_classes_carousel_rejects_invalid_mode(client, admin_headers):
     response = client.post(
         "/page-sections",
         json={"page": "home", "type": "classes_carousel", "content": {"mode": "featured"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_classes_carousel_full_layout(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"layout": "full"}},
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    assert create.json()["content"]["layout"] == "full"
+
+
+def test_create_classes_carousel_rejects_invalid_layout(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"layout": "huge"}},
         headers=admin_headers,
     )
     assert response.status_code == 422

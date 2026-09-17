@@ -760,6 +760,12 @@
             <option value="manual">Selección manual</option>
           </select>
         </div>
+        <div class="field"><label for="s_classcar_layout">Ancho del bloque</label>
+          <select id="s_classcar_layout">
+            <option value="contained">Contenido (angosto, con márgenes)</option>
+            <option value="full">Ancho completo (todo el bloque)</option>
+          </select>
+        </div>
         <p id="classCarouselEmptyNotice" class="text-muted text-small" style="color:var(--danger);" hidden>Todavía no hay clases activas. Créalas en la pestaña Clases.</p>
         <div id="classCarouselPickerWrap" hidden>
           <p class="text-caption" style="margin-bottom: var(--space-2);">Marca las clases a mostrar y arrastra para ordenarlas</p>
@@ -2470,6 +2476,11 @@
               <option value="center"${img.text_position === 'center' ? ' selected' : ''}>Centro</option>
               <option value="right"${img.text_position === 'right' ? ' selected' : ''}>Derecha</option>
             </select>
+            <select class="input-sm" data-gi-text-v-position style="flex:1;">
+              <option value="top"${img.text_position_vertical === 'top' ? ' selected' : ''}>Arriba</option>
+              <option value="center"${img.text_position_vertical === 'center' ? ' selected' : ''}>Medio</option>
+              <option value="bottom"${(img.text_position_vertical || 'bottom') === 'bottom' ? ' selected' : ''}>Abajo</option>
+            </select>
           </div>
           <div style="display:flex; gap:var(--space-2);">
             <input class="input-sm" type="number" min="0" max="100" placeholder="Oscurecer imagen (0-100%)" data-gi-overlay value="${img.overlay_opacity != null ? esc(String(img.overlay_opacity)) : '0'}" style="flex:1;">
@@ -2497,6 +2508,7 @@
         cta_label: row.querySelector('[data-gi-cta-label]').value.trim() || null,
         cta_color: row.querySelector('[data-gi-cta-color]').value || null,
         text_position: row.querySelector('[data-gi-text-position]').value,
+        text_position_vertical: row.querySelector('[data-gi-text-v-position]').value,
         overlay_opacity: Math.max(0, Math.min(100, Number(row.querySelector('[data-gi-overlay]').value) || 0)),
         blur: Math.max(0, Math.min(20, Number(row.querySelector('[data-gi-blur]').value) || 0)),
       }))
@@ -2768,6 +2780,7 @@
       document.getElementById('s_classcar_heading').value = c.heading || '';
       document.getElementById('s_classcar_mode').value = c.mode || 'all';
       document.getElementById('classCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
+      document.getElementById('s_classcar_layout').value = c.layout || 'contained';
       document.getElementById('s_classcar_mobile').value = c.cards_mobile != null ? c.cards_mobile : 1.3;
       document.getElementById('s_classcar_tablet').value = c.cards_tablet != null ? c.cards_tablet : 3;
       document.getElementById('s_classcar_desktop').value = c.cards_desktop != null ? c.cards_desktop : 4;
@@ -2918,6 +2931,7 @@
         heading: document.getElementById('s_classcar_heading').value.trim() || null,
         mode: document.getElementById('s_classcar_mode').value,
         category_ids: collectClassCarouselIds(),
+        layout: document.getElementById('s_classcar_layout').value,
         cards_mobile: Number(document.getElementById('s_classcar_mobile').value) || 1.3,
         cards_tablet: Number(document.getElementById('s_classcar_tablet').value) || 3,
         cards_desktop: Number(document.getElementById('s_classcar_desktop').value) || 4,
