@@ -313,6 +313,39 @@ def test_create_classes_carousel_rejects_cards_out_of_range(client, admin_header
     assert response.status_code == 422
 
 
+def test_create_classes_carousel_continuous_mode_with_direction(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={
+            "page": "home", "type": "classes_carousel",
+            "content": {"carousel_mode": "continuous", "carousel_direction": "right"},
+        },
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["carousel_mode"] == "continuous"
+    assert content["carousel_direction"] == "right"
+
+
+def test_create_classes_carousel_rejects_invalid_carousel_mode(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"carousel_mode": "fade"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_classes_carousel_rejects_invalid_carousel_direction(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "classes_carousel", "content": {"carousel_direction": "up"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
 def test_update_classes_carousel_validates_content(client, admin_headers):
     section = client.post(
         "/page-sections", json={"page": "home", "type": "classes_carousel", "content": {}}, headers=admin_headers

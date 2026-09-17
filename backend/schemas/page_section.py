@@ -170,6 +170,8 @@ class ClassesCarouselContent(BaseModel):
     show_arrows: bool = True
     autoplay: bool = False
     autoplay_interval: int = Field(default=5, ge=3, le=10)
+    carousel_mode: Literal["arrows", "continuous"] = "arrows"
+    carousel_direction: Literal["left", "right"] = "left"
 
 
 class BrandsCarouselContent(BaseModel):
