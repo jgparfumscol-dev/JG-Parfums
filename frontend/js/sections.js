@@ -1133,5 +1133,9 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.
+  } finally {
+    // Revela el footer (ver .site-footer en components.css) haya salido
+    // bien o mal el fetch — nunca se queda escondido para siempre.
+    document.body.classList.add('pgs-ready');
   }
 }

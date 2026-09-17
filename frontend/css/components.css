@@ -447,11 +447,22 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 .nav-mobile-classes a { text-decoration: none; color: var(--jg-onyx); font-size: 15px; }
 
 /* footer */
+/* El contenido de #dynamicSections tarda un instante en llegar (fetch a
+   /page-sections) — sin esto, el footer se veía pegado al header ese
+   instante, antes de que cargara el resto de la página. body.pgs-ready lo
+   agrega renderPageSections en sections.js al terminar, salga bien o mal
+   el fetch, para no dejar el footer escondido para siempre. */
 .site-footer {
   background: var(--jg-onyx);
   color: #FFFFFF;
   padding-top: var(--space-16);
   padding-bottom: var(--space-16);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+body.pgs-ready .site-footer { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .site-footer { transition: none; }
 }
 
 .site-footer a { text-decoration: none; }
