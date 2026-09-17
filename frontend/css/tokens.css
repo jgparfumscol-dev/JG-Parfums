@@ -85,7 +85,21 @@ body {
   letter-spacing: 0.005em;
 }
 
-img { max-width: 100%; display: block; }
+/* Fricción básica contra copiar/descargar fotos: sin arrastrar para
+   guardar, sin el menú de "Guardar imagen"/"Copiar imagen" al mantener
+   presionado en celular. No es protección real — cualquiera puede tomar
+   una captura de pantalla igual — solo desalienta al visitante casual (ver
+   initImageProtection en site-settings.js para el bloqueo de clic
+   derecho, solo en la tienda pública). El zoom nativo del navegador
+   (pellizcar para acercar) se deja intacto a propósito: ayuda a vender.
+   No molesta en el panel admin — ahí no hace falta arrastrar ni mantener
+   presionada una foto para nada. */
+img {
+  max-width: 100%;
+  display: block;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
 
 a { color: inherit; }
 

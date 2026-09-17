@@ -260,6 +260,17 @@ function initNavClassesToggle() {
   });
 }
 
+// Fricción básica contra copiar/descargar fotos: sin menú de clic derecho
+// ("Guardar imagen como", "Copiar imagen") sobre ninguna <img> de la
+// tienda pública. Este archivo no lo carga admin.html, así que el panel
+// nunca queda afectado. No es protección real -- cualquiera puede tomar
+// una captura de pantalla igual -- solo desalienta al visitante casual.
+function initImageProtection() {
+  document.addEventListener('contextmenu', (event) => {
+    if (event.target.tagName === 'IMG') event.preventDefault();
+  });
+}
+
 function initNavSearch() {
   document.querySelectorAll('.nav-search').forEach((form) => {
     form.addEventListener('submit', (event) => {
@@ -276,3 +287,4 @@ initNavClasses();
 initNavClassesToggle();
 initNavSearch();
 initNavScrollState();
+initImageProtection();

@@ -278,3 +278,4 @@ Sección administrable (`brands_carousel`), pensada para ir justo debajo del car
 - **Don't** redondear nada a más de 2px, ni usar sombra para separar una tarjeta en reposo.
 - **Don't** escribir frases genéricas de perfumería ("experiencia sensorial única", "despierta tus sentidos") ni usar mayúsculas sostenidas fuera de "PARFUMS" en el logo.
 - **Don't** inventar contenido de cliente (productos, precios, fotografía, testimonios) que el cliente no haya entregado todavía.
+- **Don't** desactivar el zoom nativo del navegador (pellizcar/doble-tap) para "proteger" fotos — es mala práctica de accesibilidad, no se puede limitar solo a imágenes, y ni siquiera funciona en iOS Safari (lo ignora desde 2016). La fricción contra copiar/descargar se resuelve con `-webkit-user-drag`/`-webkit-touch-callout` y bloqueando el clic derecho sobre `<img>` (ver `initImageProtection` en `site-settings.js`, solo tienda pública) — nunca tocando el zoom de la página.
