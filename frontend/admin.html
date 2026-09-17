@@ -877,6 +877,19 @@
             <option value="manual">Selección manual</option>
           </select>
         </div>
+        <div class="field"><label for="s_brandcar_layout">Ancho del bloque</label>
+          <select id="s_brandcar_layout">
+            <option value="contained">Contenido (angosto, con márgenes)</option>
+            <option value="full">Ancho completo (todo el bloque)</option>
+          </select>
+        </div>
+        <div class="field"><label for="s_brandcar_spacing">Espaciado de la sección</label>
+          <select id="s_brandcar_spacing">
+            <option value="normal">Normal</option>
+            <option value="compact">Compacto</option>
+            <option value="flush">Mínimo (pegado a lo de arriba/abajo)</option>
+          </select>
+        </div>
         <p id="brandCarouselEmptyNotice" class="text-muted text-small" style="color:var(--danger);" hidden>Todavía no hay marcas activas. Créalas en la pestaña Marcas.</p>
         <div id="brandCarouselPickerWrap" hidden>
           <p class="text-caption" style="margin-bottom: var(--space-2);">Marca las marcas a mostrar y arrastra para ordenarlas</p>
@@ -3085,6 +3098,8 @@
       document.getElementById('s_brandcar_heading').value = c.heading || '';
       document.getElementById('s_brandcar_mode').value = c.mode || 'all';
       document.getElementById('brandCarouselPickerWrap').hidden = (c.mode || 'all') !== 'manual';
+      document.getElementById('s_brandcar_layout').value = c.layout || 'contained';
+      document.getElementById('s_brandcar_spacing').value = c.spacing || 'normal';
       document.getElementById('s_brandcar_carousel_mode').value = c.carousel_mode || 'arrows';
       document.getElementById('s_brandcar_speed').value = c.carousel_speed || 'normal';
       updateBrandCarouselModeFields(c.carousel_mode || 'arrows');
@@ -3248,6 +3263,8 @@
         heading: document.getElementById('s_brandcar_heading').value.trim() || null,
         mode: document.getElementById('s_brandcar_mode').value,
         brand_ids: collectBrandCarouselIds(),
+        layout: document.getElementById('s_brandcar_layout').value,
+        spacing: document.getElementById('s_brandcar_spacing').value,
         carousel_mode: document.getElementById('s_brandcar_carousel_mode').value,
         carousel_speed: document.getElementById('s_brandcar_speed').value,
         logo_color: document.getElementById('s_brandcar_color').value,

@@ -1005,16 +1005,27 @@ async function renderBrandsCarousel(section) {
       <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-prev" data-prev aria-label="Marca anterior">${ICON_PREV}</button>
       <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente marca">${ICON_NEXT}</button>
     `;
+    const carouselHtml = `
+      <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-speed="${c.carousel_speed || 'normal'}"` : ''}>
+        <div class="pgs-carousel-track pgs-brand-track${continuous ? ' pgs-brand-track--continuous' : ''}" data-track>${trackHtml}</div>
+        ${arrowsHtml}
+      </div>
+    `;
+    // Mismo criterio que el carrusel de clases (ver renderClassesCarousel):
+    // "full" rompe el container y ocupa todo el ancho de la pantalla (el
+    // título se queda adentro, como cualquier título de sección);
+    // "contained" es el ancho angosto de siempre. spacing: aire arriba/abajo
+    // de la sección — normal, compact o flush.
+    const isFull = c.layout === 'full';
+    const spacingClass = c.spacing && c.spacing !== 'normal' ? ` section--${c.spacing}` : '';
     return `
-      <section class="section pgs-brands-carousel" data-section-id="${section.id}" data-carousel-mode="${continuous ? 'continuous' : 'arrows'}"
+      <section class="section${spacingClass} pgs-brands-carousel${isFull ? ' pgs-brands-carousel--full' : ''}" data-section-id="${section.id}" data-carousel-mode="${continuous ? 'continuous' : 'arrows'}"
         style="--pgs-logos-mobile:${c.logos_mobile || 3}; --pgs-logos-tablet:${c.logos_tablet || 5}; --pgs-logos-desktop:${c.logos_desktop || 7};">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
-          <div class="pgs-carousel-wrap${continuous ? ' pgs-carousel-wrap--continuous' : ''}"${continuous ? ` data-speed="${c.carousel_speed || 'normal'}"` : ''}>
-            <div class="pgs-carousel-track pgs-brand-track${continuous ? ' pgs-brand-track--continuous' : ''}" data-track>${trackHtml}</div>
-            ${arrowsHtml}
-          </div>
+          ${isFull ? '' : carouselHtml}
         </div>
+        ${isFull ? carouselHtml : ''}
       </section>
     `;
   } catch (_err) {

@@ -182,6 +182,8 @@ class BrandsCarouselContent(BaseModel):
     heading: str | None = Field(default=None, max_length=80)
     mode: Literal["all", "manual"] = "all"
     brand_ids: list[int] = Field(default_factory=list)
+    layout: Literal["contained", "full"] = "contained"
+    spacing: Literal["normal", "compact", "flush"] = "normal"
     carousel_mode: Literal["arrows", "continuous"] = "arrows"
     carousel_speed: Literal["slow", "normal", "fast"] = "normal"
     logos_mobile: int = Field(default=3, ge=1, le=8)

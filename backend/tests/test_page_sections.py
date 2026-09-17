@@ -389,11 +389,43 @@ def test_create_brands_carousel_with_defaults(client, admin_headers):
     assert create.status_code == 201
     content = create.json()["content"]
     assert content["mode"] == "all"
+    assert content["layout"] == "contained"
+    assert content["spacing"] == "normal"
     assert content["carousel_mode"] == "arrows"
     assert content["logos_mobile"] == 3
     assert content["logos_tablet"] == 5
     assert content["logos_desktop"] == 7
     assert content["logo_color"] == "grayscale"
+
+
+def test_create_brands_carousel_layout_and_spacing(client, admin_headers):
+    create = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {"layout": "full", "spacing": "flush"}},
+        headers=admin_headers,
+    )
+    assert create.status_code == 201
+    content = create.json()["content"]
+    assert content["layout"] == "full"
+    assert content["spacing"] == "flush"
+
+
+def test_create_brands_carousel_rejects_invalid_layout(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {"layout": "huge"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_create_brands_carousel_rejects_invalid_spacing(client, admin_headers):
+    response = client.post(
+        "/page-sections",
+        json={"page": "home", "type": "brands_carousel", "content": {"spacing": "huge"}},
+        headers=admin_headers,
+    )
+    assert response.status_code == 422
 
 
 def test_create_brands_carousel_continuous_mode_with_manual_selection(client, admin_headers):
