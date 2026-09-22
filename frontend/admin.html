@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922a">
-<link rel="stylesheet" href="/css/components.css?v=20260922a">
+<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
+<link rel="stylesheet" href="/css/components.css?v=20260922c">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -604,7 +604,10 @@
       </div>
 
       <div id="noteSection" hidden style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border);">
-        <p class="text-caption" style="margin-bottom: var(--space-2);">Notas olfativas</p>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); flex-wrap:wrap; margin-bottom: var(--space-2);">
+          <p class="text-caption" style="margin:0;">Notas olfativas</p>
+          <button class="btn btn-secondary" type="button" id="openNotesCatalogBtn" style="height:36px; padding:0 var(--space-3);">Ver todas las notas guardadas</button>
+        </div>
         <p class="text-muted text-small" style="margin-bottom: var(--space-3);">El orden importa: la última nota es la más fuerte y se muestra abajo en la escalera de la ficha.</p>
         <div id="noteList"></div>
         <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
@@ -943,6 +946,20 @@
 
       <div id="sectionFieldsSectionHeading" hidden>
         <div class="field"><label for="s_heading_title">Título</label><input id="s_heading_title"></div>
+        <div id="relatedProductsSettings" hidden>
+          <p class="text-muted text-small" style="margin: var(--space-2) 0 var(--space-3);">Cómo se arma la grilla de "También te puede interesar" debajo de la ficha.</p>
+          <div class="field"><label for="s_related_display_mode">Forma de mostrarlos</label>
+            <select id="s_related_display_mode">
+              <option value="grid">Grilla</option>
+              <option value="list">Lista</option>
+              <option value="carousel">Carrusel</option>
+            </select>
+          </div>
+          <div class="field"><label for="s_related_category">Clase / categoría (opcional)</label>
+            <select id="s_related_category"><option value="">Automático (misma clase del producto)</option></select>
+          </div>
+          <div class="field"><label for="s_related_limit">Cantidad de productos</label><input id="s_related_limit" type="number" min="2" max="12" value="4"></div>
+        </div>
       </div>
 
       <div id="sectionFieldsDecantCallout" hidden>
@@ -1056,7 +1073,18 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260922a"></script>
+<dialog id="notesCatalogDialog">
+  <div class="dialog-inner">
+    <h2 class="h3" style="margin-bottom: var(--space-4);">Notas olfativas guardadas</h2>
+    <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Todas las notas que se fueron creando en cualquier producto, para no repetirlas de cero. Eliminar una acá la quita de todos los productos que la usan — no se puede deshacer.</p>
+    <div id="notesCatalogList"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" id="closeNotesCatalogBtn">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="/js/api.js?v=20260922c"></script>
 <script>
   let editingProductId = null;
 
@@ -1237,6 +1265,7 @@
     const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('p_category').innerHTML = '<option value="">Sin categoría</option>' + options;
     document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
+    document.getElementById('s_related_category').innerHTML = '<option value="">Automático (misma clase del producto)</option>' + options;
     renderClassCarouselPicker();
     updateClassCarouselEmptyNotice();
 
@@ -1471,9 +1500,10 @@
   // backend, no hay tabla propia de "notas"), así que sin esto tocaba
   // escribir el nombre y volver a elegir el color cada vez, incluso para una
   // nota ya usada en otro producto. knownNotes junta las notas de todos los
-  // productos cargados (case-insensitive) para armar el datalist del campo
-  // "nueva nota" y, si el nombre escrito coincide con una ya conocida,
-  // recuperar su color en vez de pedir elegirlo de nuevo.
+  // productos cargados (case-insensitive), con `refs` (qué nota de qué
+  // producto) para: armar el datalist del campo "nueva nota", recuperar el
+  // color de una ya conocida, y poder eliminar una nota de todos los
+  // productos que la usan desde el catálogo global (ver notesCatalogDialog).
   const knownNotes = new Map();
   function refreshNotesDatalist() {
     document.getElementById('notesCatalog').innerHTML = Array.from(knownNotes.values())
@@ -1481,18 +1511,90 @@
       .map((n) => `<option value="${n.name}"></option>`)
       .join('');
   }
-  function rememberNote(name, color) {
-    knownNotes.set(name.trim().toLowerCase(), { name: name.trim(), color });
+  // Reemplaza las referencias de UN producto puntual (el que se está
+  // editando) sin tocar las de los demás — se llama después de cualquier
+  // alta/baja/edición de nota de ese producto. Si una nota se queda sin
+  // ningún producto que la use, desaparece del catálogo sola.
+  function mergeProductNotesIntoKnown(product) {
+    knownNotes.forEach((entry) => { entry.refs = entry.refs.filter((r) => r.productId !== product.id); });
+    (product.notes || []).forEach((n) => {
+      const key = n.name.trim().toLowerCase();
+      const entry = knownNotes.get(key) || { name: n.name.trim(), color: n.color, refs: [] };
+      entry.name = n.name.trim();
+      entry.color = n.color;
+      entry.refs.push({ productId: product.id, noteId: n.id });
+      knownNotes.set(key, entry);
+    });
+    Array.from(knownNotes.entries()).forEach(([key, entry]) => { if (entry.refs.length === 0) knownNotes.delete(key); });
     refreshNotesDatalist();
   }
   function collectKnownNotes(products) {
-    products.forEach((p) => (p.notes || []).forEach((n) => knownNotes.set(n.name.trim().toLowerCase(), { name: n.name.trim(), color: n.color })));
+    knownNotes.clear();
+    products.forEach((p) => (p.notes || []).forEach((n) => {
+      const key = n.name.trim().toLowerCase();
+      const entry = knownNotes.get(key) || { name: n.name.trim(), color: n.color, refs: [] };
+      entry.name = n.name.trim();
+      entry.color = n.color;
+      entry.refs.push({ productId: p.id, noteId: n.id });
+      knownNotes.set(key, entry);
+    }));
     refreshNotesDatalist();
   }
   document.getElementById('newNoteName').addEventListener('input', (event) => {
     const known = knownNotes.get(event.target.value.trim().toLowerCase());
     if (known) document.getElementById('newNoteColor').value = known.color;
   });
+
+  function renderNotesCatalogDialog() {
+    const list = document.getElementById('notesCatalogList');
+    const entries = Array.from(knownNotes.entries()).sort((a, b) => a[1].name.localeCompare(b[1].name, 'es'));
+    if (entries.length === 0) {
+      list.innerHTML = '<p class="text-muted text-small">Todavía no hay notas guardadas.</p>';
+      return;
+    }
+    list.innerHTML = entries.map(([key, entry]) => {
+      const count = new Set(entry.refs.map((r) => r.productId)).size;
+      return `
+        <div class="image-row">
+          <span style="width:22px; height:22px; border-radius:50%; background:${entry.color}; flex-shrink:0; border:1px solid var(--ink-100);" aria-hidden="true"></span>
+          <span style="flex:1;">${entry.name} <span class="text-muted text-small">· ${count} producto${count === 1 ? '' : 's'}</span></span>
+          <button type="button" class="remove-btn" data-delete-known-note="${encodeURIComponent(key)}">Eliminar</button>
+        </div>
+      `;
+    }).join('');
+    list.querySelectorAll('[data-delete-known-note]').forEach((btn) => {
+      btn.addEventListener('click', () => deleteKnownNote(decodeURIComponent(btn.dataset.deleteKnownNote)));
+    });
+  }
+
+  async function deleteKnownNote(key) {
+    const entry = knownNotes.get(key);
+    if (!entry) return;
+    const productCount = new Set(entry.refs.map((r) => r.productId)).size;
+    if (!confirm(`¿Eliminar la nota "${entry.name}" de ${productCount === 1 ? 'el producto que la usa' : `los ${productCount} productos que la usan`}? Esta acción no se puede deshacer.`)) return;
+    try {
+      await Promise.all(entry.refs.map((r) => apiFetch(`/products/notes/${r.noteId}`, { method: 'DELETE' })));
+      const affectedProductIds = new Set(entry.refs.map((r) => r.productId));
+      knownNotes.delete(key);
+      refreshNotesDatalist();
+      renderNotesCatalogDialog();
+      // Si el producto que está abierto en el editor ahora mismo tenía esta
+      // nota, se refresca su lista visible para que no se quede desactualizada.
+      if (editingProductId && affectedProductIds.has(editingProductId)) {
+        const slug = document.getElementById('p_slug').value;
+        const updated = await apiFetch(`/products/${slug}`);
+        renderNotes(updated);
+      }
+    } catch (err) {
+      alert(`No se pudo eliminar la nota: ${err.message}`);
+    }
+  }
+
+  document.getElementById('openNotesCatalogBtn').addEventListener('click', () => {
+    renderNotesCatalogDialog();
+    document.getElementById('notesCatalogDialog').showModal();
+  });
+  document.getElementById('closeNotesCatalogBtn').addEventListener('click', () => document.getElementById('notesCatalogDialog').close());
 
   async function loadProducts() {
     const data = await apiFetch('/products?include_inactive=true&page_size=100');
@@ -1679,8 +1781,8 @@
         const color = document.querySelector(`[data-note-color="${id}"]`).value;
         if (!name) return;
         await apiFetch(`/products/notes/${id}`, { method: 'PUT', body: JSON.stringify({ name, color }) });
-        rememberNote(name, color);
         const updated = await apiFetch(`/products/${product.slug}`);
+        mergeProductNotesIntoKnown(updated);
         renderNotes(updated);
       });
     });
@@ -1702,6 +1804,7 @@
       btn.addEventListener('click', async () => {
         await apiFetch(`/products/notes/${btn.dataset.noteRemove}`, { method: 'DELETE' });
         const updated = await apiFetch(`/products/${product.slug}`);
+        mergeProductNotesIntoKnown(updated);
         renderNotes(updated);
       });
     });
@@ -1712,10 +1815,10 @@
     const color = document.getElementById('newNoteColor').value;
     if (!name || !editingProductId) return;
     await apiFetch(`/products/${editingProductId}/notes`, { method: 'POST', body: JSON.stringify({ name, color }) });
-    rememberNote(name, color);
     document.getElementById('newNoteName').value = '';
     const slug = document.getElementById('p_slug').value;
     const updated = await apiFetch(`/products/${slug}`);
+    mergeProductNotesIntoKnown(updated);
     renderNotes(updated);
   });
 
@@ -2245,6 +2348,7 @@
   };
 
   let editingSectionId = null;
+  let editingSectionKey = null;
   let editorSectionsCache = [];
 
   function initEditorPageSelect() {
@@ -3015,6 +3119,7 @@
 
   function openSectionDialog(section, forcedType) {
     editingSectionId = section ? section.id : null;
+    editingSectionKey = section ? section.key : null;
     const type = section ? section.type : (forcedType || document.getElementById('newSectionType').value);
     document.getElementById('sectionDialogTitle').textContent = section
       ? `Editar ${SECTION_TYPE_LABEL[type].toLowerCase()}`
@@ -3022,6 +3127,12 @@
     document.getElementById('sectionFormError').hidden = true;
     document.getElementById('sectionForm').dataset.type = type;
     showSectionTypeFields(type);
+    // Los campos de "también te puede interesar" viven adentro del editor de
+    // sectionFieldsSectionHeading (mismo tipo section_heading que cualquier
+    // otro título suelto) pero solo tienen sentido para esta sección fija en
+    // particular — showSectionTypeFields no sabe de esto, así que se
+    // muestran/ocultan acá aparte.
+    document.getElementById('relatedProductsSettings').hidden = editingSectionKey !== 'producto_related_heading';
 
     const c = (section && section.content) || {};
     if (type === 'announcement_bar') {
@@ -3089,6 +3200,11 @@
       document.getElementById('s_custom_css').value = c.css || '';
     } else if (type === 'section_heading') {
       document.getElementById('s_heading_title').value = c.heading || '';
+      if (editingSectionKey === 'producto_related_heading') {
+        document.getElementById('s_related_display_mode').value = c.display_mode || 'grid';
+        document.getElementById('s_related_category').value = c.category_id || '';
+        document.getElementById('s_related_limit').value = c.limit || 4;
+      }
     } else if (type === 'decant_callout') {
       document.getElementById('s_decant_heading').value = c.heading || '';
       document.getElementById('s_decant_body').value = c.body || '';
@@ -3252,6 +3368,11 @@
       };
     } else if (type === 'section_heading') {
       content = { heading: document.getElementById('s_heading_title').value.trim() || null };
+      if (editingSectionKey === 'producto_related_heading') {
+        content.display_mode = document.getElementById('s_related_display_mode').value || 'grid';
+        content.category_id = document.getElementById('s_related_category').value ? Number(document.getElementById('s_related_category').value) : null;
+        content.limit = Number(document.getElementById('s_related_limit').value) || 4;
+      }
     } else if (type === 'decant_callout') {
       content = {
         heading: document.getElementById('s_decant_heading').value.trim() || null,

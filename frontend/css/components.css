@@ -714,6 +714,23 @@ body.pgs-ready .site-footer { opacity: 1; }
 .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
 .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
 
+/* "También te puede interesar" (ficha de producto, ver producto_related_heading
+   en el admin): mismo .product-card de siempre, en dos formas más además de
+   la grilla — lista compacta en fila, o carrusel horizontal con flechas
+   (mismo vocabulario de pista que classes_carousel/brands_carousel, ver
+   initSnapCarousel en sections.js). */
+.product-list { display: flex; flex-direction: column; gap: var(--space-6); }
+.product-list .product-card { display: flex; gap: var(--space-4); align-items: flex-start; }
+.product-list .product-card-media { width: 88px; flex-shrink: 0; }
+.product-list .product-card-body { flex: 1; padding-top: 0; margin-top: 0; border-top: none; }
+
+.pgs-related-carousel .pgs-carousel-track { --pgs-cards: 1.6; }
+@media (min-width: 640px) { .pgs-related-carousel .pgs-carousel-track { --pgs-cards: 2.5; } }
+@media (min-width: 1024px) { .pgs-related-carousel .pgs-carousel-track { --pgs-cards: 4; } }
+.pgs-related-carousel .product-card {
+  flex: 0 0 calc((100% - (var(--pgs-cards) - 1) * var(--space-4)) / var(--pgs-cards));
+}
+
 /* campo compacto — filas de tabla en el panel admin (imágenes, decants) */
 .input-sm {
   height: 44px;
