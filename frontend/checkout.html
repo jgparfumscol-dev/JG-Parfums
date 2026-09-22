@@ -6,8 +6,8 @@
 <title>Pagar — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260916e">
-<link rel="stylesheet" href="/css/components.css?v=20260916e">
+<link rel="stylesheet" href="/css/tokens.css?v=20260922a">
+<link rel="stylesheet" href="/css/components.css?v=20260922a">
 <style>
   .checkout-layout { display: flex; flex-direction: column; gap: var(--space-12); padding-top: var(--space-8); padding-bottom: var(--space-16); }
   .checkout-layout[hidden] { display: none; }
@@ -36,7 +36,7 @@
 
 <main>
   <div class="container">
-    <p class="breadcrumb"><a href="/carrito.html">← Volver al carrito</a></p>
+    <p class="breadcrumb"><a href="/carrito.html" data-smart-back>← Volver al carrito</a></p>
     <h1 class="h1" style="padding-top: var(--space-3);">Confirmar y pagar</h1>
     <div class="empty-state" id="emptyCheckout" hidden>
       <p>Tu carrito está vacío — no hay nada que pagar todavía.</p>
@@ -102,11 +102,11 @@
   <input type="hidden" name="redirect-url">
 </form>
 
-<script src="/js/api.js?v=20260916e"></script>
-<script src="/js/site-settings.js?v=20260916e"></script>
-<script src="/js/cart.js?v=20260916e"></script>
-<script src="/js/sections.js?v=20260916e"></script>
-<script src="/js/reveal.js?v=20260916e"></script>
+<script src="/js/api.js?v=20260922a"></script>
+<script src="/js/site-settings.js?v=20260922a"></script>
+<script src="/js/cart.js?v=20260922a"></script>
+<script src="/js/sections.js?v=20260922a"></script>
+<script src="/js/reveal.js?v=20260922a"></script>
 <script>
   renderPageSections('checkout');
   const items = getCart();

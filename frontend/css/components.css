@@ -128,13 +128,22 @@
   z-index: 20;
   background: var(--jg-paper);
   border-bottom: 1px solid var(--ink-100);
-  transition: background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+  transition: background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease, transform 250ms ease;
 }
 
 .nav.is-scrolled {
   background: rgba(247, 245, 241, 0.62);
   border-bottom-color: rgba(201, 196, 191, 0.35);
   box-shadow: var(--shadow-float);
+}
+
+/* header que se esconde al bajar y reaparece apenas se sube (ver
+   initNavHideOnScroll en site-settings.js) — en todas las páginas menos
+   home, que tiene su propio comportamiento de header flotante/transparente
+   sobre el hero (ver body.home-transparent-nav más abajo) y no participa de
+   esto. */
+body:not(.home-transparent-nav) .nav.nav-hidden {
+  transform: translateY(-100%);
 }
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {

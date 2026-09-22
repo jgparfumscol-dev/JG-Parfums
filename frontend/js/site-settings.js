@@ -282,9 +282,73 @@ function initNavSearch() {
   });
 }
 
+// Header que se esconde al bajar y vuelve a aparecer apenas se sube (ver
+// .nav.nav-hidden en components.css), en todas las páginas menos home:
+// home tiene su propio header flotante/transparente sobre el hero (ver
+// body.home-transparent-nav) y no participa de esto. Compara contra el
+// último scroll conocido en vez de un umbral fijo desde arriba, así que
+// "subir un poco" lo trae de vuelta sin necesidad de volver al tope de la
+// página; DELTA descarta el micro-scroll (rebote táctil en iOS, etc.) para
+// que no parpadee.
+function initNavHideOnScroll() {
+  if (document.body.classList.contains('home-transparent-nav')) return;
+  const nav = document.querySelector('header.nav');
+  if (!nav) return;
+  const mobilePanel = document.getElementById('navMobilePanel');
+  const classesDropdown = document.getElementById('navClasses');
+  const DELTA = 8;
+  let lastY = window.scrollY;
+  let ticking = false;
+  function update() {
+    // no esconder el header con el menú móvil o el desplegable de clases
+    // abierto: viven dentro de header.nav, así que se irían con él.
+    if (mobilePanel?.classList.contains('is-open') || classesDropdown?.classList.contains('is-open')) {
+      ticking = false;
+      return;
+    }
+    const y = Math.max(window.scrollY, 0);
+    const diff = y - lastY;
+    if (Math.abs(diff) > DELTA) {
+      if (diff > 0 && y > nav.offsetHeight) nav.classList.add('nav-hidden');
+      else nav.classList.remove('nav-hidden');
+      lastY = y;
+    }
+    ticking = false;
+  }
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    },
+    { passive: true }
+  );
+}
+
+// Los breadcrumbs "← Volver a…" (producto.html, checkout.html) linkeaban
+// siempre al mismo destino fijo (catálogo / carrito), así que entrar a un
+// producto desde el inicio y darle "atrás" mandaba al catálogo en vez de al
+// inicio, que era de donde el visitante venía. Si el referrer es de la
+// misma tienda y hay historial de navegación, el breadcrumb usa
+// history.back() (vuelve a la página real anterior); si no —enlace externo,
+// pestaña nueva, o llegó por marcador— cae al href fijo de siempre.
+function initSmartBackLinks() {
+  const sameOriginReferrer = document.referrer && new URL(document.referrer, window.location.href).origin === window.location.origin;
+  if (!sameOriginReferrer || window.history.length <= 1) return;
+  document.querySelectorAll('[data-smart-back]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.history.back();
+    });
+  });
+}
+
 initMobileNavToggle();
 initNavClasses();
 initNavClassesToggle();
 initNavSearch();
 initNavScrollState();
+initNavHideOnScroll();
+initSmartBackLinks();
 initImageProtection();
