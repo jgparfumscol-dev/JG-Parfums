@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260916e">
-<link rel="stylesheet" href="/css/components.css?v=20260916e">
+<link rel="stylesheet" href="/css/tokens.css?v=20260922a">
+<link rel="stylesheet" href="/css/components.css?v=20260922a">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -608,7 +608,8 @@
         <p class="text-muted text-small" style="margin-bottom: var(--space-3);">El orden importa: la última nota es la más fuerte y se muestra abajo en la escalera de la ficha.</p>
         <div id="noteList"></div>
         <div style="display:flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap;">
-          <input id="newNoteName" placeholder="Nombre de la nota (ej. Bergamota)" class="input-sm" style="flex:1; min-width:160px;">
+          <input id="newNoteName" list="notesCatalog" placeholder="Nombre de la nota (ej. Bergamota)" class="input-sm" style="flex:1; min-width:160px;" autocomplete="off">
+          <datalist id="notesCatalog"></datalist>
           <input id="newNoteColor" type="color" value="#D3AE6A" class="input-sm" style="width:52px; padding:2px;">
           <button class="btn btn-secondary" type="button" id="addNoteBtn">Agregar</button>
         </div>
@@ -1055,7 +1056,7 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260916e"></script>
+<script src="/js/api.js?v=20260922a"></script>
 <script>
   let editingProductId = null;
 
@@ -1465,8 +1466,37 @@
   });
 
   // --- Productos ---
+  // Las notas olfativas se repiten mucho entre perfumes (Bergamota, Vainilla,
+  // Oud...) pero viven una por una en cada producto (ver ProductNote en el
+  // backend, no hay tabla propia de "notas"), así que sin esto tocaba
+  // escribir el nombre y volver a elegir el color cada vez, incluso para una
+  // nota ya usada en otro producto. knownNotes junta las notas de todos los
+  // productos cargados (case-insensitive) para armar el datalist del campo
+  // "nueva nota" y, si el nombre escrito coincide con una ya conocida,
+  // recuperar su color en vez de pedir elegirlo de nuevo.
+  const knownNotes = new Map();
+  function refreshNotesDatalist() {
+    document.getElementById('notesCatalog').innerHTML = Array.from(knownNotes.values())
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+      .map((n) => `<option value="${n.name}"></option>`)
+      .join('');
+  }
+  function rememberNote(name, color) {
+    knownNotes.set(name.trim().toLowerCase(), { name: name.trim(), color });
+    refreshNotesDatalist();
+  }
+  function collectKnownNotes(products) {
+    products.forEach((p) => (p.notes || []).forEach((n) => knownNotes.set(n.name.trim().toLowerCase(), { name: n.name.trim(), color: n.color })));
+    refreshNotesDatalist();
+  }
+  document.getElementById('newNoteName').addEventListener('input', (event) => {
+    const known = knownNotes.get(event.target.value.trim().toLowerCase());
+    if (known) document.getElementById('newNoteColor').value = known.color;
+  });
+
   async function loadProducts() {
     const data = await apiFetch('/products?include_inactive=true&page_size=100');
+    collectKnownNotes(data.items);
     if (data.items.length === 0) {
       document.getElementById('productsBody').innerHTML = `
         <tr><td colspan="7" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</td></tr>
@@ -1649,6 +1679,7 @@
         const color = document.querySelector(`[data-note-color="${id}"]`).value;
         if (!name) return;
         await apiFetch(`/products/notes/${id}`, { method: 'PUT', body: JSON.stringify({ name, color }) });
+        rememberNote(name, color);
         const updated = await apiFetch(`/products/${product.slug}`);
         renderNotes(updated);
       });
@@ -1681,6 +1712,7 @@
     const color = document.getElementById('newNoteColor').value;
     if (!name || !editingProductId) return;
     await apiFetch(`/products/${editingProductId}/notes`, { method: 'POST', body: JSON.stringify({ name, color }) });
+    rememberNote(name, color);
     document.getElementById('newNoteName').value = '';
     const slug = document.getElementById('p_slug').value;
     const updated = await apiFetch(`/products/${slug}`);

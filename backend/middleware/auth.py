@@ -15,7 +15,7 @@ logger = logging.getLogger("jg_parfums.auth")
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = os.environ.get("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 # auto_error=False: un request sin header Authorization no debe tirar 403 acá,
 # así las rutas con usuario opcional (ej. checkout invitado) pueden decidir ellas mismas.
