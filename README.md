@@ -51,7 +51,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (122 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (144 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
@@ -60,10 +60,11 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Panel admin: tienda en vivo editable (secciones de página: banner con varias fotos, galería, anuncio, testimonios, contadores, etc.) y Ajustes de marca (nombre, color, tipografía, contacto/redes, envío) | ✅ Construido y probado |
 | Secciones fijas de cada página (hero, encabezados, bloque de decants, manifiesto) editables desde el panel, con historial de versiones y restauración | ✅ Backend, panel admin y sitio público construidos y probados |
 | Producto destacado del home seleccionable con una estrella en el panel (en vez de elegirse solo, al azar) | ✅ Construido y probado |
+| Ficha de producto avanzada: descripción destacada, acordeón de info específica del perfume, botón de compra directa, foto propia por presentación/variante, bloques de foto/GIF con texto superpuesto configurables | ✅ Backend, panel admin y sitio público construidos y probados |
 | Páginas institucionales editables desde el panel: Envíos y políticas, Contacto (con formulario que guarda mensajes revisables en el panel) y Quiénes somos | ✅ Construido y probado |
 | Frontend (tienda, cuenta, panel admin) | ✅ Construido — sistema de diseño documentado (`DESIGN.md`), tipografía de títulos Newsreader (legible en cualquier densidad de pantalla), acentos circulares para romper la retícula sin tocar el radio duro de botones/tarjetas |
 | Frontend desplegado (Cloudflare Pages) | ✅ En línea — dominio propio [jgparfums.com.co](https://jgparfums.com.co) |
-| Home: carrusel de clases y carrusel de marcas, galería de fotos y banner con arrastre táctil/mouse, ancho y espaciado de sección configurables | ✅ Backend, panel admin y sitio público construidos y probados |
+| Home: carrusel de clases y carrusel de marcas (modo flechas o continuo con velocidad y sentido configurables, arrastrable con el dedo o el cursor), galería de fotos y banner con arrastre táctil/mouse — ancho del bloque y espaciado de sección configurables en los tres | ✅ Backend, panel admin y sitio público construidos y probados |
 | Fricción básica contra copiar/descargar fotos en la tienda pública (sin clic derecho, sin arrastrar, sin guardar al mantener presionado en celular) | ✅ Construido — el panel admin no se ve afectado |
 | CORS frontend ↔ backend | ✅ Verificado con petición real |
 | Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
@@ -132,11 +133,11 @@ flowchart LR
 - Home: producto destacado (elegido con una estrella en el panel, no al azar) como ficha técnica interactiva, con sus notas olfativas reales en una escalera de barras (más fuerte abajo), grilla de recién llegados, bloque de decants; sin ningún producto marcado, la ficha se queda con copy genérico de la tienda en vez de mostrar una marca de perfume puntual
 - Header transparente en la portada, flotando sobre el banner (degradado sutil + logo/íconos en blanco) hasta que se hace scroll, donde pasa al header sólido de vidrio esmerilado de siempre
 - Banner con una o varias fotos: rotación configurable, transición de "empuje" suave entre fotos, arrastre con el dedo o el mouse además de flechas, posición del texto (izquierda/centro/derecha), oscurecido y desenfoque por foto, proporción fija (sin marco nunca, se recorta si hace falta)
-- Sección de galería de fotos (grid, carrusel manual, comparar una al lado de la otra, o una sola foto), con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner más posición vertical del texto (arriba/medio/abajo) y zoom leve en hover/foco
-- Carrusel de clases (categorías con foto, eyebrow, oscurecido, desenfoque y posición de texto configurables, ancho del bloque contenido o completo) que enlaza cada tarjeta al catálogo ya filtrado, y carrusel de marcas (logos en escala de grises, modo flechas o deslizamiento continuo) — ambos con zoom en hover/foco sobre la imagen, deslizamiento nativo al dedo en móvil, siempre en bucle, y respeto de `prefers-reduced-motion`
+- Sección de galería de fotos (grid, carrusel manual, comparar una al lado de la otra, o una sola foto), con el mismo texto/botón/oscurecido/desenfoque superpuesto por imagen que el banner más posición vertical del texto (arriba/medio/abajo), zoom leve en hover/foco, y ancho del bloque (contenido o completo) y espaciado de sección configurables
+- Carrusel de clases (categorías con foto, eyebrow, oscurecido, desenfoque y posición de texto configurables) que enlaza cada tarjeta al catálogo ya filtrado, y carrusel de marcas (logos en escala de grises) — ambos con ancho del bloque y espaciado de sección configurables, modo flechas (zoom en hover/foco, deslizamiento nativo al dedo, siempre en bucle) o modo continuo (deslizamiento infinito con velocidad y sentido configurables, arrastrable con el dedo o el cursor sin perder la pausa al pasar por encima), y respeto de `prefers-reduced-motion`
 - Barra de anuncios con rotación (fundido real o deslizamiento direccional configurable), variantes de color, y mensajes con fecha de vigencia
 - Catálogo con filtros (categoría, rango de precio, búsqueda, orden por precio, solo con decant disponible)
-- Ficha de producto: galería, notas olfativas en escalera, selector de presentación (frasco completo o decant de 5ml/10ml), stock por presentación
+- Ficha de producto: galería (con foto propia por presentación si se configura), notas olfativas en escalera, selector de presentación (frasco completo o decant de 5ml/10ml) con stock propio, descripción destacada, listados desplegables (acordeón) con info específica del perfume, bloques de foto/GIF con texto superpuesto configurables, botón de compra directa además de agregar al carrito
 - Carrito persistido en el navegador (`localStorage`), con una línea independiente por presentación
 - Checkout con datos de envío, costo de envío configurable y elección de pasarela de pago
 - Cuentas de usuario opcionales + checkout invitado
@@ -162,14 +163,15 @@ flowchart LR
 - Mensajes de contacto (`contact_messages`): guarda lo que dejan los visitantes en `/contacto.html`, con límite de tasa por IP contra spam; el admin los marca como leídos o los elimina desde el panel
 - Ajustes de marca en una fila única (`site_settings`): color de acento (regenera toda la escala dorada), tipografía, datos de contacto/redes y costo de envío
 - Estadísticas propias de tráfico (sin cookies, IP ni user-agent) para el panel de Métricas
-- Decants por producto (5ml/10ml): precio y stock propios, independientes del frasco completo
+- Decants por producto (5ml/10ml): precio y stock propios, foto propia opcional por presentación, independientes del frasco completo
+- Info adicional y media de la ficha de producto (`product_detail_sections`, `product_media_items`): listados desplegables y bloques de foto/GIF con texto superpuesto, oscurecido, desenfoque, alto y ancho configurables, ordenables, editables desde "Editar" en Productos
 - Pedidos con descuento de stock transaccional (respeta la presentación comprada: frasco completo o decant) y costo de envío configurable
 - Borrado de producto en dos niveles: desactivar (oculta de la tienda, reversible) o eliminar permanentemente (hard delete; los pedidos ya guardan su propio snapshot de nombre/precio, así que no se pierde el historial)
 - Integración con Wompi (firma de integridad + verificación de checksum de webhook)
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (122) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (144) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -179,6 +181,12 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- Ancho del bloque (contenido/ancho completo) y espaciado de sección (normal/compact/flush) agregados al carrusel de marcas, mismo criterio que ya tenía el de clases desde antes — el default (`contained`/`normal`) preserva exactamente el aspecto de las secciones ya guardadas. 3 tests nuevos (144 en total).
+- Ancho del bloque configurable también en la galería de fotos (antes fijo por modo de visualización: grid siempre contenida, carrusel/comparar/una foto siempre a todo el ancho — ahora el admin puede invertirlo) y velocidad del modo continuo (clases y marcas) configurable en tres pasos (lenta/normal/rápida) en vez de fija. 4 tests nuevos (141 en total).
+- El carrusel en modo continuo (clases y marcas) ahora se puede arrastrar con el dedo o el cursor sin perder la pausa al pasar por encima, en cualquier momento — se reescribió el motor de puro CSS (`@keyframes`) a JavaScript con `requestAnimationFrame`, la única forma de tomar el control exacto de la posición durante el arrastre y devolverle el control a la animación al soltar, desde donde quedó.
+- Dos bugs reales corregidos en el carrusel continuo recién agregado: (a) la pista duplicada para el loop infinito no se recortaba en ningún punto y empujaba el ancho de toda la página, dejando una barra de scroll horizontal — se arregló con `overflow:hidden` en el contenedor (no en la pista, que lo necesita visible para el arrastre); (b) el modo "continuo" nunca quedaba guardado porque el esquema de validación del backend no declaraba `carousel_mode`/`carousel_direction` como campos — Pydantic los descartaba en silencio al guardar, y por eso el admin veía "Continuo" volver a "Flechas" cada vez que reabría la sección. 3 tests nuevos (137 en total).
+- Ficha de producto: título "Descripción" agregado sobre el texto (antes sin encabezado propio) con más aire respecto al bloque de compra, y opción de desplazamiento continuo (infinito, sin parar, con sentido configurable) sumada al modo flechas de siempre en la sección de carrusel de clases del editor.
+- Personalización avanzada de fichas de producto: descripción a todo el ancho debajo de la ficha, listados desplegables (acordeón) para info específica del perfume (`product_detail_sections`), botón de "Comprar ahora" además de "Agregar al carrito", foto propia por presentación/variante, y bloques de foto/GIF con texto superpuesto (`product_media_items`: oscurecido, desenfoque, alto y ancho configurables) — todo editable desde "Editar" en la sección de Productos del panel. 13 tests nuevos (134 en total).
 - Corregido un bug real: el footer (estático en el HTML) podía verse pegado al header por un instante al entrar a cualquier página, porque `#dynamicSections` arranca vacío hasta que resuelve el fetch a `/page-sections` — durante ese instante no había nada entre los dos. El footer ahora arranca invisible (`opacity:0`) y `renderPageSections` lo revela con un fade corto al terminar, salga bien o mal el fetch (para no dejarlo escondido para siempre si falla).
 - Fricción básica contra copiar/descargar fotos en la tienda pública: sin clic derecho ni arrastrar la imagen, sin el menú de guardar al mantener presionado en celular — el panel admin no se ve afectado (`site-settings.js` no se carga ahí). No es protección real (cualquiera puede tomar una captura de pantalla), es solo un desincentivo; a propósito no se toca el zoom nativo del navegador (pellizcar/doble-tap), que además de ayudar a vender es mala práctica de accesibilidad desactivarlo y ni siquiera funciona en iOS Safari.
 - Espaciado de sección y proporción de foto configurables en el carrusel de clases y la galería: `spacing` (normal / compact / flush, mismas variantes `.section--compact`/`.section--flush` para ambas) para achicar el aire arriba/abajo del bloque, y proporción ancho:alto de la foto (`card_ratio_w`/`card_ratio_h` en clases, `image_ratio_w`/`image_ratio_h` opcional en galería) para recortarlas más finas — ambos vía `aspect-ratio` con custom properties, sin tocar el resto de secciones. 4 tests nuevos (122 en total).
@@ -244,12 +252,12 @@ flowchart LR
 .
 ├── backend/
 │   ├── routes/          # auth, products, categories, brands, orders, payments, settings, stats, page_sections, contact_messages
-│   ├── models/           # Modelos SQLAlchemy (incluye brand, product_note, product_variant, site_settings, page_section, page_section_history, contact_message)
+│   ├── models/           # Modelos SQLAlchemy (incluye brand, product_note, product_variant, product_detail_section, product_media_item, site_settings, page_section, page_section_history, contact_message)
 │   ├── schemas/           # Esquemas Pydantic
 │   ├── services/           # Wompi, Mercado Pago, email
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (122 tests)
+│   └── tests/                   # pytest, SQLite en memoria (144 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño
