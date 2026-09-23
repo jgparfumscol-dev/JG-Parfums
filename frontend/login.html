@@ -70,6 +70,18 @@
          blanco opaco. */
       text-shadow: 0 1px 2px rgba(255, 255, 255, .95), 0 0 10px rgba(255, 255, 255, .85), 0 0 20px rgba(255, 255, 255, .55);
     }
+    /* El halo de arriba no alcanzaba para "Correo"/"Contraseña" ni para
+       "¿No tienes cuenta?...": ambos usan --text-muted (gris, pensado
+       para fondo blanco sólido), mucho más débil que el ink-900 del
+       título — quedaban leyéndose peor que "Inicia sesión" aun con el
+       mismo halo. Mismo negro que el título acá en vez del gris de
+       siempre. Los <a class="link"> (Olvidé mi contraseña, Regístrate,
+       compra como invitado) ya usan --jg-onyx propio, no hace falta
+       tocarlos. */
+    .access-card .field label,
+    .access-card .text-muted {
+      color: var(--jg-onyx);
+    }
   }
 
   @media (min-width: 1024px) {
