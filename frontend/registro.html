@@ -6,15 +6,15 @@
 <title>Crear cuenta — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
-<link rel="stylesheet" href="/css/components.css?v=20260922c">
+<link rel="stylesheet" href="/css/tokens.css?v=20260922d">
+<link rel="stylesheet" href="/css/components.css?v=20260922d">
 <style>
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 
   /* Mismo layout de pantalla dividida que login.html — ver ahí el
      detalle de cada regla. Se repite acá (page-scoped) en vez de
      compartirse en components.css porque es un tratamiento puntual de
-     las tres páginas de acceso, no un componente reusado en el resto
+     las cuatro páginas de acceso, no un componente reusado en el resto
      del sitio. */
   .login-screen { position: relative; }
 
@@ -39,11 +39,19 @@
 
   .login-panel { padding: var(--space-16) var(--space-6); }
 
-  .access-card {
-    border-radius: var(--radius);
-    background: rgba(255, 255, 255, .88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+  .access-card { border-radius: var(--radius); }
+
+  /* Móvil/tablet (<1024px): el form no debe tapar la foto de fondo con
+     ninguna capa — ver el detalle de esta misma regla en login.html. */
+  @media (max-width: 1023px) {
+    .access-card {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    .login-overlay { display: none !important; }
   }
 
   @media (min-width: 1024px) {
@@ -55,12 +63,6 @@
       grid-template-rows: 100dvh;
       height: 100dvh;
       overflow: hidden;
-    }
-
-    .access-card {
-      background: var(--jg-white);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
     }
 
     .login-panel {

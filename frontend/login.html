@@ -6,8 +6,8 @@
 <title>Iniciar sesión — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
-<link rel="stylesheet" href="/css/components.css?v=20260922c">
+<link rel="stylesheet" href="/css/tokens.css?v=20260922d">
+<link rel="stylesheet" href="/css/components.css?v=20260922d">
 <style>
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 
@@ -20,7 +20,8 @@
 
   .login-bg img {
     /* Pixel art: que no se suavice al escalar (crisp-edges como
-       respaldo en navegadores sin soporte para pixelated). */
+       respaldo en navegadores sin soporte para pixelated). Esto no
+       afecta color/opacidad de la imagen, solo el algoritmo de escalado. */
     image-rendering: crisp-edges;
     image-rendering: pixelated;
     position: fixed;
@@ -32,9 +33,6 @@
     z-index: -2;
   }
 
-  /* Capa Marfil semitransparente para bajarle protagonismo a la foto de
-     fondo en móvil/tablet — rgba sobre una capa aparte, nunca `opacity`
-     sobre la imagen (eso también apagaría el pixel art). */
   .login-overlay {
     position: fixed;
     inset: 0;
@@ -44,19 +42,28 @@
 
   .login-panel { padding: var(--space-16) var(--space-6); }
 
-  /* Móvil/tablet: la tarjeta blanca sólida tapaba casi toda la pantalla
-     (400px de max-width sobre un viewport de ~375-410px), así que la foto
-     de fondo quedaba prácticamente invisible detrás suyo. Vidrio
-     esmerilado en vez de blanco sólido — mismo recurso que el header al
-     hacer scroll, ver .nav.is-scrolled en components.css — deja asomar la
-     foto sin perder contraste: blanco al 88% sigue leyendo el texto
-     oscuro muy por encima de 4.5:1 pase lo que pase detrás. Solo hasta
-     1024px: en escritorio la tarjeta vuelve a blanco sólido de siempre. */
-  .access-card {
-    border-radius: var(--radius);
-    background: rgba(255, 255, 255, .88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+  .access-card { border-radius: var(--radius); }
+
+  /* Móvil/tablet (<1024px): el form no debe tapar la foto de fondo con
+     ninguna capa. La única otra regla que toca .access-card en todo el
+     sitio es components.css:796-802 (max-width, padding, border 1px
+     ink-100, background var(--jg-white) — ninguna de las dos define
+     blur o box-shadow); acá se apaga esa capa blanca y el borde con
+     !important para que no quede ninguna duda de cuál gana. .login-overlay
+     (más arriba, el tinte Marfil semitransparente) también se apaga: es
+     la "capa encima... mezclada con la imagen" que lavaba el color real
+     de la foto. El contraste del texto queda del lado del fondo blanco
+     propio de cada <input> (components.css .field input) y del peso de
+     la tipografía — no depende de ninguna capa detrás. */
+  @media (max-width: 1023px) {
+    .access-card {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    .login-overlay { display: none !important; }
   }
 
   @media (min-width: 1024px) {
@@ -72,12 +79,6 @@
       grid-template-rows: 100dvh;
       height: 100dvh;
       overflow: hidden;
-    }
-
-    .access-card {
-      background: var(--jg-white);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
     }
 
     .login-panel {
