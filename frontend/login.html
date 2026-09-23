@@ -12,7 +12,7 @@
   .form-error { color: var(--danger); margin-bottom: var(--space-4); }
 
   /* Pantalla dividida desde 1024px (mismo quiebre de escritorio que el
-     resto del sitio, ver tokens.css): imagen a la izquierda, form a la
+     resto del sitio, ver tokens.css): form a la izquierda, imagen a la
      derecha, sin scroll de página. Antes de eso es una sola columna con
      la imagen vertical de fondo fijo detrás del form, que sigue en flujo
      normal y puede scrollear si hace falta. */
@@ -34,10 +34,7 @@
 
   /* Capa Marfil semitransparente para bajarle protagonismo a la foto de
      fondo en móvil/tablet — rgba sobre una capa aparte, nunca `opacity`
-     sobre la imagen (eso también apagaría el pixel art). El form igual
-     vive dentro de .access-card (fondo blanco sólido + borde propio, ver
-     components.css), así que el contraste del texto no depende de esta
-     capa: queda garantizado pase lo que pase con la foto de atrás. */
+     sobre la imagen (eso también apagaría el pixel art). */
   .login-overlay {
     position: fixed;
     inset: 0;
@@ -47,9 +44,20 @@
 
   .login-panel { padding: var(--space-16) var(--space-6); }
 
-  /* Tarjeta del form con el radio de marca (ver DESIGN.md) — el resto
-     (fondo blanco, borde 1px, sin sombra) ya lo trae .access-card. */
-  .access-card { border-radius: var(--radius); }
+  /* Móvil/tablet: la tarjeta blanca sólida tapaba casi toda la pantalla
+     (400px de max-width sobre un viewport de ~375-410px), así que la foto
+     de fondo quedaba prácticamente invisible detrás suyo. Vidrio
+     esmerilado en vez de blanco sólido — mismo recurso que el header al
+     hacer scroll, ver .nav.is-scrolled en components.css — deja asomar la
+     foto sin perder contraste: blanco al 88% sigue leyendo el texto
+     oscuro muy por encima de 4.5:1 pase lo que pase detrás. Solo hasta
+     1024px: en escritorio la tarjeta vuelve a blanco sólido de siempre. */
+  .access-card {
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, .88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 
   @media (min-width: 1024px) {
     html, body { height: 100%; overflow: hidden; }
@@ -66,15 +74,11 @@
       overflow: hidden;
     }
 
-    /* La imagen deja de ser fondo fijo y pasa a llenar su propia columna
-       a alto completo — sin borde ni sombra, como pide el layout. */
-    .login-bg img {
-      position: static;
-      width: 100%;
-      height: 100%;
-      z-index: auto;
+    .access-card {
+      background: var(--jg-white);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
-    .login-overlay { display: none; }
 
     .login-panel {
       display: flex;
@@ -83,8 +87,37 @@
       height: 100dvh;
       overflow-y: auto;
       padding: var(--space-12);
-      border-left: 1px solid var(--ink-100);
     }
+
+    /* Columna de la foto con "marco": padding a modo de margen + radio
+       marcado (no el de 2px de botones/inputs — acá es a propósito más
+       visible, una excepción decorativa puntual para esta foto, no un
+       componente de UI) recortando la imagen adentro. El tamaño de la
+       columna no cambia — la foto se ve más chica solo por el padding
+       del marco, igual que antes ocupa la mitad de la pantalla. */
+    .login-art {
+      padding: var(--space-6);
+      box-sizing: border-box;
+      border-right: 1px solid var(--ink-100);
+    }
+    .login-bg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    /* La imagen deja de ser fondo fijo y pasa a llenar su columna (menos
+       el padding del marco) a alto completo — sin borde ni sombra propios,
+       el marco de afuera ya los trae. */
+    .login-bg img {
+      position: static;
+      width: 100%;
+      height: 100%;
+      z-index: auto;
+      border-radius: 24px;
+    }
+    .login-overlay { display: none; }
   }
 </style>
 </head>
@@ -92,12 +125,6 @@
 <div id="pgs-announcement-bar"></div>
 <main>
 <div class="login-screen">
-  <picture class="login-bg" aria-hidden="true">
-    <source media="(min-width: 1024px)" srcset="/assets/logos/jg-parfums-pixel-art-desktop.jpg">
-    <img src="/assets/logos/jg-parfums-pixel-art-mobile.jpg" alt="" loading="eager">
-  </picture>
-  <div class="login-overlay" aria-hidden="true"></div>
-
   <div class="login-panel">
     <div class="access-card">
       <a href="/index.html"><img class="access-mark" src="/assets/logos/jg-star.svg" alt="JG Parfums, inicio"></a>
@@ -125,6 +152,14 @@
       </div>
     </div>
   </div>
+
+  <div class="login-art">
+    <picture class="login-bg" aria-hidden="true">
+      <source media="(min-width: 1024px)" srcset="/assets/logos/jg-parfums-pixel-art-desktop.jpg">
+      <img src="/assets/logos/jg-parfums-pixel-art-mobile.jpg" alt="" loading="eager" fetchpriority="high">
+    </picture>
+  </div>
+  <div class="login-overlay" aria-hidden="true"></div>
 </div>
 <div id="dynamicSections"></div>
 </main>
