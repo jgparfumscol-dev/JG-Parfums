@@ -700,7 +700,13 @@ body.pgs-ready .site-footer { opacity: 1; }
 @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
 
-.product-card { text-decoration: none; color: inherit; display: block; }
+/* Con 3-4 columnas en móvil, el nombre/precio no siempre entra en el ancho
+   de columna — por default un grid item no se achica más allá del ancho
+   mínimo de su contenido (min-width:auto), así que ese texto empujaba la
+   columna a desbordar y la grilla entera se corría hacia la derecha
+   (página más ancha que la pantalla, columnas dispares). min-width:0
+   deja que 1fr mande de verdad. */
+.product-card { text-decoration: none; color: inherit; display: block; min-width: 0; }
 .product-card-media {
   aspect-ratio: 4 / 5;
   background: var(--ink-100);
@@ -716,6 +722,24 @@ body.pgs-ready .site-footer { opacity: 1; }
 .product-card-name { font-family: var(--font-body); font-weight: 500; font-size: 20px; line-height: 1.3; margin: 0; }
 .product-card-meta { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
 .product-card-price { font-weight: 600; font-size: 15px; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+
+/* Con 3 o 4 columnas en móvil (ver "Productos por fila en móvil" en el
+   editor de catalogo_header) la tarjeta a tamaño normal queda apretada —
+   texto y separación se achican con la cantidad de columnas, para que 3-4
+   se sientan compactas a propósito en vez de forzadas dentro del mismo
+   tamaño de tarjeta de 2 columnas. Solo hasta el quiebre de tablet: de
+   ahí en adelante manda el grid fijo de 3/4 de siempre, no este dato. */
+@media (max-width: 639px) {
+  .product-grid[data-cols-mobile="3"] { gap: var(--space-4) var(--space-3); }
+  .product-grid[data-cols-mobile="3"] .product-card-name { font-size: 14px; }
+  .product-grid[data-cols-mobile="3"] .product-card-meta { font-size: 11px; }
+  .product-grid[data-cols-mobile="3"] .product-card-price { font-size: 13px; }
+
+  .product-grid[data-cols-mobile="4"] { gap: var(--space-3) var(--space-2); }
+  .product-grid[data-cols-mobile="4"] .product-card-name { font-size: 12px; }
+  .product-grid[data-cols-mobile="4"] .product-card-meta { font-size: 10px; }
+  .product-grid[data-cols-mobile="4"] .product-card-price { font-size: 12px; }
+}
 
 /* "También te puede interesar" (ficha de producto, ver producto_related_heading
    en el admin): mismo .product-card de siempre, en dos formas más además de

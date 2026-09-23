@@ -1128,7 +1128,14 @@ function renderSectionHeading(section) {
     // esta sección (ver comentario sobre catalogo_header/mount fijo más
     // arriba) pero está en la misma página.
     const grid = document.getElementById('productGrid');
-    if (grid) grid.style.setProperty('--product-grid-cols-mobile', String(c.mobile_columns || 2));
+    if (grid) {
+      const cols = String(c.mobile_columns || 2);
+      grid.style.setProperty('--product-grid-cols-mobile', cols);
+      // data-attribute (no la CSS var) porque el CSS necesita "seleccionar
+      // por valor" para achicar tarjeta/gap solo en 3-4 columnas — ver
+      // components.css, .product-grid[data-cols-mobile].
+      grid.dataset.colsMobile = cols;
+    }
     return c.heading ? `<h1 class="h1">${c.heading}</h1>` : '';
   }
   if (!c.heading) return '';
