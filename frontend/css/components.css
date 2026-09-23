@@ -688,10 +688,13 @@ body.pgs-ready .site-footer { opacity: 1; }
   margin-bottom: var(--space-3);
 }
 
-/* grilla de tarjetas de producto — home, catálogo, relacionados en ficha */
+/* grilla de tarjetas de producto — home, catálogo, relacionados en ficha.
+   El catálogo puede pisar --product-grid-cols-mobile por sección (ver
+   catalogo_header en sections.js) para mostrar 2, 3 o 4 por fila en móvil;
+   el resto de las grillas se queda con el default de 2. */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(var(--product-grid-cols-mobile, 2), 1fr);
   gap: var(--space-8) var(--space-6);
 }
 @media (min-width: 640px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }

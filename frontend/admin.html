@@ -960,6 +960,15 @@
           </div>
           <div class="field"><label for="s_related_limit">Cantidad de productos</label><input id="s_related_limit" type="number" min="2" max="12" value="4"></div>
         </div>
+        <div id="catalogGridSettings" hidden>
+          <div class="field"><label for="s_catalog_mobile_columns">Productos por fila en móvil</label>
+            <select id="s_catalog_mobile_columns">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div id="sectionFieldsDecantCallout" hidden>
@@ -3133,6 +3142,7 @@
     // particular — showSectionTypeFields no sabe de esto, así que se
     // muestran/ocultan acá aparte.
     document.getElementById('relatedProductsSettings').hidden = editingSectionKey !== 'producto_related_heading';
+    document.getElementById('catalogGridSettings').hidden = editingSectionKey !== 'catalogo_header';
 
     const c = (section && section.content) || {};
     if (type === 'announcement_bar') {
@@ -3204,6 +3214,9 @@
         document.getElementById('s_related_display_mode').value = c.display_mode || 'grid';
         document.getElementById('s_related_category').value = c.category_id || '';
         document.getElementById('s_related_limit').value = c.limit || 4;
+      }
+      if (editingSectionKey === 'catalogo_header') {
+        document.getElementById('s_catalog_mobile_columns').value = c.mobile_columns || 2;
       }
     } else if (type === 'decant_callout') {
       document.getElementById('s_decant_heading').value = c.heading || '';
@@ -3372,6 +3385,9 @@
         content.display_mode = document.getElementById('s_related_display_mode').value || 'grid';
         content.category_id = document.getElementById('s_related_category').value ? Number(document.getElementById('s_related_category').value) : null;
         content.limit = Number(document.getElementById('s_related_limit').value) || 4;
+      }
+      if (editingSectionKey === 'catalogo_header') {
+        content.mobile_columns = Number(document.getElementById('s_catalog_mobile_columns').value) || 2;
       }
     } else if (type === 'decant_callout') {
       content = {

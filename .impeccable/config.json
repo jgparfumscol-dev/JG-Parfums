@@ -134,6 +134,15 @@
         ],
         "createdAt": "2026-09-17T17:05:07.300Z",
         "reason": "user explicitly requested infinite, non-stopping auto-scroll for the addable 'carrusel de clases' section (left-to-right or reverse, admin-selectable), mirroring the existing brands_carousel continuous mode already shipped in production; mitigated with pause-on-hover/focus and prefers-reduced-motion fallback to the arrow carousel"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/catalogo.html"
+        ],
+        "createdAt": "2026-09-22T22:01:17.719Z",
+        "reason": "site-wide brand token --jg-paper (#F7F5F1) from tokens.css, used across the whole site since before this session, not introduced by any edit here"
       }
     ]
   }

@@ -1121,8 +1121,17 @@ function renderCustomHtml(section) {
 
 function renderSectionHeading(section) {
   const c = section.content || {};
+  if (section.key === 'catalogo_header') {
+    // Cuántas tarjetas de producto entran por fila en móvil (2 a 4) — ver
+    // el campo "Columnas en móvil" del editor, solo visible para esta
+    // sección. Se aplica acá porque #productGrid vive fuera del mount de
+    // esta sección (ver comentario sobre catalogo_header/mount fijo más
+    // arriba) pero está en la misma página.
+    const grid = document.getElementById('productGrid');
+    if (grid) grid.style.setProperty('--product-grid-cols-mobile', String(c.mobile_columns || 2));
+    return c.heading ? `<h1 class="h1">${c.heading}</h1>` : '';
+  }
   if (!c.heading) return '';
-  if (section.key === 'catalogo_header') return `<h1 class="h1">${c.heading}</h1>`;
   return `<h2 class="h2 section-title">${c.heading}</h2>`;
 }
 
