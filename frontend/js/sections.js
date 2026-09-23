@@ -477,6 +477,15 @@ function renderHeader(section) {
   `;
 }
 
+// Sección "products" administrable (+ Añadir sección): además de la
+// grilla de siempre, ahora soporta lista compacta en fila o carrusel
+// horizontal con flechas — mismo vocabulario que "También te puede
+// interesar" de la ficha de producto (ver loadRelated en producto.html),
+// ahora reusable en cualquier página. "Productos por fila en móvil" (1-4)
+// aplica tanto a grilla (columnas reales, ver [data-cols-mobile] en
+// components.css, mismo mecanismo que el catálogo) como a carrusel
+// (cuántas tarjetas entran por pantalla, ver --pgs-cards-mobile) — en
+// lista no aplica, cada producto ocupa una fila entera.
 async function renderProducts(section) {
   const c = section.content || {};
   const params = new URLSearchParams({ page_size: String(c.limit || 8) });
@@ -484,24 +493,44 @@ async function renderProducts(section) {
   try {
     const data = await apiFetch(`/products?${params.toString()}`);
     if (data.items.length === 0) return '';
+
+    const displayMode = ['grid', 'list', 'carousel'].includes(c.display_mode) ? c.display_mode : 'grid';
+    const mobileCols = Math.min(4, Math.max(1, Number(c.mobile_columns) || 2));
+    const cardsHtml = data.items.map((p) => `
+      <a class="product-card" href="/producto.html?slug=${encodeURIComponent(p.slug)}">
+        <div class="product-card-media">
+          ${p.images[0] ? `<img src="${p.images[0].url}" alt="${p.images[0].alt_text}" loading="lazy">` : ''}
+        </div>
+        <div class="product-card-body">
+          <p class="product-card-name">${p.name}</p>
+          <p class="product-card-meta">${p.house ? `${p.house} · ` : ''}${p.size_ml} ml</p>
+          <p class="product-card-price">${formatCOP(p.price)}</p>
+        </div>
+      </a>
+    `).join('');
+
+    let itemsHtml;
+    if (displayMode === 'carousel') {
+      itemsHtml = `
+        <div class="pgs-products-carousel" data-section-id="${section.id}">
+          <div class="pgs-carousel-wrap" style="--pgs-cards-mobile:${mobileCols};">
+            <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-prev" data-prev aria-label="Anterior">${ICON_PREV}</button>
+            <button type="button" class="pgs-carousel-arrow pgs-carousel-arrow-next" data-next aria-label="Siguiente">${ICON_NEXT}</button>
+            <div class="pgs-carousel-track" data-track>${cardsHtml}</div>
+          </div>
+        </div>
+      `;
+    } else if (displayMode === 'list') {
+      itemsHtml = `<div class="product-list">${cardsHtml}</div>`;
+    } else {
+      itemsHtml = `<div class="product-grid" data-cols-mobile="${mobileCols}" style="--product-grid-cols-mobile:${mobileCols};">${cardsHtml}</div>`;
+    }
+
     return `
       <section class="section">
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
-          <div class="product-grid">
-            ${data.items.map((p) => `
-              <a class="product-card" href="/producto.html?slug=${encodeURIComponent(p.slug)}">
-                <div class="product-card-media">
-                  ${p.images[0] ? `<img src="${p.images[0].url}" alt="${p.images[0].alt_text}" loading="lazy">` : ''}
-                </div>
-                <div class="product-card-body">
-                  <p class="product-card-name">${p.name}</p>
-                  <p class="product-card-meta">${p.house ? `${p.house} · ` : ''}${p.size_ml} ml</p>
-                  <p class="product-card-price">${formatCOP(p.price)}</p>
-                </div>
-              </a>
-            `).join('')}
-          </div>
+          ${itemsHtml}
         </div>
       </section>
     `;
@@ -1280,6 +1309,7 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
       mount.querySelectorAll('.pgs-banner[data-section-id]').forEach((el) => initBanner(el));
       mount.querySelectorAll('.pgs-classes-carousel[data-section-id]').forEach((el) => initClassesCarousel(el));
       mount.querySelectorAll('.pgs-brands-carousel[data-section-id]').forEach((el) => initBrandsCarousel(el));
+      mount.querySelectorAll('.pgs-products-carousel[data-section-id]').forEach((el) => initSnapCarousel(el.querySelector('.pgs-carousel-wrap')));
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.

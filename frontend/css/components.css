@@ -758,6 +758,18 @@ body.pgs-ready .site-footer { opacity: 1; }
   flex: 0 0 calc((100% - (var(--pgs-cards) - 1) * var(--space-4)) / var(--pgs-cards));
 }
 
+/* Sección "products" administrable en modo carrusel (ver renderProducts
+   en sections.js) — mismo mecanismo de "cuántas tarjetas por pantalla"
+   que classes_carousel, pero acá el mobile también lo elige el admin
+   (--pgs-cards-mobile, 1 a 4, ver "Productos por fila en móvil"); tablet
+   y escritorio quedan fijos como el resto de los carruseles del sitio. */
+.pgs-products-carousel .pgs-carousel-track { --pgs-cards: var(--pgs-cards-mobile, 2); }
+@media (min-width: 640px) { .pgs-products-carousel .pgs-carousel-track { --pgs-cards: 3; } }
+@media (min-width: 1024px) { .pgs-products-carousel .pgs-carousel-track { --pgs-cards: 4; } }
+.pgs-products-carousel .product-card {
+  flex: 0 0 calc((100% - (var(--pgs-cards) - 1) * var(--space-4)) / var(--pgs-cards));
+}
+
 /* campo compacto — filas de tabla en el panel admin (imágenes, decants) */
 .input-sm {
   height: 44px;

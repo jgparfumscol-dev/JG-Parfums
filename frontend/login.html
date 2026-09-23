@@ -33,10 +33,15 @@
     z-index: -2;
   }
 
+  /* Blanco suave (no Marfil como antes) al 30% — deja pasar el color real
+     de la foto, solo le baja un poco el contraste general para que,
+     sumado al text-shadow de acá abajo, el texto se lea en cualquier
+     zona de la imagen (clara u oscura). En escritorio sigue apagada
+     (ver @media min-width:1024px más abajo). */
   .login-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(247, 245, 241, .8);
+    background: rgba(255, 255, 255, .3);
     z-index: -1;
   }
 
@@ -45,16 +50,14 @@
   .access-card { border-radius: var(--radius); }
 
   /* Móvil/tablet (<1024px): el form no debe tapar la foto de fondo con
-     ninguna capa. La única otra regla que toca .access-card en todo el
-     sitio es components.css:796-802 (max-width, padding, border 1px
-     ink-100, background var(--jg-white) — ninguna de las dos define
-     blur o box-shadow); acá se apaga esa capa blanca y el borde con
-     !important para que no quede ninguna duda de cuál gana. .login-overlay
-     (más arriba, el tinte Marfil semitransparente) también se apaga: es
-     la "capa encima... mezclada con la imagen" que lavaba el color real
-     de la foto. El contraste del texto queda del lado del fondo blanco
-     propio de cada <input> (components.css .field input) y del peso de
-     la tipografía — no depende de ninguna capa detrás. */
+     una capa opaca ni sólida. La única otra regla que toca .access-card
+     en todo el sitio es components.css:796-802 (max-width, padding,
+     border 1px ink-100, background var(--jg-white) — ninguna de las dos
+     define blur o box-shadow); acá se apaga esa capa blanca y el borde
+     con !important para que no quede duda de cuál gana. Lo único que
+     queda entre el texto y la foto es el wash blanco al 30% de
+     .login-overlay (arriba) más este halo por text-shadow — no una capa
+     sólida ni un blur, así la foto se sigue viendo con sus colores. */
   @media (max-width: 1023px) {
     .access-card {
       background: transparent !important;
@@ -62,8 +65,11 @@
       -webkit-backdrop-filter: none !important;
       box-shadow: none !important;
       border: none !important;
+      /* Se hereda a todo el texto de adentro (h1, labels, links, texto
+         muted); los <input> no lo necesitan, tienen su propio fondo
+         blanco opaco. */
+      text-shadow: 0 1px 2px rgba(255, 255, 255, .95), 0 0 10px rgba(255, 255, 255, .85), 0 0 20px rgba(255, 255, 255, .55);
     }
-    .login-overlay { display: none !important; }
   }
 
   @media (min-width: 1024px) {

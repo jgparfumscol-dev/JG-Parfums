@@ -733,6 +733,21 @@
 
       <div id="sectionFieldsProducts" hidden>
         <div class="field"><label for="s_products_heading">Título de la sección (opcional)</label><input id="s_products_heading" placeholder="Lo más vendido"></div>
+        <div class="field"><label for="s_products_display_mode">Forma de mostrarlos</label>
+          <select id="s_products_display_mode">
+            <option value="grid">Grilla</option>
+            <option value="list">Lista</option>
+            <option value="carousel">Carrusel</option>
+          </select>
+        </div>
+        <div class="field" id="productsMobileColsField"><label for="s_products_mobile_columns">Productos por fila en móvil</label>
+          <select id="s_products_mobile_columns">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
         <div class="field"><label for="s_products_category">Categoría (opcional)</label>
           <select id="s_products_category"><option value="">Todas</option></select>
         </div>
@@ -2431,7 +2446,10 @@
         return slides.length === 1 ? (slides[0].title || '(sin título)') : `${slides.length} fotos rotando`;
       }
       case 'header': return c.title || '(sin título)';
-      case 'products': return c.heading || 'Grilla de productos';
+      case 'products': {
+        const modeLabel = { grid: 'grilla', list: 'lista', carousel: 'carrusel' }[c.display_mode] || 'grilla';
+        return `${c.heading || 'Productos'} · ${modeLabel}`;
+      }
       case 'text': return c.heading || '(sin título)';
       case 'categories': return c.heading || 'Categorías';
       case 'image': return c.caption || c.alt_text || '(sin descripción)';
@@ -2694,6 +2712,16 @@
   function updateBrandCarouselEmptyNotice() {
     document.getElementById('brandCarouselEmptyNotice').hidden = brandsCache.some((b) => b.is_active);
   }
+
+  // "Productos por fila en móvil" solo tiene sentido en grilla y carrusel
+  // (en carrusel, cuántas tarjetas entran por pantalla) — en lista cada
+  // producto ocupa una fila entera, no aplica.
+  function updateProductsFieldsVisibility(mode) {
+    document.getElementById('productsMobileColsField').hidden = mode === 'list';
+  }
+  document.getElementById('s_products_display_mode').addEventListener('change', (event) => {
+    updateProductsFieldsVisibility(event.target.value);
+  });
 
   document.getElementById('s_classcar_mode').addEventListener('change', (event) => {
     document.getElementById('classCarouselPickerWrap').hidden = event.target.value !== 'manual';
@@ -3166,6 +3194,9 @@
       document.getElementById('s_header_subtitle').value = c.subtitle || '';
     } else if (type === 'products') {
       document.getElementById('s_products_heading').value = c.heading || '';
+      document.getElementById('s_products_display_mode').value = c.display_mode || 'grid';
+      document.getElementById('s_products_mobile_columns').value = c.mobile_columns || 2;
+      updateProductsFieldsVisibility(c.display_mode || 'grid');
       document.getElementById('s_products_category').value = c.category_id || '';
       document.getElementById('s_products_limit').value = c.limit || 8;
     } else if (type === 'text') {
@@ -3333,6 +3364,8 @@
     } else if (type === 'products') {
       content = {
         heading: document.getElementById('s_products_heading').value.trim() || null,
+        display_mode: document.getElementById('s_products_display_mode').value || 'grid',
+        mobile_columns: Number(document.getElementById('s_products_mobile_columns').value) || 2,
         category_id: document.getElementById('s_products_category').value ? Number(document.getElementById('s_products_category').value) : null,
         limit: Number(document.getElementById('s_products_limit').value) || 8,
       };
