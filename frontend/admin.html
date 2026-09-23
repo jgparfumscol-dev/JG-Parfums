@@ -751,7 +751,11 @@
         <div class="field"><label for="s_products_category">Categoría (opcional)</label>
           <select id="s_products_category"><option value="">Todas</option></select>
         </div>
-        <div class="field"><label for="s_products_limit">Cantidad de productos</label><input id="s_products_limit" type="number" min="1" max="24" value="8"></div>
+        <p class="text-caption" style="margin-bottom: var(--space-2);">Cantidad de productos</p>
+        <div style="display:flex; gap: var(--space-2);">
+          <div class="field" style="flex:1;"><label for="s_products_limit_mobile">Móvil</label><input id="s_products_limit_mobile" type="number" min="1" max="24" value="6"></div>
+          <div class="field" style="flex:1;"><label for="s_products_limit_desktop">PC / escritorio</label><input id="s_products_limit_desktop" type="number" min="1" max="24" value="8"></div>
+        </div>
       </div>
 
       <div id="sectionFieldsText" hidden>
@@ -3198,7 +3202,11 @@
       document.getElementById('s_products_mobile_columns').value = c.mobile_columns || 2;
       updateProductsFieldsVisibility(c.display_mode || 'grid');
       document.getElementById('s_products_category').value = c.category_id || '';
-      document.getElementById('s_products_limit').value = c.limit || 8;
+      // limit_mobile/limit_desktop reemplazan el "limit" único de antes —
+      // si la sección es vieja y todavía no los tiene, se parte del mismo
+      // "limit" para las dos (ver el mismo fallback en renderProducts).
+      document.getElementById('s_products_limit_mobile').value = c.limit_mobile || c.limit || 6;
+      document.getElementById('s_products_limit_desktop').value = c.limit_desktop || c.limit || 8;
     } else if (type === 'text') {
       document.getElementById('s_text_heading').value = c.heading || '';
       document.getElementById('s_text_body').value = c.body || '';
@@ -3367,7 +3375,8 @@
         display_mode: document.getElementById('s_products_display_mode').value || 'grid',
         mobile_columns: Number(document.getElementById('s_products_mobile_columns').value) || 2,
         category_id: document.getElementById('s_products_category').value ? Number(document.getElementById('s_products_category').value) : null,
-        limit: Number(document.getElementById('s_products_limit').value) || 8,
+        limit_mobile: Number(document.getElementById('s_products_limit_mobile').value) || 6,
+        limit_desktop: Number(document.getElementById('s_products_limit_desktop').value) || 8,
       };
     } else if (type === 'text') {
       content = {

@@ -488,7 +488,16 @@ function renderHeader(section) {
 // lista no aplica, cada producto ocupa una fila entera.
 async function renderProducts(section) {
   const c = section.content || {};
-  const params = new URLSearchParams({ page_size: String(c.limit || 8) });
+  // Cantidad de productos por separado para móvil/tablet y PC — se decide
+  // una sola vez al cargar la página (no reactivo al resize, mismo
+  // criterio que el resto de las secciones administrables: la cantidad de
+  // tarjetas visibles de un carrusel tampoco cambia en vivo si se
+  // redimensiona la ventana). `limit` es el campo viejo, de antes de que
+  // esto se separara — sigue de fallback para secciones ya guardadas que
+  // todavía no tengan limit_mobile/limit_desktop.
+  const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+  const limit = isDesktop ? (c.limit_desktop || c.limit || 8) : (c.limit_mobile || c.limit || 6);
+  const params = new URLSearchParams({ page_size: String(limit) });
   if (c.category_id) params.set('category_id', c.category_id);
   try {
     const data = await apiFetch(`/products?${params.toString()}`);
