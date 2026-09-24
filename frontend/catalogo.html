@@ -7,8 +7,8 @@
 <meta name="description" content="Catálogo de perfumes originales de nicho. Filtra por categoría y precio.">
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
-<link rel="stylesheet" href="/css/components.css?v=20260922c">
+<link rel="stylesheet" href="/css/tokens.css?v=20260924a">
+<link rel="stylesheet" href="/css/components.css?v=20260924a">
 <style>
   .catalog-header {
     padding-top: var(--space-12);
@@ -174,11 +174,11 @@
   </div>
 </footer>
 
-<script src="/js/api.js?v=20260922c"></script>
-<script src="/js/site-settings.js?v=20260922c"></script>
-<script src="/js/cart.js?v=20260922c"></script>
-<script src="/js/sections.js?v=20260922c"></script>
-<script src="/js/reveal.js?v=20260922c"></script>
+<script src="/js/api.js?v=20260924a"></script>
+<script src="/js/site-settings.js?v=20260924a"></script>
+<script src="/js/cart.js?v=20260924a"></script>
+<script src="/js/sections.js?v=20260924a"></script>
+<script src="/js/reveal.js?v=20260924a"></script>
 <script>
   renderPageSections('catalogo');
 
@@ -207,21 +207,10 @@
         <div class="product-card-body">
           <p class="product-card-name">${product.name}</p>
           <p class="product-card-meta">${product.house ? `${product.house} · ` : ''}${product.size_ml} ml</p>
-          <p class="product-card-price">${productPriceLabel(product)}</p>
+          <p class="product-card-price">${productCardPriceHtml(product)}</p>
         </div>
       </a>
     `).join('');
-  }
-
-  function effectivePrice(product) {
-    const activeVariants = (product.variants || []).filter((v) => v.is_active);
-    return activeVariants.length === 0 ? product.price : Math.min(product.price, ...activeVariants.map((v) => v.price));
-  }
-
-  function productPriceLabel(product) {
-    const hasDecant = (product.variants || []).some((v) => v.is_active);
-    const price = formatCOP(effectivePrice(product));
-    return hasDecant ? `Desde ${price}` : price;
   }
 
   function renderPagination(total, page) {
@@ -258,8 +247,8 @@
       const data = await apiFetch(`/products?${params.toString()}`);
       let items = data.items;
       const sort = form.get('sort');
-      if (sort === 'price_asc') items = [...items].sort((a, b) => effectivePrice(a) - effectivePrice(b));
-      if (sort === 'price_desc') items = [...items].sort((a, b) => effectivePrice(b) - effectivePrice(a));
+      if (sort === 'price_asc') items = [...items].sort((a, b) => lowestFinalPrice(a) - lowestFinalPrice(b));
+      if (sort === 'price_desc') items = [...items].sort((a, b) => lowestFinalPrice(b) - lowestFinalPrice(a));
 
       if (items.length === 0) {
         grid.innerHTML = '';

@@ -22,7 +22,7 @@ function cartLineKey(productId, variantId) {
   return `${productId}:${variantId || 'full'}`;
 }
 
-// variant, si viene, es {id, size_ml, price, stock} — un decant de 5ml/10ml.
+// variant, si viene, es {id, size_ml, final_price, stock} — un decant de 5ml/10ml.
 // Sin variant se agrega el frasco completo, tal como funcionaba antes.
 function addToCart(product, quantity = 1, variant = null) {
   const items = getCart();
@@ -38,7 +38,7 @@ function addToCart(product, quantity = 1, variant = null) {
       variant_id: variant ? variant.id : null,
       name: product.name,
       slug: product.slug,
-      price: variant ? variant.price : product.price,
+      price: variant ? variant.final_price : product.final_price,
       size_label: variant ? `${variant.size_ml} ml (decant)` : `${product.size_ml} ml`,
       stock,
       image: product.images && product.images[0] ? product.images[0].url : null,

@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from database import Base
+from services.pricing import apply_discount
 
 
 class ProductVariant(Base):
@@ -25,3 +26,8 @@ class ProductVariant(Base):
     image_url = Column(String, nullable=True)
 
     product = relationship("Product", back_populates="variants")
+
+    @property
+    def final_price(self) -> int:
+        # El descuento es del producto padre: aplica igual a sus decants.
+        return apply_discount(self.price, self.product.discount_percent)

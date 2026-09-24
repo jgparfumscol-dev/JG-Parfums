@@ -83,6 +83,28 @@ function formatCOP(amount) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 }
 
+// Precio con descuento: el original tachado, el final y la etiqueta "-X%".
+// Sin descuento devuelve solo el precio, igual que antes.
+function priceHtml(originalPrice, finalPrice, discountPercent) {
+  if (!discountPercent) return formatCOP(finalPrice);
+  return `${formatCOP(finalPrice)} <s class="price-original">${formatCOP(originalPrice)}</s> <span class="discount-tag">-${discountPercent}%</span>`;
+}
+
+// Precio más bajo con el que se puede comprar el producto (frasco o decant
+// activo), ya con el descuento aplicado, para ordenar y mostrar "Desde".
+function lowestFinalPrice(product) {
+  const activeVariants = (product.variants || []).filter((v) => v.is_active);
+  return Math.min(product.final_price, ...activeVariants.map((v) => v.final_price));
+}
+
+// Precio de la tarjeta de producto: "Desde" cuando hay decants activos.
+function productCardPriceHtml(product) {
+  const activeVariants = (product.variants || []).filter((v) => v.is_active);
+  const prefix = activeVariants.length ? 'Desde ' : '';
+  const originalLowest = Math.min(product.price, ...activeVariants.map((v) => v.price));
+  return prefix + priceHtml(originalLowest, lowestFinalPrice(product), product.discount_percent);
+}
+
 // Estadísticas propias del sitio: sin cookies, sin IP ni user-agent guardados,
 // solo qué página se vio. No cuenta el panel admin (es tráfico del dueño de
 // la tienda, no de clientes) ni falla nunca de forma visible al usuario.

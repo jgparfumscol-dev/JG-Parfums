@@ -45,13 +45,13 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
                     detail=f"Stock insuficiente para {product.name}",
                 )
             product.stock -= item.quantity
-            subtotal += product.price * item.quantity
+            subtotal += product.final_price * item.quantity
             order_items.append(
                 OrderItem(
                     product_id=product.id,
                     product_name=product.name,
                     size_ml=product.size_ml,
-                    unit_price=product.price,
+                    unit_price=product.final_price,
                     quantity=item.quantity,
                 )
             )
@@ -76,14 +76,14 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
                     detail=f"Stock insuficiente del decant de {variant.size_ml}ml para {product.name}",
                 )
             variant.stock -= item.quantity
-            subtotal += variant.price * item.quantity
+            subtotal += variant.final_price * item.quantity
             order_items.append(
                 OrderItem(
                     product_id=product.id,
                     product_variant_id=variant.id,
                     product_name=f"{product.name} — decant {variant.size_ml}ml",
                     size_ml=variant.size_ml,
-                    unit_price=variant.price,
+                    unit_price=variant.final_price,
                     quantity=item.quantity,
                 )
             )

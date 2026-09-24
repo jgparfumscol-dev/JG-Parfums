@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.orm import relationship
 
 from database import Base
+from services.pricing import apply_discount
 
 # Un producto puede estar en una, dos o más clases (antes category_id, una
 # sola) — tabla puente sin columnas propias, ver la migración
@@ -31,6 +32,8 @@ class Product(Base):
     size_ml = Column(Integer, nullable=False)
     price = Column(Integer, nullable=False)  # COP, pesos enteros (sin centavos)
     stock = Column(Integer, nullable=False, default=0)
+    # Descuento en % (0–99) sobre el frasco y todos sus decants; 0 = sin descuento.
+    discount_percent = Column(Integer, nullable=False, default=0, server_default="0")
     is_active = Column(Boolean, nullable=False, default=True)
     # Producto que se muestra en la ficha "destacada" del home (diagrama de
     # notas). Solo uno puede estar marcado a la vez — se hace cumplir en la
@@ -75,6 +78,10 @@ class Product(Base):
     )
     order_items = relationship("OrderItem", back_populates="product")
     categories = relationship("Category", secondary=product_categories, order_by="Category.sort_order")
+
+    @property
+    def final_price(self) -> int:
+        return apply_discount(self.price, self.discount_percent)
 
 
 class ProductImage(Base):

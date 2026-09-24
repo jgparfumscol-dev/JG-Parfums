@@ -60,10 +60,12 @@ def list_products(
     if search:
         like = f"%{search}%"
         query = query.filter(Product.name.ilike(like) | Product.house.ilike(like))
+    # El filtro de precio es sobre lo que el cliente paga: con el descuento aplicado.
+    final_price = (Product.price * (100 - Product.discount_percent) + 50) // 100
     if min_price is not None:
-        query = query.filter(Product.price >= min_price)
+        query = query.filter(final_price >= min_price)
     if max_price is not None:
-        query = query.filter(Product.price <= max_price)
+        query = query.filter(final_price <= max_price)
     if has_decant:
         query = query.filter(Product.variants.any(ProductVariant.is_active.is_(True)))
     if is_featured is not None:

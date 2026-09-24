@@ -51,9 +51,10 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (144 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (171 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
+| Descuento por producto (% sobre frasco y decants, precio final calculado en el servidor) | ✅ Backend, panel admin y tienda construidos y probados — migración `c9d0e1f2a3b4` pendiente de aplicar en Railway |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
 | Notas de producto libres (nombre + color por nota, escalera con la más fuerte abajo) | ✅ Backend, panel admin y ficha de producto/hero construidos y probados |
 | Categorías y estadísticas propias de tráfico (sin cookies ni datos personales) | ✅ Backend, panel admin y filtro de catálogo construidos y probados |
@@ -165,13 +166,14 @@ flowchart LR
 - Estadísticas propias de tráfico (sin cookies, IP ni user-agent) para el panel de Métricas
 - Decants por producto (5ml/10ml): precio y stock propios, foto propia opcional por presentación, independientes del frasco completo
 - Info adicional y media de la ficha de producto (`product_detail_sections`, `product_media_items`): listados desplegables y bloques de foto/GIF con texto superpuesto, oscurecido, desenfoque, alto y ancho configurables, ordenables, editables desde "Editar" en Productos
+- Descuento por producto (`discount_percent`, 0–99 %): se fija en el formulario de crear/editar producto y aplica al frasco y a todos sus decants. El servidor calcula el `final_price` y es el que cobran los pedidos; la tienda muestra el original tachado y la etiqueta "-X%"
 - Pedidos con descuento de stock transaccional (respeta la presentación comprada: frasco completo o decant) y costo de envío configurable
 - Borrado de producto en dos niveles: desactivar (oculta de la tienda, reversible) o eliminar permanentemente (hard delete; los pedidos ya guardan su propio snapshot de nombre/precio, así que no se pierde el historial)
 - Integración con Wompi (firma de integridad + verificación de checksum de webhook)
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (144) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (171) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -180,6 +182,8 @@ flowchart LR
 ## Novedades recientes
 
 > Changelog de la construcción inicial del proyecto.
+
+- Descuento por producto: columna `products.discount_percent` (0–99, default 0) con migración `c9d0e1f2a3b4`, y campo "Descuento (%)" en el formulario de crear/editar producto del panel, con vista previa del precio final. Aplica al frasco y a todos sus decants. El servidor calcula el precio final (`services/pricing.py`, redondeo al peso más cercano) y lo expone como `final_price` en productos y decants; `POST /orders` cobra ese precio y el `OrderItem` guarda el snapshot ya con descuento, así que Wompi/Mercado Pago cobran lo mismo que ve el cliente. Los filtros `min_price`/`max_price` del catálogo comparan contra el precio con descuento. En la tienda (catálogo, ficha, relacionados, secciones del home) se muestra el precio final, el original tachado y la etiqueta "-X%" (`priceHtml` en `js/api.js`). Un carrito que ya tenía el producto conserva el precio anterior hasta volver a agregarlo, pero el pedido siempre cobra el vigente. 9 tests nuevos (171 en total).
 
 - Dos secciones administrables nuevas (+ Añadir sección, cualquier página). **Barra inferior** (`bottom_bar`): tira fija al pie de la pantalla con texto y un botón opcional a la dirección que se configure, en las mismas 3 variantes de color que la barra de anuncios — a diferencia de esa, esta solo vive abajo, y con un comportamiento propio: no se ve al cargar la página, aparece mientras el visitante se desliza hacia abajo y se esconde apenas se desliza hacia arriba. **Promoción emergente** (`promo_popup`): cuadro con imagen/título/texto/botón opcionales que aparece centrado sobre la página (con fondo oscurecido detrás) al cargar la página donde se agregue — se puede rechazar con la X o haciendo clic afuera, y una vez cerrado no vuelve a aparecer mientras el visitante siga navegando el sitio en esa pestaña (`sessionStorage`, no molesta de nuevo en cada página pero sí vuelve en una visita nueva). Tres tamaños (compacto/mediano/amplio) que en escritorio nunca ocupan toda la pantalla — un cuadro centrado de ancho limitado — y en móvil se adaptan solos al ancho disponible. Los dos tipos se suman a la cobertura de `test_create_page_section_accepts_new_block_types` (162 tests en total).
 
@@ -271,10 +275,10 @@ flowchart LR
 │   ├── routes/          # auth, products, categories, brands, orders, payments, settings, stats, page_sections, contact_messages
 │   ├── models/           # Modelos SQLAlchemy (incluye brand, product_note, product_variant, product_detail_section, product_media_item, site_settings, page_section, page_section_history, contact_message)
 │   ├── schemas/           # Esquemas Pydantic
-│   ├── services/           # Wompi, Mercado Pago, email
+│   ├── services/           # Wompi, Mercado Pago, email, pricing (descuentos)
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (144 tests)
+│   └── tests/                   # pytest, SQLite en memoria (171 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño

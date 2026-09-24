@@ -6,8 +6,8 @@
 <title id="pageTitle">Producto — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
-<link rel="stylesheet" href="/css/components.css?v=20260922c">
+<link rel="stylesheet" href="/css/tokens.css?v=20260924a">
+<link rel="stylesheet" href="/css/components.css?v=20260924a">
 <style>
   .product-layout {
     display: flex;
@@ -206,11 +206,11 @@
   </div>
 </footer>
 
-<script src="/js/api.js?v=20260922c"></script>
-<script src="/js/site-settings.js?v=20260922c"></script>
-<script src="/js/cart.js?v=20260922c"></script>
-<script src="/js/sections.js?v=20260922c"></script>
-<script src="/js/reveal.js?v=20260922c"></script>
+<script src="/js/api.js?v=20260924a"></script>
+<script src="/js/site-settings.js?v=20260924a"></script>
+<script src="/js/cart.js?v=20260924a"></script>
+<script src="/js/sections.js?v=20260924a"></script>
+<script src="/js/reveal.js?v=20260924a"></script>
 <script>
   renderPageSections('producto');
   const slug = new URLSearchParams(window.location.search).get('slug');
@@ -244,6 +244,7 @@
       size_ml: product.size_ml,
       label: `${product.size_ml} ml — frasco completo`,
       price: product.price,
+      final_price: product.final_price,
       stock: product.stock,
       image_url: null,
     };
@@ -254,6 +255,7 @@
         size_ml: v.size_ml,
         label: `Decant ${v.size_ml} ml — prueba antes de llevar el frasco completo`,
         price: v.price,
+        final_price: v.final_price,
         stock: v.stock,
         image_url: v.image_url || null,
       }));
@@ -340,7 +342,7 @@
         <div class="product-info">
           ${product.house ? `<p class="product-house text-small">${product.house}</p>` : ''}
           <h1 class="h1">${product.name}</h1>
-          <p class="product-price" id="selectedPrice">${formatCOP(selected.price)}</p>
+          <p class="product-price" id="selectedPrice">${priceHtml(selected.price, selected.final_price, product.discount_percent)}</p>
 
           <p class="badge" id="stockBadge" style="margin-top:var(--space-4);"></p>
 
@@ -364,7 +366,7 @@
                       <input type="radio" name="size" value="${index}" ${index === 0 ? 'checked' : ''} ${size.stock === 0 ? 'disabled' : ''}>
                       ${size.label}${size.stock === 0 ? ' — agotado' : ''}
                     </span>
-                    <span class="option-row-price">${formatCOP(size.price)}</span>
+                    <span class="option-row-price">${priceHtml(size.price, size.final_price, product.discount_percent)}</span>
                   </label>
                 `).join('')}
               </div>
@@ -403,7 +405,7 @@
       const size = sizes[selectedSizeIndex];
       quantity = Math.min(quantity, Math.max(size.stock, 1));
       document.getElementById('qtyValue').textContent = quantity;
-      document.getElementById('selectedPrice').textContent = formatCOP(size.price);
+      document.getElementById('selectedPrice').innerHTML = priceHtml(size.price, size.final_price, product.discount_percent);
 
       // Si la presentación elegida tiene foto propia (ej. el decant en su
       // caja), la ficha la muestra; si no, se queda con la galería de siempre.
@@ -448,14 +450,14 @@
     });
     document.getElementById('addToCartBtn').addEventListener('click', () => {
       const size = sizes[selectedSizeIndex];
-      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, stock: size.stock } : null;
+      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, final_price: size.final_price, stock: size.stock } : null;
       addToCart(product, quantity, variant);
       document.getElementById('addToCartBtn').textContent = 'Agregado ✓';
       setTimeout(() => applySelection(), 1500);
     });
     document.getElementById('buyNowBtn').addEventListener('click', () => {
       const size = sizes[selectedSizeIndex];
-      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, stock: size.stock } : null;
+      const variant = size.variant_id ? { id: size.variant_id, size_ml: size.size_ml, price: size.price, final_price: size.final_price, stock: size.stock } : null;
       addToCart(product, quantity, variant);
       window.location.href = '/checkout.html';
     });
@@ -532,7 +534,7 @@
           <div class="product-card-body">
             <p class="product-card-name">${p.name}</p>
             <p class="product-card-meta">${p.house ? `${p.house} · ` : ''}${p.size_ml} ml</p>
-            <p class="product-card-price">${p.variants && p.variants.length ? 'Desde ' : ''}${formatCOP(p.variants && p.variants.length ? Math.min(p.price, ...p.variants.map((v) => v.price)) : p.price)}</p>
+            <p class="product-card-price">${productCardPriceHtml(p)}</p>
           </div>
         </a>
       `).join('');

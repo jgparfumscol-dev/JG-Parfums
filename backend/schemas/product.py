@@ -25,6 +25,7 @@ class ProductVariantResponse(BaseModel):
     id: int
     size_ml: int
     price: int
+    final_price: int  # con el descuento del producto ya aplicado
     stock: int
     is_active: bool
     image_url: str | None = None
@@ -147,6 +148,7 @@ class ProductBase(BaseModel):
     size_ml: int = Field(gt=0)
     price: int = Field(gt=0)
     stock: int = Field(ge=0, default=0)
+    discount_percent: int = Field(ge=0, le=99, default=0)
     is_active: bool = True
     is_featured: bool = False
 
@@ -166,6 +168,7 @@ class ProductUpdate(BaseModel):
     size_ml: int | None = Field(default=None, gt=0)
     price: int | None = Field(default=None, gt=0)
     stock: int | None = Field(default=None, ge=0)
+    discount_percent: int | None = Field(default=None, ge=0, le=99)
     is_active: bool | None = None
     is_featured: bool | None = None
     # None = no tocar las clases actuales; [] = dejarlo sin ninguna.
@@ -175,6 +178,7 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     id: int
     slug: str
+    final_price: int  # `price` con `discount_percent` ya aplicado
     created_at: datetime
     updated_at: datetime
     images: list[ProductImageResponse] = []

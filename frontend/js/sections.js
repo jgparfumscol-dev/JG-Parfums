@@ -515,7 +515,7 @@ async function renderProducts(section) {
         <div class="product-card-body">
           <p class="product-card-name">${p.name}</p>
           <p class="product-card-meta">${p.house ? `${p.house} · ` : ''}${p.size_ml} ml</p>
-          <p class="product-card-price">${formatCOP(p.price)}</p>
+          <p class="product-card-price">${priceHtml(p.price, p.final_price, p.discount_percent)}</p>
         </div>
       </a>
     `).join('');

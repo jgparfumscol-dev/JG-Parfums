@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260922c">
-<link rel="stylesheet" href="/css/components.css?v=20260922c">
+<link rel="stylesheet" href="/css/tokens.css?v=20260924a">
+<link rel="stylesheet" href="/css/components.css?v=20260924a">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -605,6 +605,12 @@
       <div class="grid-2">
         <div class="field"><label for="p_size_ml">Tamaño (ml)</label><input id="p_size_ml" name="size_ml" type="number" min="1" required></div>
         <div class="field"><label for="p_price">Precio (COP)</label><input id="p_price" name="price" type="number" min="1" required></div>
+      </div>
+      <div class="field">
+        <label for="p_discount">Descuento (%)</label>
+        <p class="text-muted text-small" style="margin:0 0 var(--space-2);">De 0 a 99. Aplica al frasco y a todos sus decants. Déjalo en 0 para quitarlo.</p>
+        <input id="p_discount" name="discount_percent" type="number" min="0" max="99" step="1" value="0" inputmode="numeric">
+        <p class="text-small" id="discountPreview" style="margin:var(--space-2) 0 0;" aria-live="polite"></p>
       </div>
       <div class="grid-2">
         <div class="field"><label for="p_stock">Stock</label><input id="p_stock" name="stock" type="number" min="0" required></div>
@@ -1211,7 +1217,7 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260922c"></script>
+<script src="/js/api.js?v=20260924a"></script>
 <script>
   let editingProductId = null;
 
@@ -1722,6 +1728,24 @@
   });
   document.getElementById('closeNotesCatalogBtn').addEventListener('click', () => document.getElementById('notesCatalogDialog').close());
 
+  // Precio en las listas del panel: con descuento muestra el final, el
+  // original tachado y el porcentaje.
+  function adminPriceHtml(p) {
+    return priceHtml(p.price, p.final_price, p.discount_percent);
+  }
+
+  function updateDiscountPreview() {
+    const form = document.getElementById('productForm');
+    const price = Number(form.price.value);
+    const pct = Number(form.discount_percent.value);
+    const preview = document.getElementById('discountPreview');
+    if (!price || !pct || pct < 0 || pct > 99) { preview.textContent = ''; return; }
+    const final = Math.floor((price * (100 - pct) + 50) / 100);
+    preview.textContent = `El cliente pagará ${formatCOP(final)} (antes ${formatCOP(price)}).`;
+  }
+  document.getElementById('p_price').addEventListener('input', updateDiscountPreview);
+  document.getElementById('p_discount').addEventListener('input', updateDiscountPreview);
+
   async function loadProducts() {
     const data = await apiFetch('/products?include_inactive=true&page_size=100');
     collectKnownNotes(data.items);
@@ -1742,7 +1766,7 @@
         </td>
         <td>${p.name}</td>
         <td class="text-muted">${p.house || '—'}</td>
-        <td>${formatCOP(p.price)}</td>
+        <td>${adminPriceHtml(p)}</td>
         <td>${p.stock}</td>
         <td>${p.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge text-muted">Inactivo</span>'}</td>
         <td style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
@@ -1809,7 +1833,7 @@
         <span class="right-list-thumb">${p.images[0] ? `<img src="${p.images[0].url}" alt="">` : ''}</span>
         <span class="right-list-body">
           <span class="right-list-name">${p.name}</span>
-          <span class="right-list-price">${formatCOP(p.price)}</span>
+          <span class="right-list-price">${adminPriceHtml(p)}</span>
         </span>
       </button>
     `).join('');
@@ -1837,6 +1861,7 @@
       form.concentration.value = product.concentration || '';
       form.size_ml.value = product.size_ml;
       form.price.value = product.price;
+      form.discount_percent.value = product.discount_percent || 0;
       form.stock.value = product.stock;
       form.is_active.value = String(product.is_active);
       document.getElementById('imageSection').hidden = false;
@@ -1858,6 +1883,7 @@
       document.getElementById('detailSectionSection').hidden = true;
       document.getElementById('mediaSection').hidden = true;
     }
+    updateDiscountPreview();
     document.getElementById('productDialog').showModal();
   }
 
@@ -2172,6 +2198,7 @@
       concentration: form.get('concentration') || null,
       size_ml: Number(form.get('size_ml')),
       price: Number(form.get('price')),
+      discount_percent: Number(form.get('discount_percent')) || 0,
       stock: Number(form.get('stock')),
       is_active: form.get('is_active') === 'true',
     };
