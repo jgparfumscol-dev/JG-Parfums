@@ -542,6 +542,7 @@ async function renderProducts(section) {
         <div class="container">
           ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
           ${itemsHtml}
+          ${c.cta_link ? `<p class="pgs-products-cta"><a class="btn btn-secondary" href="${c.cta_link}">${c.cta_label || 'Ver todos'}</a></p>` : ''}
         </div>
       </section>
     `;

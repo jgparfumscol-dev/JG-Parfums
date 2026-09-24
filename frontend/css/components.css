@@ -493,6 +493,12 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 
 .nav-mobile-classes a { text-decoration: none; color: var(--jg-onyx); font-size: 15px; }
 
+/* botón opcional al pie de la sección "products" (ver renderProducts) */
+.pgs-products-cta {
+  margin: var(--space-8) 0 0;
+  text-align: center;
+}
+
 /* footer */
 /* El contenido de #dynamicSections tarda un instante en llegar (fetch a
    /page-sections) — sin esto, el footer se veía pegado al header ese

@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260924b">
-<link rel="stylesheet" href="/css/components.css?v=20260924b">
+<link rel="stylesheet" href="/css/tokens.css?v=20260924c">
+<link rel="stylesheet" href="/css/components.css?v=20260924c">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -782,6 +782,8 @@
           <div class="field" style="flex:1;"><label for="s_products_limit_mobile">Móvil</label><input id="s_products_limit_mobile" type="number" min="1" max="24" value="6"></div>
           <div class="field" style="flex:1;"><label for="s_products_limit_desktop">PC / escritorio</label><input id="s_products_limit_desktop" type="number" min="1" max="24" value="8"></div>
         </div>
+        <div class="field"><label for="s_products_cta_label">Texto del botón (opcional)</label><input id="s_products_cta_label" placeholder="Ver todos"></div>
+        <div class="field"><label for="s_products_cta_link">Enlace del botón (opcional)</label><input id="s_products_cta_link" data-linkpick placeholder="/catalogo.html"></div>
       </div>
 
       <div id="sectionFieldsText" hidden>
@@ -1217,7 +1219,7 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260924b"></script>
+<script src="/js/api.js?v=20260924c"></script>
 <script>
   let editingProductId = null;
 
@@ -3504,6 +3506,8 @@
       // "limit" para las dos (ver el mismo fallback en renderProducts).
       document.getElementById('s_products_limit_mobile').value = c.limit_mobile || c.limit || 6;
       document.getElementById('s_products_limit_desktop').value = c.limit_desktop || c.limit || 8;
+      document.getElementById('s_products_cta_label').value = c.cta_label || '';
+      document.getElementById('s_products_cta_link').value = c.cta_link || '';
     } else if (type === 'text') {
       document.getElementById('s_text_heading').value = c.heading || '';
       document.getElementById('s_text_body').value = c.body || '';
@@ -3695,6 +3699,8 @@
         category_id: document.getElementById('s_products_category').value ? Number(document.getElementById('s_products_category').value) : null,
         limit_mobile: Number(document.getElementById('s_products_limit_mobile').value) || 6,
         limit_desktop: Number(document.getElementById('s_products_limit_desktop').value) || 8,
+        cta_label: document.getElementById('s_products_cta_label').value.trim() || null,
+        cta_link: document.getElementById('s_products_cta_link').value.trim() || null,
       };
     } else if (type === 'text') {
       content = {
