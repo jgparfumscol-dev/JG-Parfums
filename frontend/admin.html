@@ -580,9 +580,10 @@
       <div class="field"><label for="p_house">Casa</label><input id="p_house" name="house"></div>
       <div class="field"><label for="p_description">Descripción</label><textarea id="p_description" name="description" required></textarea></div>
       <div class="grid-2">
-        <div class="field"><label>Clases</label>
+        <div class="field"><label for="productCategoryAdd">Clases</label>
           <p class="text-muted text-small" style="margin:0 0 var(--space-2);">Puede estar en una, varias o ninguna.</p>
-          <div id="productCategoriesPicker"></div>
+          <select id="productCategoryAdd"><option value="">+ Agregar clase…</option></select>
+          <div id="productCategoriesPicker" style="margin-top: var(--space-2);"></div>
         </div>
         <div class="field"><label for="p_concentration">Concentración</label><input id="p_concentration" name="concentration" placeholder="EDP"></div>
       </div>
@@ -2767,25 +2768,44 @@
   }
 
   // Clases de un producto (ficha de producto, no una sección del editor):
-  // casillas simples, sin el handle de arrastrar de
-  // clases_carousel/brands_carousel — acá el orden no importa, solo cuáles
-  // quedan marcadas, así que no tiene sentido mostrar una manija que no
-  // hace nada.
+  // una lista fija de casillas se veía mal apenas había varias clases (una
+  // pared de checkboxes) — ahora es un <select> para ir agregando de a una,
+  // cada una elegida cae abajo como fila con "Quitar" (mismo criterio que
+  // imágenes/notas/variantes de la ficha) y sale del dropdown para no
+  // poder agregarla dos veces.
   function renderProductCategoriesPicker(selectedIds) {
     const ids = selectedIds || [];
-    document.getElementById('productCategoriesPicker').innerHTML = categoriesCache.length
-      ? categoriesCache.map((c) => `
-          <label class="image-row" style="cursor:pointer;">
-            <input type="checkbox" data-product-category-check value="${c.id}" ${ids.includes(c.id) ? 'checked' : ''}>
+    const selected = ids.map((id) => categoriesCache.find((c) => c.id === id)).filter(Boolean);
+    const available = categoriesCache.filter((c) => !ids.includes(c.id));
+
+    document.getElementById('productCategoriesPicker').innerHTML = selected.length
+      ? selected.map((c) => `
+          <div class="image-row" data-product-category-row="${c.id}">
             <span style="flex:1;">${c.name}${c.is_active === false ? ' <span class="text-muted text-small">(oculta)</span>' : ''}</span>
-          </label>
+            <button type="button" class="remove-btn" data-remove-product-category="${c.id}">Quitar</button>
+          </div>
         `).join('')
-      : '<p class="text-muted text-small">Todavía no hay clases creadas.</p>';
+      : '<p class="text-muted text-small">Sin clases todavía.</p>';
+
+    const select = document.getElementById('productCategoryAdd');
+    select.innerHTML = '<option value="">+ Agregar clase…</option>'
+      + available.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+
+    document.querySelectorAll('[data-remove-product-category]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        renderProductCategoriesPicker(ids.filter((id) => id !== Number(btn.dataset.removeProductCategory)));
+      });
+    });
   }
 
+  document.getElementById('productCategoryAdd').addEventListener('change', (event) => {
+    if (!event.target.value) return;
+    renderProductCategoriesPicker([...collectProductCategoryIds(), Number(event.target.value)]);
+  });
+
   function collectProductCategoryIds() {
-    return Array.from(document.querySelectorAll('#productCategoriesPicker [data-product-category-check]:checked'))
-      .map((el) => Number(el.value));
+    return Array.from(document.querySelectorAll('[data-product-category-row]'))
+      .map((row) => Number(row.dataset.productCategoryRow));
   }
 
   // "Productos por fila en móvil" solo tiene sentido en grilla y carrusel
