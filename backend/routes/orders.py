@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from middleware.auth import get_current_admin, get_optional_user
+from middleware.auth import get_current_admin, get_optional_user, hash_password
 from models.order import Order
 from models.order_item import OrderItem
 from models.product import Product
@@ -91,9 +91,27 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db), user: User
     settings = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
     shipping_cost = settings.shipping_cost if settings else 0
 
+    # Compra como invitado: se crea (o reutiliza, si ya compró antes con el
+    # mismo correo) una cuenta para dejarle el pedido en su historial —
+    # pero sin el correo de bienvenida de /auth/register, porque nadie
+    # decidió registrarse a propósito acá. Password inutilizable (nadie la
+    # conoce): para entrar más adelante, "Olvidé mi contraseña" con este
+    # mismo correo.
+    if user is None:
+        user = db.query(User).filter(User.email == payload.guest_email).first()
+        if user is None:
+            user = User(
+                email=payload.guest_email,
+                password_hash=hash_password(secrets.token_urlsafe(32)),
+                full_name=payload.guest_name,
+                phone=payload.guest_phone,
+            )
+            db.add(user)
+            db.flush()  # necesita user.id para el Order de abajo, antes del commit final
+
     order = Order(
         order_number=_generate_order_number(),
-        user_id=user.id if user else None,
+        user_id=user.id,
         guest_email=payload.guest_email,
         guest_name=payload.guest_name,
         guest_phone=payload.guest_phone,

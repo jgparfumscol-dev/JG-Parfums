@@ -90,3 +90,60 @@ def test_list_orders_requires_admin(client, admin_headers):
 
     response = client.get("/orders")
     assert response.status_code == 401
+
+
+def test_guest_checkout_creates_account_without_welcome_email(client, admin_headers, db, monkeypatch):
+    from models.order import Order
+    from models.user import User
+    from services import email_service
+
+    welcome_calls = []
+    monkeypatch.setattr(email_service, "email_bienvenida", lambda *a, **k: welcome_calls.append((a, k)))
+
+    product = _create_product(client, admin_headers)
+    order_payload = client.post("/orders", json=_checkout_payload(product["id"])).json()
+
+    assert welcome_calls == []  # nunca se manda el correo de bienvenida de /auth/register
+
+    user = db.query(User).filter(User.email == "comprador@example.com").first()
+    assert user is not None
+    assert user.full_name == "Comprador Test"
+    assert user.phone == "3001234567"
+    assert user.is_admin is False
+
+    order = db.query(Order).filter(Order.order_number == order_payload["order_number"]).first()
+    assert order.user_id == user.id
+
+    # Sin contraseña conocida, pero la cuenta ya existe: puede entrar
+    # pidiendo restablecerla con el mismo correo.
+    forgot = client.post("/auth/forgot-password", json={"email": "comprador@example.com"})
+    assert forgot.status_code == 200
+
+
+def test_guest_checkout_reuses_account_on_repeat_email(client, admin_headers, db):
+    from models.user import User
+
+    product = _create_product(client, admin_headers, stock=10)
+    client.post("/orders", json=_checkout_payload(product["id"]))
+    client.post("/orders", json=_checkout_payload(product["id"]))
+
+    accounts = db.query(User).filter(User.email == "comprador@example.com").all()
+    assert len(accounts) == 1
+
+
+def test_guest_checkout_links_to_existing_registered_account(client, admin_headers, db):
+    from models.order import Order
+
+    register = client.post(
+        "/auth/register",
+        json={"email": "comprador@example.com", "password": "supersecret123", "full_name": "Comprador Real"},
+    )
+    registered_user_id = None
+    me = client.get("/auth/me", headers={"Authorization": f"Bearer {register.json()['access_token']}"})
+    registered_user_id = me.json()["id"]
+
+    product = _create_product(client, admin_headers, stock=10)
+    order_payload = client.post("/orders", json=_checkout_payload(product["id"])).json()
+
+    order = db.query(Order).filter(Order.order_number == order_payload["order_number"]).first()
+    assert order.user_id == registered_user_id

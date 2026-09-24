@@ -179,6 +179,132 @@
         ],
         "createdAt": "2026-09-23T01:57:12.518Z",
         "reason": "site-wide brand token --jg-paper (#F7F5F1) from tokens.css, used across the whole site since before this session, not introduced by any edit here"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.242Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.258Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/carrito.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.266Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/carrito.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.276Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/contacto.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.283Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/contacto.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.292Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/mi-cuenta.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.299Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/mi-cuenta.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.307Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/politicas.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.316Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/politicas.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.325Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/producto.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.332Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/producto.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.342Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "frontend/quienes-somos.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.349Z",
+        "reason": "pre-existing .nav-classes dropdown (border 1px + shadow-float 0 8px 24px), the single sanctioned float-shadow use per DESIGN.md Elevation section (menus/modals) — not introduced or touched by this session's nav-search edits"
+      },
+      {
+        "rule": "image-hover-transform",
+        "value": "*",
+        "files": [
+          "frontend/quienes-somos.html"
+        ],
+        "createdAt": "2026-09-24T00:22:54.359Z",
+        "reason": "pre-existing .product-card:hover img scale(1.035), documented sanctioned exception in DESIGN.md Cards/Containers — not introduced or touched by this session's nav-search edits"
       }
     ]
   }

@@ -57,8 +57,9 @@ def delete_category(category_id: int, db: Session = Depends(get_db), _admin: Use
     category = db.query(Category).filter(Category.id == category_id).first()
     if category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categoría no encontrada")
-    # ondelete=SET NULL en products.category_id: los productos que la usaban
-    # quedan sin categoría, no se borran.
+    # ondelete=CASCADE en la tabla puente product_categories: los productos
+    # que la usaban pierden esta clase (les puede quedar alguna otra si
+    # tenían más de una), no se borran.
     db.delete(category)
     db.commit()
 

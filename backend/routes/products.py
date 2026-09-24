@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from middleware.auth import get_current_admin, get_optional_user
+from models.category import Category
 from models.product import Product, ProductImage
 from models.product_detail_section import ProductDetailSection
 from models.product_media_item import ProductMediaItem
@@ -55,7 +56,7 @@ def list_products(
     if not (include_inactive and user is not None and user.is_admin):
         query = query.filter(Product.is_active.is_(True))
     if category_id is not None:
-        query = query.filter(Product.category_id == category_id)
+        query = query.filter(Product.categories.any(Category.id == category_id))
     if search:
         like = f"%{search}%"
         query = query.filter(Product.name.ilike(like) | Product.house.ilike(like))
@@ -87,7 +88,12 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db), _admin
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un producto con ese slug")
 
-    product = Product(**payload.model_dump())
+    data = payload.model_dump()
+    category_ids = data.pop("category_ids")
+
+    product = Product(**data)
+    if category_ids:
+        product.categories = db.query(Category).filter(Category.id.in_(category_ids)).all()
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -109,6 +115,13 @@ def update_product(
         db.query(Product).filter(Product.id != product_id, Product.is_featured.is_(True)).update(
             {"is_featured": False}
         )
+    # category_ids no es una columna real (es la relación N:N `categories`)
+    # — se resuelve aparte en vez de por setattr directo. Ausente en el
+    # payload = no tocar las clases actuales; presente (aunque sea []) =
+    # reemplazarlas por esta lista.
+    if "category_ids" in data:
+        category_ids = data.pop("category_ids")
+        product.categories = db.query(Category).filter(Category.id.in_(category_ids)).all() if category_ids else []
     for field, value in data.items():
         setattr(product, field, value)
     db.commit()

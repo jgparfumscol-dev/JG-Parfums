@@ -1,9 +1,20 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
 
 from database import Base
+
+# Un producto puede estar en una, dos o más clases (antes category_id, una
+# sola) — tabla puente sin columnas propias, ver la migración
+# b8c9d0e1f2a3_products_many_to_many_categories para el backfill desde la
+# columna vieja.
+product_categories = Table(
+    "product_categories",
+    Base.metadata,
+    Column("product_id", Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
+    Column("category_id", Integer, ForeignKey("categories.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Product(Base):
@@ -16,7 +27,6 @@ class Product(Base):
     name = Column(String, nullable=False)
     house = Column(String, nullable=True)  # casa/marca original del perfume
     description = Column(Text, nullable=False)
-    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     concentration = Column(String, nullable=True)  # EDP, EDT, extrait de parfum
     size_ml = Column(Integer, nullable=False)
     price = Column(Integer, nullable=False)  # COP, pesos enteros (sin centavos)
@@ -64,7 +74,7 @@ class Product(Base):
         order_by="ProductMediaItem.position",
     )
     order_items = relationship("OrderItem", back_populates="product")
-    category = relationship("Category")
+    categories = relationship("Category", secondary=product_categories, order_by="Category.sort_order")
 
 
 class ProductImage(Base):

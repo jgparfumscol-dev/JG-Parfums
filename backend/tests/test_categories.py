@@ -38,12 +38,12 @@ def test_product_category_assignment_and_filter(client, admin_headers):
         "/products",
         json={
             "slug": "citrico-manana", "name": "Cítrico Mañana", "description": "Fresco.",
-            "category_id": category["id"], "size_ml": 100, "price": 180000, "stock": 5,
+            "category_ids": [category["id"]], "size_ml": 100, "price": 180000, "stock": 5,
         },
         headers=admin_headers,
     )
     assert with_category.status_code == 201
-    assert with_category.json()["category"]["slug"] == "citrico"
+    assert with_category.json()["categories"][0]["slug"] == "citrico"
 
     client.post(
         "/products",
@@ -54,6 +54,32 @@ def test_product_category_assignment_and_filter(client, admin_headers):
     filtered = client.get(f"/products?category_id={category['id']}")
     assert filtered.json()["total"] == 1
     assert filtered.json()["items"][0]["slug"] == "citrico-manana"
+
+
+def test_product_can_belong_to_several_categories(client, admin_headers):
+    citrico = client.post("/categories", json={"name": "Cítrico", "slug": "citrico"}, headers=admin_headers).json()
+    fresco = client.post("/categories", json={"name": "Fresco", "slug": "fresco"}, headers=admin_headers).json()
+
+    product = client.post(
+        "/products",
+        json={
+            "slug": "citrico-fresco", "name": "Cítrico Fresco", "description": "Dos clases.",
+            "category_ids": [citrico["id"], fresco["id"]], "size_ml": 100, "price": 180000, "stock": 5,
+        },
+        headers=admin_headers,
+    ).json()
+    slugs = {c["slug"] for c in product["categories"]}
+    assert slugs == {"citrico", "fresco"}
+
+    assert client.get(f"/products?category_id={citrico['id']}").json()["total"] == 1
+    assert client.get(f"/products?category_id={fresco['id']}").json()["total"] == 1
+
+    # Reemplaza la lista completa (no agrega) — se queda solo con "fresco".
+    updated = client.put(
+        f"/products/{product['id']}", json={"category_ids": [fresco["id"]]}, headers=admin_headers
+    ).json()
+    assert [c["slug"] for c in updated["categories"]] == ["fresco"]
+    assert client.get(f"/products?category_id={citrico['id']}").json()["total"] == 0
 
 
 def test_create_category_with_class_card_fields_and_defaults(client, admin_headers):
@@ -148,7 +174,7 @@ def test_deleting_category_unsets_it_on_products_instead_of_deleting_them(client
         "/products",
         json={
             "slug": "ambar-nocturno", "name": "Ámbar Nocturno", "description": "Oriental.",
-            "category_id": category["id"], "size_ml": 100, "price": 200000, "stock": 3,
+            "category_ids": [category["id"]], "size_ml": 100, "price": 200000, "stock": 3,
         },
         headers=admin_headers,
     ).json()
@@ -157,4 +183,4 @@ def test_deleting_category_unsets_it_on_products_instead_of_deleting_them(client
 
     updated = client.get("/products/ambar-nocturno")
     assert updated.status_code == 200
-    assert updated.json()["category"] is None
+    assert updated.json()["categories"] == []

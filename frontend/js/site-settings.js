@@ -173,10 +173,40 @@ applySiteBranding();
 function initMobileNavToggle() {
   const toggle = document.getElementById('navToggle');
   const panel = document.getElementById('navMobilePanel');
+  const searchToggle = document.getElementById('navSearchToggle');
+  const searchPanel = document.getElementById('navSearchPanel');
   if (!toggle || !panel) return;
   toggle.addEventListener('click', () => {
     const isOpen = panel.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', String(isOpen));
+    // No tiene sentido tener el menú y el buscador abiertos a la vez.
+    if (isOpen && searchPanel) {
+      searchPanel.hidden = true;
+      searchToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+// Buscador de móvil aparte del menú hamburguesa (ver .nav-search-panel en
+// components.css): antes vivía adentro del panel del menú, así que buscar
+// significaba primero abrir todo el menú. Ahora es su propio ícono al
+// lado de "Abrir menú" que abre/cierra una franja angosta solo con el
+// campo de búsqueda.
+function initMobileSearchToggle() {
+  const toggle = document.getElementById('navSearchToggle');
+  const panel = document.getElementById('navSearchPanel');
+  const menuToggle = document.getElementById('navToggle');
+  const menuPanel = document.getElementById('navMobilePanel');
+  if (!toggle || !panel) return;
+  toggle.addEventListener('click', () => {
+    const isOpen = panel.hidden;
+    panel.hidden = !isOpen;
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    if (isOpen) {
+      menuPanel?.classList.remove('is-open');
+      menuToggle?.setAttribute('aria-expanded', 'false');
+      panel.querySelector('input')?.focus();
+    }
   });
 }
 
@@ -345,6 +375,7 @@ function initSmartBackLinks() {
 }
 
 initMobileNavToggle();
+initMobileSearchToggle();
 initNavClasses();
 initNavClassesToggle();
 initNavSearch();

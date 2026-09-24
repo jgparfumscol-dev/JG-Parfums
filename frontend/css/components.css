@@ -200,9 +200,20 @@ body.home-transparent-nav .nav .nav-search input { color: #FFFFFF; }
 body.home-transparent-nav .nav .nav-search input::placeholder { color: rgba(255, 255, 255, .7); }
 body.home-transparent-nav .nav .nav-search button { color: #FFFFFF; }
 
-/* el menú móvil abierto necesita un fondo sólido propio para leerse, sin
-   importar que el header de atrás siga transparente. */
+/* el menú móvil (y ahora el buscador, ver .nav-search-panel) abiertos
+   necesitan un fondo sólido propio para leerse, sin importar que el
+   header de atrás siga transparente. */
 body.home-transparent-nav .nav-mobile-panel.is-open { background: var(--jg-paper); }
+body.home-transparent-nav .nav-search-panel:not([hidden]) { background: var(--jg-paper); }
+
+/* El buscador de escritorio, ahí sí sobre la foto transparente, usa texto
+   blanco (ver arriba) — pero este mismo .nav-search vive también adentro
+   de .nav-search-panel, ya con fondo sólido claro propio: mismo texto
+   oscuro de siempre, blanco quedaría invisible. Misma especificidad que
+   la regla de arriba (3 clases + input/button), gana por venir después. */
+body.home-transparent-nav .nav .nav-search-panel input { color: var(--jg-onyx); }
+body.home-transparent-nav .nav .nav-search-panel input::placeholder { color: var(--text-muted); }
+body.home-transparent-nav .nav .nav-search-panel button { color: var(--text-muted); }
 
 body.home-transparent-nav .nav.is-scrolled {
   position: fixed;
@@ -258,6 +269,9 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 }
 
 .nav-mobile-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   cursor: pointer;
@@ -285,6 +299,27 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
   .nav-mobile-panel { display: none !important; }
 }
 
+/* Buscador de móvil: antes vivía adentro del panel del menú hamburguesa
+   (había que abrir "Clases"/"Mi cuenta" y todo lo demás solo para buscar);
+   ahora tiene su propio ícono al lado de "Abrir menú" y abre una franja
+   angosta solo con el campo, sin arrastrar el resto de los links del
+   menú. Mismo .nav-search de siempre adentro — initNavSearch (más abajo)
+   no le importa dónde viva el form. */
+.nav-search-panel {
+  display: none;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-top: 1px solid var(--ink-100);
+}
+
+.nav-search-panel:not([hidden]) { display: block; }
+
+.nav-search-panel .nav-search-mobile { margin-bottom: 0; }
+
+@media (min-width: 1024px) {
+  .nav-search-panel { display: none !important; }
+}
+
 /* header compacto de una sola fila: en móvil, logo centrado con el menú a
    la izquierda y el carrito a la derecha (clases, cuenta y buscador se
    recogen en el panel del menú); en escritorio (≥1024px) se abre a un
@@ -300,7 +335,7 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 
 .nav-logo-link { display: inline-flex; }
 
-.nav-bar .nav-mobile-toggle { position: absolute; left: 0; }
+.nav-bar .nav-mobile-left { position: absolute; left: 0; display: flex; align-items: center; }
 
 .nav-bar-actions {
   position: absolute;

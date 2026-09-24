@@ -143,7 +143,6 @@ class ProductBase(BaseModel):
     name: str = Field(min_length=1)
     house: str | None = None
     description: str = Field(min_length=1)
-    category_id: int | None = None
     concentration: str | None = None
     size_ml: int = Field(gt=0)
     price: int = Field(gt=0)
@@ -154,19 +153,23 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     slug: str = Field(min_length=1)
+    # Una, dos o más — nunca obligatorio, un producto puede quedar sin
+    # clase todavía (igual que antes con category_id=None).
+    category_ids: list[int] = Field(default_factory=list)
 
 
 class ProductUpdate(BaseModel):
     name: str | None = None
     house: str | None = None
     description: str | None = None
-    category_id: int | None = None
     concentration: str | None = None
     size_ml: int | None = Field(default=None, gt=0)
     price: int | None = Field(default=None, gt=0)
     stock: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
     is_featured: bool | None = None
+    # None = no tocar las clases actuales; [] = dejarlo sin ninguna.
+    category_ids: list[int] | None = None
 
 
 class ProductResponse(ProductBase):
@@ -179,7 +182,7 @@ class ProductResponse(ProductBase):
     notes: list[ProductNoteResponse] = []
     detail_sections: list[ProductDetailSectionResponse] = []
     media_items: list[ProductMediaItemResponse] = []
-    category: CategoryResponse | None = None
+    categories: list[CategoryResponse] = []
 
     model_config = {"from_attributes": True}
 

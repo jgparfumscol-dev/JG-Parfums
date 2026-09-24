@@ -110,9 +110,14 @@
 
 <header class="nav">
   <div class="container nav-bar">
-    <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
+    <div class="nav-mobile-left">
+      <button class="nav-mobile-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <button class="nav-mobile-toggle nav-search-toggle" id="navSearchToggle" aria-label="Buscar" aria-expanded="false" aria-controls="navSearchPanel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+      </button>
+    </div>
     <div class="nav-classes-menu">
       <button type="button" class="nav-classes-toggle" id="navClassesToggle" aria-haspopup="true" aria-expanded="false" aria-controls="navClasses">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
@@ -140,16 +145,18 @@
     </div>
   </div>
   <nav class="nav-mobile-panel container" id="navMobilePanel">
+    <ul class="nav-mobile-classes" id="navClassesMobile"></ul>
+    <a href="/catalogo.html">Catálogo</a>
+    <a href="/mi-cuenta.html">Mi cuenta</a>
+  </nav>
+  <div class="nav-search-panel container" id="navSearchPanel" hidden>
     <form class="nav-search nav-search-mobile" id="navSearchFormMobile" role="search">
       <input type="search" name="q" placeholder="Buscar perfumes" aria-label="Buscar perfumes">
       <button type="submit" aria-label="Buscar">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
       </button>
     </form>
-    <ul class="nav-mobile-classes" id="navClassesMobile"></ul>
-    <a href="/catalogo.html">Catálogo</a>
-    <a href="/mi-cuenta.html">Mi cuenta</a>
-  </nav>
+  </div>
 </header>
 
 <main id="main">
@@ -484,13 +491,23 @@
         const byCategory = await apiFetch(`/products?category_id=${settings.category_id}&page_size=${limit + 1}`);
         candidates = byCategory.items.filter((p) => p.id !== product.id);
       } else {
-        // Prioriza la misma familia olfativa; si el catálogo todavía tiene
-        // pocos productos, completa con los más recientes en vez de dejar
-        // la sección vacía o a medias.
-        const byFamily = product.category
-          ? await apiFetch(`/products?category_id=${product.category.id}&page_size=${limit + 4}`)
-          : { items: [] };
-        candidates = byFamily.items.filter((p) => p.id !== product.id);
+        // Prioriza cualquiera de las clases del producto (puede tener más
+        // de una); si el catálogo todavía tiene pocos productos, completa
+        // con los más recientes en vez de dejar la sección vacía o a medias.
+        const categories = product.categories || [];
+        const byFamilyPages = await Promise.all(
+          categories.map((cat) => apiFetch(`/products?category_id=${cat.id}&page_size=${limit + 4}`))
+        );
+        candidates = [];
+        const seenIds = new Set();
+        for (const page of byFamilyPages) {
+          for (const p of page.items) {
+            if (p.id !== product.id && !seenIds.has(p.id)) {
+              candidates.push(p);
+              seenIds.add(p.id);
+            }
+          }
+        }
 
         if (candidates.length < limit) {
           const recent = await apiFetch(`/products?page_size=${limit + 4}`);

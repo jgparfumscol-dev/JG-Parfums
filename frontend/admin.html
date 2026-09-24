@@ -427,7 +427,10 @@
       </div>
 
       <div id="centerOrders" class="center-view" hidden>
-        <h2 class="h3" style="margin-bottom: var(--space-4);">Pedidos</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap: var(--space-3); margin-bottom: var(--space-4);">
+          <h2 class="h3" style="margin:0;">Pedidos</h2>
+          <button class="btn btn-secondary" type="button" id="openUsersBtn">Ver usuarios</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>N.° pedido</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Estado</th><th>Fecha</th></tr></thead>
@@ -577,8 +580,9 @@
       <div class="field"><label for="p_house">Casa</label><input id="p_house" name="house"></div>
       <div class="field"><label for="p_description">Descripción</label><textarea id="p_description" name="description" required></textarea></div>
       <div class="grid-2">
-        <div class="field"><label for="p_category">Categoría</label>
-          <select id="p_category" name="category_id"><option value="">Sin categoría</option></select>
+        <div class="field"><label>Clases</label>
+          <p class="text-muted text-small" style="margin:0 0 var(--space-2);">Puede estar en una, varias o ninguna.</p>
+          <div id="productCategoriesPicker"></div>
         </div>
         <div class="field"><label for="p_concentration">Concentración</label><input id="p_concentration" name="concentration" placeholder="EDP"></div>
       </div>
@@ -1101,6 +1105,22 @@
   </div>
 </dialog>
 
+<dialog id="usersDialog">
+  <div class="dialog-inner" style="max-width:680px;">
+    <h2 class="h3" style="margin-bottom: var(--space-2);">Usuarios registrados</h2>
+    <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Cuentas creadas desde "Regístrate" en la tienda. La compra como invitado no crea una cuenta acá — solo queda el nombre/correo/teléfono guardados en el pedido.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Admin</th><th>Registrado</th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" id="closeUsersBtn">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="notesCatalogDialog">
   <div class="dialog-inner">
     <h2 class="h3" style="margin-bottom: var(--space-4);">Notas olfativas guardadas</h2>
@@ -1291,7 +1311,6 @@
   async function loadCategories() {
     categoriesCache = await apiFetch('/categories');
     const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-    document.getElementById('p_category').innerHTML = '<option value="">Sin categoría</option>' + options;
     document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
     document.getElementById('s_related_category').innerHTML = '<option value="">Automático (misma clase del producto)</option>' + options;
     renderClassCarouselPicker();
@@ -1735,7 +1754,7 @@
       form.slug.disabled = true;
       form.house.value = product.house || '';
       form.description.value = product.description;
-      form.category_id.value = product.category_id || '';
+      renderProductCategoriesPicker((product.categories || []).map((c) => c.id));
       form.concentration.value = product.concentration || '';
       form.size_ml.value = product.size_ml;
       form.price.value = product.price;
@@ -1753,6 +1772,7 @@
       renderMediaItems(product);
     } else {
       form.slug.disabled = false;
+      renderProductCategoriesPicker([]);
       document.getElementById('imageSection').hidden = true;
       document.getElementById('noteSection').hidden = true;
       document.getElementById('variantSection').hidden = true;
@@ -2069,7 +2089,7 @@
       name: form.get('name'),
       house: form.get('house') || null,
       description: form.get('description'),
-      category_id: form.get('category_id') ? Number(form.get('category_id')) : null,
+      category_ids: collectProductCategoryIds(),
       concentration: form.get('concentration') || null,
       size_ml: Number(form.get('size_ml')),
       price: Number(form.get('price')),
@@ -2137,6 +2157,35 @@
       });
     });
   }
+
+  // Cuentas reales (creadas desde /registro) — botón "Ver usuarios" en
+  // Pedidos, mismo patrón de diálogo de solo lectura que "Ver todas las
+  // notas guardadas" del editor de productos. La compra como invitado no
+  // aparece acá: no crea fila en `users`, solo guest_name/guest_email en
+  // el pedido (ver create_order en el backend).
+  async function loadUsers() {
+    const users = await apiFetch('/auth/users');
+    const body = document.getElementById('usersBody');
+    if (users.length === 0) {
+      body.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center; padding-block: var(--space-8);">Todavía no hay cuentas registradas.</td></tr>`;
+      return;
+    }
+    body.innerHTML = users.map((u) => `
+      <tr>
+        <td>${u.full_name}</td>
+        <td>${u.email}</td>
+        <td class="text-small text-muted">${u.phone || '—'}</td>
+        <td>${u.is_admin ? 'Sí' : 'No'}</td>
+        <td class="text-small text-muted">${new Date(u.created_at).toLocaleDateString('es-CO')}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('openUsersBtn').addEventListener('click', async () => {
+    document.getElementById('usersDialog').showModal();
+    await loadUsers();
+  });
+  document.getElementById('closeUsersBtn').addEventListener('click', () => document.getElementById('usersDialog').close());
 
   async function loadRightOrders() {
     const orders = await apiFetch('/orders');
@@ -2715,6 +2764,28 @@
 
   function updateBrandCarouselEmptyNotice() {
     document.getElementById('brandCarouselEmptyNotice').hidden = brandsCache.some((b) => b.is_active);
+  }
+
+  // Clases de un producto (ficha de producto, no una sección del editor):
+  // casillas simples, sin el handle de arrastrar de
+  // clases_carousel/brands_carousel — acá el orden no importa, solo cuáles
+  // quedan marcadas, así que no tiene sentido mostrar una manija que no
+  // hace nada.
+  function renderProductCategoriesPicker(selectedIds) {
+    const ids = selectedIds || [];
+    document.getElementById('productCategoriesPicker').innerHTML = categoriesCache.length
+      ? categoriesCache.map((c) => `
+          <label class="image-row" style="cursor:pointer;">
+            <input type="checkbox" data-product-category-check value="${c.id}" ${ids.includes(c.id) ? 'checked' : ''}>
+            <span style="flex:1;">${c.name}${c.is_active === false ? ' <span class="text-muted text-small">(oculta)</span>' : ''}</span>
+          </label>
+        `).join('')
+      : '<p class="text-muted text-small">Todavía no hay clases creadas.</p>';
+  }
+
+  function collectProductCategoryIds() {
+    return Array.from(document.querySelectorAll('#productCategoriesPicker [data-product-category-check]:checked'))
+      .map((el) => Number(el.value));
   }
 
   // "Productos por fila en móvil" solo tiene sentido en grilla y carrusel

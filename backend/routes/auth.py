@@ -8,7 +8,14 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from main import limiter
-from middleware.auth import create_access_token, get_client_ip, get_current_user, hash_password, verify_password
+from middleware.auth import (
+    create_access_token,
+    get_client_ip,
+    get_current_admin,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
 from models.password_reset import PasswordResetToken
 from models.user import User
 from schemas.auth import (
@@ -73,6 +80,13 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
 @router.get("/me", response_model=UserResponse)
 def me(user: User = Depends(get_current_user)):
     return user
+
+
+@router.get("/users", response_model=list[UserResponse])
+def list_users(db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    # Solo cuentas reales (creadas desde /registro) — la compra como invitado
+    # no crea una fila acá, ver guest_email/guest_name en Order.
+    return db.query(User).order_by(User.created_at.desc()).all()
 
 
 @router.post("/forgot-password", response_model=GenericMessageResponse)

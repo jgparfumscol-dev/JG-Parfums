@@ -43,3 +43,27 @@ def test_forgot_password_generic_response_for_unknown_email(client):
     response = client.post("/auth/forgot-password", json={"email": "nadie@example.com"})
     assert response.status_code == 200
     assert "Si el email existe" in response.json()["message"]
+
+
+def test_admin_can_list_users(client, admin_headers):
+    client.post(
+        "/auth/register",
+        json={"email": "cliente2@example.com", "password": "supersecret123", "full_name": "Cliente Dos"},
+    )
+    response = client.get("/auth/users", headers=admin_headers)
+    assert response.status_code == 200
+    emails = [u["email"] for u in response.json()]
+    assert "cliente2@example.com" in emails
+    assert "admin@jgparfums.com" in emails
+
+
+def test_list_users_requires_admin(client):
+    client.post(
+        "/auth/register",
+        json={"email": "cliente3@example.com", "password": "supersecret123", "full_name": "Cliente Tres"},
+    )
+    login = client.post("/auth/login", json={"email": "cliente3@example.com", "password": "supersecret123"})
+    token = login.json()["access_token"]
+
+    response = client.get("/auth/users", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 403

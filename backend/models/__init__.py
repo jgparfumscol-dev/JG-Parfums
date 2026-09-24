@@ -10,7 +10,9 @@ from models.page_section import PageSection  # noqa: F401
 from models.page_section_history import PageSectionHistory  # noqa: F401
 from models.page_view import PageView  # noqa: F401
 from models.password_reset import PasswordResetToken  # noqa: F401
-from models.product import Product, ProductImage  # noqa: F401
+from models.product import Product, ProductImage, product_categories  # noqa: F401
+from models.product_detail_section import ProductDetailSection  # noqa: F401
+from models.product_media_item import ProductMediaItem  # noqa: F401
 from models.product_note import ProductNote  # noqa: F401
 from models.product_variant import ProductVariant  # noqa: F401
 from models.site_settings import SiteSettings  # noqa: F401
