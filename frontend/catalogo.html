@@ -275,7 +275,7 @@
   });
 
   // El buscador y las "clases" del header linkean para acá con ?search= y
-  // ?category_id= — hay que esperar a que cargue el <select> de categorías
+  // ?category_id= (y ?has_decant=) — hay que esperar a que cargue el <select> de categorías
   // antes de poder marcarle un value, si no la opción todavía no existe.
   async function initFromUrl() {
     await loadCategoryFilter();
@@ -284,6 +284,9 @@
     const categoryId = params.get('category_id');
     if (search) document.querySelector('#filterForm [name="search"]').value = search;
     if (categoryId) document.getElementById('categoryFilter').value = categoryId;
+    // ?has_decant=true: los botones del editor pueden llevar directo al
+    // catálogo con "Solo perfumes con decant disponible" ya marcado.
+    if (params.get('has_decant') === 'true') document.querySelector('#filterForm [name="has_decant"]').checked = true;
     loadProducts();
   }
 

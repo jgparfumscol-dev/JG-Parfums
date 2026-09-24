@@ -1402,6 +1402,7 @@
   // fuente de verdad — la clase elegida solo escribe su URL de catálogo
   // filtrado ahí — por eso el guardado y el backend no cambian.
   const CATALOG_URL = '/catalogo.html';
+  const DECANT_FILTER_URL = '/catalogo.html?has_decant=true';
   const CLASS_LINK_RE = /^\/catalogo\.html\?category_id=(\d+)$/;
 
   function classLinkUrl(id) {
@@ -1420,6 +1421,7 @@
       .join('');
     return '<option value="custom">URL personalizada</option>'
       + '<option value="catalog">Catálogo completo</option>'
+      + '<option value="decants">Catálogo: solo perfumes con decant</option>'
       + (classes ? `<optgroup label="Clases">${classes}</optgroup>` : '');
   }
 
@@ -1429,6 +1431,7 @@
   function linkPickerStateFor(value) {
     const v = (value || '').trim();
     if (v === CATALOG_URL) return 'catalog';
+    if (v === DECANT_FILTER_URL) return 'decants';
     const match = CLASS_LINK_RE.exec(v);
     if (match && categoriesCache.some((c) => c.id === Number(match[1]))) return `cat:${match[1]}`;
     return 'custom';
@@ -1456,7 +1459,9 @@
             input.style.display = '';
             input.focus();
           } else {
-            input.value = select.value === 'catalog' ? CATALOG_URL : classLinkUrl(select.value.slice(4));
+            input.value = select.value === 'catalog' ? CATALOG_URL
+              : select.value === 'decants' ? DECANT_FILTER_URL
+              : classLinkUrl(select.value.slice(4));
             input.style.display = 'none';
           }
           input.dispatchEvent(new Event('input', { bubbles: true }));
