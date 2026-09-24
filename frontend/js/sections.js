@@ -62,10 +62,12 @@ const ICON_PREV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" s
 const ICON_NEXT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 6 15 12 9 18"/></svg>';
 const ICON_CLOSE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>';
 
-// Hash simple (no criptográfico, no hace falta) del contenido — la clave de
-// localStorage lo incluye para que si el admin cambia los mensajes, la
-// barra que el visitante ya había cerrado vuelva a aparecer.
-function announcementContentHash(content) {
+// Hash simple (no criptográfico, no hace falta) del contenido de una
+// sección — usado en la clave de storage de cualquier widget que recuerde
+// haber sido cerrado (barra de anuncios, popup de promo), para que si el
+// admin cambia el contenido, lo que el visitante ya había cerrado vuelva a
+// aparecer.
+function contentHash(content) {
   const raw = JSON.stringify(content || {});
   let hash = 0;
   for (let i = 0; i < raw.length; i += 1) {
@@ -103,7 +105,7 @@ function initAnnouncementBar(el, section) {
   // Cerrar se recuerda en localStorage; el acceso va en try/catch porque
   // puede fallar (modo privado, storage bloqueado) sin que eso rompa la
   // barra — simplemente no persiste el cierre entre visitas.
-  const storageKey = `jg_announcement_closed_${section.id}_${announcementContentHash(section.content)}`;
+  const storageKey = `jg_announcement_closed_${section.id}_${contentHash(section.content)}`;
   try {
     if (localStorage.getItem(storageKey) === '1') {
       el.hidden = true;
@@ -1294,6 +1296,110 @@ function initChatWidget(el) {
   });
 }
 
+// Sección administrable "Barra inferior" (bottom_bar) (+ Añadir sección,
+// cualquier página): tira fija abajo de la pantalla, a diferencia de
+// announcement_bar (que va arriba o en línea), y con un comportamiento
+// propio a propósito distinto de esa: solo aparece mientras el visitante
+// se desliza hacia abajo, y se esconde apenas se desliza hacia arriba —
+// como el visitante ya vio el resto de la página al bajar, no compite por
+// espacio con el contenido, y no queda pegada tapando algo cuando el
+// visitante vuelve a subir a revisar algo.
+function renderBottomBar(section) {
+  const c = section.content || {};
+  if (!c.text) return '';
+  const variant = ['onyx', 'paper', 'gold-soft'].includes(c.variant) ? c.variant : 'onyx';
+  const hasButton = Boolean(c.button_label && c.button_link);
+  return `
+    <aside class="pgs-bottom-bar pgs-bottom-bar--${variant}" aria-label="Aviso" data-section-id="${section.id}">
+      <div class="pgs-bottom-bar-inner">
+        <p class="pgs-bottom-bar-text">${c.text}</p>
+        ${hasButton ? `<a class="pgs-bottom-bar-btn" href="${c.button_link}">${c.button_label}</a>` : ''}
+      </div>
+    </aside>
+  `;
+}
+
+function initBottomBar(el) {
+  if (!el) return;
+  let lastY = window.scrollY;
+  let ticking = false;
+
+  function onScroll() {
+    const y = window.scrollY;
+    // Umbral chico para ignorar el jitter de rebote de iOS/Android y no
+    // parpadear con cada pixel; y > 40 para no mostrarla apenas se entra a
+    // la página con un scroll mínimo cerca del borde superior.
+    if (Math.abs(y - lastY) > 4) {
+      el.classList.toggle('is-visible', y > lastY && y > 40);
+      lastY = y;
+    }
+    ticking = false;
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
+}
+
+// Sección administrable "Promoción emergente" (promo_popup) (+ Añadir
+// sección, cualquier página): cuadro centrado con foto/título/texto/botón
+// que aparece al cargar la página donde se agregue — a diferencia del
+// banner o el bloque de footer, este flota sobre el contenido con fondo
+// oscurecido detrás, y se puede rechazar (X o clic afuera). El cierre se
+// recuerda por pestaña (sessionStorage, no localStorage): no vuelve a
+// aparecer si el visitante navega a otra página con la misma promo en la
+// misma sesión, pero sí en una visita nueva.
+function renderPromoPopup(section) {
+  const c = section.content || {};
+  if (!c.heading && !c.text && !c.image_url) return '';
+  const size = ['small', 'medium', 'large'].includes(c.size) ? c.size : 'medium';
+  const hasButton = Boolean(c.button_label && c.button_link);
+  return `
+    <div class="pgs-promo-popup pgs-promo-popup--${size}" data-section-id="${section.id}" hidden>
+      <div class="pgs-promo-popup-backdrop" data-promo-backdrop></div>
+      <div class="pgs-promo-popup-card" role="dialog" aria-modal="true" aria-label="${c.heading || 'Promoción'}">
+        <button type="button" class="pgs-promo-popup-close" data-promo-close aria-label="Cerrar">${ICON_CLOSE}</button>
+        ${c.image_url ? `<img class="pgs-promo-popup-image" src="${c.image_url}" alt="">` : ''}
+        <div class="pgs-promo-popup-body">
+          ${c.heading ? `<h3 class="pgs-promo-popup-heading">${c.heading}</h3>` : ''}
+          ${c.text ? `<p class="pgs-promo-popup-text">${c.text}</p>` : ''}
+          ${hasButton ? `<a class="btn btn-primary pgs-promo-popup-btn" href="${c.button_link}">${c.button_label}</a>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initPromoPopup(el, section) {
+  if (!el) return;
+  const storageKey = `jg_promo_dismissed_${section.id}_${contentHash(section.content)}`;
+  try {
+    if (sessionStorage.getItem(storageKey) === '1') return;
+  } catch (_err) {
+    // sin storage disponible: el popup igual funciona, solo no recuerda el cierre
+  }
+
+  function dismiss() {
+    el.hidden = true;
+    try {
+      sessionStorage.setItem(storageKey, '1');
+    } catch (_err) {
+      // sin storage: el cierre solo dura mientras la página siga abierta
+    }
+  }
+
+  el.querySelector('[data-promo-close]').addEventListener('click', dismiss);
+  el.querySelector('[data-promo-backdrop]').addEventListener('click', dismiss);
+  el.hidden = false;
+}
+
 function renderTestimonials(section) {
   const items = (section.content && section.content.items) || [];
   if (items.length === 0) return '';
@@ -1479,6 +1585,8 @@ const SECTION_RENDERERS = {
   classes_carousel: renderClassesCarousel,
   brands_carousel: renderBrandsCarousel,
   chat_widget: renderChatWidget,
+  bottom_bar: renderBottomBar,
+  promo_popup: renderPromoPopup,
 };
 
 async function renderPageSections(pageKey, mountId = 'dynamicSections') {
@@ -1532,6 +1640,11 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
       mount.querySelectorAll('.pgs-brands-carousel[data-section-id]').forEach((el) => initBrandsCarousel(el));
       mount.querySelectorAll('.pgs-products-carousel[data-section-id]').forEach((el) => initSnapCarousel(el.querySelector('.pgs-carousel-wrap')));
       mount.querySelectorAll('.pgs-chat-widget[data-section-id]').forEach((el) => initChatWidget(el));
+      mount.querySelectorAll('.pgs-bottom-bar[data-section-id]').forEach((el) => initBottomBar(el));
+      mount.querySelectorAll('.pgs-promo-popup[data-section-id]').forEach((el) => {
+        const section = freeform.find((s) => String(s.id) === el.dataset.sectionId);
+        if (section) initPromoPopup(el, section);
+      });
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.

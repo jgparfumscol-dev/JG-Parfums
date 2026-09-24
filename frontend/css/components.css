@@ -1664,3 +1664,121 @@ body.pgs-ready .site-footer { opacity: 1; }
      escritorio (ver .pgs-chat-form input arriba, 14px). */
   .pgs-chat-form input { font-size: 16px; }
 }
+
+/* Barra inferior (bottom_bar, ver renderBottomBar/initBottomBar en
+   sections.js) — tira fija al pie de la pantalla, distinta de
+   announcement_bar en que solo vive abajo y aparece/desaparece según la
+   dirección del scroll (nunca al cargar la página). Mismas 3 variantes de
+   color cerradas que la barra de anuncios (BRAND.md §3.7). */
+.pgs-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 55;
+  transform: translateY(100%);
+  transition: transform 260ms ease;
+}
+.pgs-bottom-bar.is-visible { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) { .pgs-bottom-bar { transition: none; } }
+
+.pgs-bottom-bar--onyx { background: var(--jg-onyx); color: #FFFFFF; }
+.pgs-bottom-bar--onyx .pgs-bottom-bar-btn { background: #FFFFFF; color: var(--jg-onyx); }
+.pgs-bottom-bar--paper { background: var(--jg-paper); color: var(--ink-900); border-top: 1px solid var(--ink-100); }
+.pgs-bottom-bar--paper .pgs-bottom-bar-btn,
+.pgs-bottom-bar--gold-soft .pgs-bottom-bar-btn { background: var(--jg-onyx); color: #FFFFFF; }
+.pgs-bottom-bar--gold-soft { background: var(--gold-50); color: var(--ink-900); }
+
+.pgs-bottom-bar-inner {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+}
+
+.pgs-bottom-bar-text { margin: 0; font-size: 14px; text-align: center; }
+
+.pgs-bottom-bar-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Popup de promoción (promo_popup, ver renderPromoPopup/initPromoPopup en
+   sections.js) — cuadro centrado sobre un fondo oscurecido, nunca a pantalla
+   completa (ni en móvil ni en escritorio): el ancho lo pone --size, el alto
+   se acomoda solo al contenido y nunca pasa de la altura visible. */
+.pgs-promo-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+.pgs-promo-popup[hidden] { display: none; }
+
+.pgs-promo-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.pgs-promo-popup-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+  background: var(--jg-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  animation: pgs-promo-in 220ms ease;
+}
+@media (prefers-reduced-motion: reduce) { .pgs-promo-popup-card { animation: none; } }
+@keyframes pgs-promo-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.pgs-promo-popup--small .pgs-promo-popup-card { max-width: 360px; }
+.pgs-promo-popup--medium .pgs-promo-popup-card { max-width: 480px; }
+.pgs-promo-popup--large .pgs-promo-popup-card { max-width: 640px; }
+
+.pgs-promo-popup-close {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--jg-white);
+  border: 1px solid var(--ink-100);
+  border-radius: 50%;
+  color: var(--jg-onyx);
+  cursor: pointer;
+}
+
+.pgs-promo-popup-image { display: block; width: 100%; max-height: 260px; object-fit: cover; }
+
+.pgs-promo-popup-body { padding: var(--space-6); text-align: center; }
+.pgs-promo-popup-heading { margin: 0 0 var(--space-2); font-family: var(--font-display); font-size: 22px; }
+.pgs-promo-popup-text { margin: 0 0 var(--space-4); color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+.pgs-promo-popup-btn { display: inline-flex; }
