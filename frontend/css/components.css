@@ -1655,4 +1655,9 @@ body.pgs-ready .site-footer { opacity: 1; }
     width: auto;
     height: min(70vh, 520px);
   }
+  /* Safari/iOS hace zoom automático al enfocar un input con font-size menor
+     a 16px — ese zoom es justo lo que corría el botón de enviar fuera de
+     vista al abrir el teclado. 16px lo desactiva sin tocar el tamaño en
+     escritorio (ver .pgs-chat-form input arriba, 14px). */
+  .pgs-chat-form input { font-size: 16px; }
 }
