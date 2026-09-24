@@ -1215,6 +1215,35 @@ function initChatWidget(el) {
   // otra página con el mismo widget) antes de decidir si hace falta saludo.
   getChatHistory().forEach((msg) => appendMessage(msg.role, msg.text, { persist: false }));
 
+  // En iOS Safari el layout viewport (y el "vh" de components.css) NO se
+  // achica cuando aparece el teclado — solo el visualViewport sí. Sin esto,
+  // el panel fixed queda mal ubicado o tapado por el teclado. Mientras el
+  // teclado esté activo (heurística: el visual viewport se achicó bastante
+  // más de lo que explicaría solo la barra de direcciones) se reancla el
+  // panel a esa altura real; al cerrarse el teclado vuelve al hoja-fija
+  // normal de components.css.
+  const isMobileQuery = window.matchMedia('(max-width: 480px)');
+  function adjustPanelForKeyboard() {
+    if (panel.hidden || !isMobileQuery.matches || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const keyboardOpen = window.innerHeight - vv.height > 120;
+    if (keyboardOpen) {
+      const margin = 12;
+      panel.style.top = `${vv.offsetTop + margin}px`;
+      panel.style.bottom = 'auto';
+      panel.style.height = `${vv.height - margin * 2}px`;
+    } else {
+      panel.style.top = '';
+      panel.style.bottom = '';
+      panel.style.height = '';
+    }
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', adjustPanelForKeyboard);
+    window.visualViewport.addEventListener('scroll', adjustPanelForKeyboard);
+  }
+
   function open() {
     panel.hidden = false;
     bubble.setAttribute('aria-expanded', 'true');
@@ -1222,11 +1251,17 @@ function initChatWidget(el) {
       appendMessage('bot', greeting);
       greeted = true;
     }
-    input.focus();
+    // Sin foco automático acá: en móvil eso dispara el teclado apenas se
+    // abre el panel sin que el visitante haya tocado nada — que lo abra el
+    // propio input cuando lo toquen, como cualquier campo de texto normal.
+    adjustPanelForKeyboard();
   }
   function close() {
     panel.hidden = true;
     bubble.setAttribute('aria-expanded', 'false');
+    panel.style.top = '';
+    panel.style.bottom = '';
+    panel.style.height = '';
   }
   bubble.addEventListener('click', () => (panel.hidden ? open() : close()));
   closeBtn.addEventListener('click', close);
