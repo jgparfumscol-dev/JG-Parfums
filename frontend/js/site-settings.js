@@ -158,10 +158,17 @@ async function applySiteBranding() {
   if (!s || Object.keys(s).length === 0) return;
   if (s.accent_color) applyAccentColor(s.accent_color);
   if (s.font_pairing) applyFontPairing(s.font_pairing);
-  if (s.store_name) document.title = document.title.replace('JG Parfums', s.store_name);
+  if (s.store_name) {
+    document.title = document.title.replace('JG Parfums', s.store_name);
+    document.querySelectorAll('[data-store-name]').forEach((el) => { el.textContent = s.store_name; });
+  }
   applyStoreExtras(s);
   applyFooterSocial(s);
 }
+
+// El año de la línea legal del footer se calcula acá para no tener que
+// editar 9 páginas cada enero.
+document.querySelectorAll('[data-current-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
 
 applySiteBranding();
 

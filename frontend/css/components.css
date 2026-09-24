@@ -524,6 +524,17 @@ body.pgs-ready .site-footer { opacity: 1; }
   .footer-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* línea legal al pie ("Todos los derechos reservados") — vive dentro del
+   footer pero fuera de .footer-grid para ocupar todo el ancho, separada del
+   resto por un filete fino. */
+.footer-legal {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid #3A3739;
+  text-align: center;
+}
+.footer-legal p { margin: 0; }
+
 .footer-links {
   list-style: none;
   margin: 0;

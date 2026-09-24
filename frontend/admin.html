@@ -6,8 +6,8 @@
 <title>Panel — JG Parfums</title>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
-<link rel="stylesheet" href="/css/tokens.css?v=20260924a">
-<link rel="stylesheet" href="/css/components.css?v=20260924a">
+<link rel="stylesheet" href="/css/tokens.css?v=20260924b">
+<link rel="stylesheet" href="/css/components.css?v=20260924b">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -798,7 +798,7 @@
         <div class="field"><label for="s_image_url">URL de la imagen</label><input id="s_image_url" placeholder="https://..."></div>
         <div class="field"><label for="s_image_alt">Texto alternativo</label><input id="s_image_alt"></div>
         <div class="field"><label for="s_image_caption">Pie de foto (opcional)</label><input id="s_image_caption"></div>
-        <div class="field"><label for="s_image_link">Enlace (opcional)</label><input id="s_image_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_image_link">Enlace (opcional)</label><input id="s_image_link" data-linkpick placeholder="/catalogo.html"></div>
       </div>
 
       <div id="sectionFieldsGallery" hidden>
@@ -834,7 +834,7 @@
         <div class="field"><label for="s_gallery_heading">Título</label><input id="s_gallery_heading"></div>
         <div class="field"><label for="s_gallery_subtitle">Subtítulo</label><input id="s_gallery_subtitle"></div>
         <div class="field"><label for="s_gallery_cta_label">Texto del botón</label><input id="s_gallery_cta_label" placeholder="Ver catálogo"></div>
-        <div class="field"><label for="s_gallery_cta_link">Enlace del botón</label><input id="s_gallery_cta_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_gallery_cta_link">Enlace del botón</label><input id="s_gallery_cta_link" data-linkpick placeholder="/catalogo.html"></div>
 
         <p class="text-caption" style="margin-bottom: var(--space-2);">Fotos — arrastra o usa las flechas para reordenar</p>
         <div id="galleryImageList"></div>
@@ -845,7 +845,7 @@
         <div class="field"><label for="s_footer_heading">Título</label><input id="s_footer_heading" placeholder="Últimas unidades de la temporada"></div>
         <div class="field"><label for="s_footer_text">Texto (opcional)</label><textarea id="s_footer_text" rows="3"></textarea></div>
         <div class="field"><label for="s_footer_cta_label">Texto del botón (opcional)</label><input id="s_footer_cta_label" placeholder="Ver catálogo"></div>
-        <div class="field"><label for="s_footer_cta_link">Enlace del botón (opcional)</label><input id="s_footer_cta_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_footer_cta_link">Enlace del botón (opcional)</label><input id="s_footer_cta_link" data-linkpick placeholder="/catalogo.html"></div>
       </div>
 
       <div id="sectionFieldsClassesCarousel" hidden>
@@ -1005,7 +1005,7 @@
         <div class="field"><label for="s_bb_text">Texto</label><textarea id="s_bb_text" rows="2" placeholder="Envío gratis en pedidos desde $200.000"></textarea></div>
         <div class="grid-2">
           <div class="field"><label for="s_bb_button_label">Texto del botón (opcional)</label><input id="s_bb_button_label" placeholder="Comprar ahora"></div>
-          <div class="field"><label for="s_bb_button_link">Enlace del botón (opcional)</label><input id="s_bb_button_link" placeholder="/catalogo.html"></div>
+          <div class="field"><label for="s_bb_button_link">Enlace del botón (opcional)</label><input id="s_bb_button_link" data-linkpick placeholder="/catalogo.html"></div>
         </div>
         <div class="field"><label for="s_bb_variant">Color</label>
           <select id="s_bb_variant">
@@ -1023,7 +1023,7 @@
         <div class="field"><label for="s_promo_text">Texto (opcional)</label><textarea id="s_promo_text" rows="3"></textarea></div>
         <div class="grid-2">
           <div class="field"><label for="s_promo_button_label">Texto del botón (opcional)</label><input id="s_promo_button_label" placeholder="Ver promoción"></div>
-          <div class="field"><label for="s_promo_button_link">Enlace del botón (opcional)</label><input id="s_promo_button_link" placeholder="/catalogo.html"></div>
+          <div class="field"><label for="s_promo_button_link">Enlace del botón (opcional)</label><input id="s_promo_button_link" data-linkpick placeholder="/catalogo.html"></div>
         </div>
         <div class="field"><label for="s_promo_size">Tamaño del cuadro</label>
           <select id="s_promo_size">
@@ -1083,7 +1083,7 @@
         <div class="field"><label for="s_decant_heading">Título</label><input id="s_decant_heading"></div>
         <div class="field"><label for="s_decant_body">Texto</label><textarea id="s_decant_body" rows="3"></textarea></div>
         <div class="field"><label for="s_decant_cta_label">Texto del botón (opcional)</label><input id="s_decant_cta_label" placeholder="Ver catálogo"></div>
-        <div class="field"><label for="s_decant_cta_link">Enlace del botón (opcional)</label><input id="s_decant_cta_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_decant_cta_link">Enlace del botón (opcional)</label><input id="s_decant_cta_link" data-linkpick placeholder="/catalogo.html"></div>
         <p class="text-caption" style="margin-bottom: var(--space-2);">Filas de ficha (ej. 5 ml / 10 ml / Origen)</p>
         <div id="decantRowList"></div>
         <button class="btn btn-secondary" type="button" id="addDecantRowBtn" style="margin-top:var(--space-2);">+ Agregar fila</button>
@@ -1101,7 +1101,7 @@
         <div class="field"><label for="s_hero_heading">Título</label><input id="s_hero_heading" placeholder="Un perfume se explica con hechos"></div>
         <div class="field"><label for="s_hero_description">Descripción</label><textarea id="s_hero_description" rows="3"></textarea></div>
         <div class="field"><label for="s_hero_cta_label">Texto del botón</label><input id="s_hero_cta_label" placeholder="Ver catálogo"></div>
-        <div class="field"><label for="s_hero_cta_link">Enlace del botón</label><input id="s_hero_cta_link" placeholder="/catalogo.html"></div>
+        <div class="field"><label for="s_hero_cta_link">Enlace del botón</label><input id="s_hero_cta_link" data-linkpick placeholder="/catalogo.html"></div>
         <div class="field"><label for="s_hero_diagram_heading">Título de la pirámide de notas</label><input id="s_hero_diagram_heading" placeholder="Así se lee un perfume en JG"></div>
       </div>
 
@@ -1217,7 +1217,7 @@
   </div>
 </dialog>
 
-<script src="/js/api.js?v=20260924a"></script>
+<script src="/js/api.js?v=20260924b"></script>
 <script>
   let editingProductId = null;
 
@@ -1393,8 +1393,92 @@
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
+  // --- Selector de destino de enlaces ---
+  // Todo campo de enlace de una sección (botones, fotos clicables, anuncios)
+  // se marca con data-linkpick y setupLinkPickers le antepone un <select>:
+  // "URL personalizada", "Catálogo completo" o cualquiera de las clases
+  // (las mismas de la pestaña Clases, leídas de categoriesCache, así que las
+  // que se creen después aparecen solas). El <input> original sigue siendo la
+  // fuente de verdad — la clase elegida solo escribe su URL de catálogo
+  // filtrado ahí — por eso el guardado y el backend no cambian.
+  const CATALOG_URL = '/catalogo.html';
+  const CLASS_LINK_RE = /^\/catalogo\.html\?category_id=(\d+)$/;
+
+  function classLinkUrl(id) {
+    return `${CATALOG_URL}?category_id=${id}`;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function linkPickerOptionsHtml() {
+    const classes = categoriesCache
+      .map((c) => `<option value="cat:${c.id}">${escapeHtml(c.name)}${c.is_active ? '' : ' (inactiva)'}</option>`)
+      .join('');
+    return '<option value="custom">URL personalizada</option>'
+      + '<option value="catalog">Catálogo completo</option>'
+      + (classes ? `<optgroup label="Clases">${classes}</optgroup>` : '');
+  }
+
+  // Qué opción le corresponde a un valor guardado. Un enlace a una clase que
+  // ya no existe cae a "URL personalizada" con el texto a la vista, en vez de
+  // esconder un enlace roto detrás de una opción que ya no está.
+  function linkPickerStateFor(value) {
+    const v = (value || '').trim();
+    if (v === CATALOG_URL) return 'catalog';
+    const match = CLASS_LINK_RE.exec(v);
+    if (match && categoriesCache.some((c) => c.id === Number(match[1]))) return `cat:${match[1]}`;
+    return 'custom';
+  }
+
+  function syncLinkPicker(input) {
+    const select = input.parentElement.querySelector('.link-picker-select');
+    const state = linkPickerStateFor(input.value);
+    select.value = state;
+    input.style.display = state === 'custom' ? '' : 'none';
+  }
+
+  function setupLinkPickers(root) {
+    root.querySelectorAll('input[data-linkpick]').forEach((input) => {
+      if (!input.dataset.lpReady) {
+        const wrap = document.createElement('div');
+        wrap.className = 'link-picker';
+        wrap.style.cssText = 'display:flex; flex-direction:column; gap:var(--space-2); min-width:0;';
+        const select = document.createElement('select');
+        select.className = `link-picker-select${input.classList.contains('input-sm') ? ' input-sm' : ''}`;
+        select.setAttribute('aria-label', 'Destino del enlace');
+        select.innerHTML = linkPickerOptionsHtml();
+        select.addEventListener('change', () => {
+          if (select.value === 'custom') {
+            input.style.display = '';
+            input.focus();
+          } else {
+            input.value = select.value === 'catalog' ? CATALOG_URL : classLinkUrl(select.value.slice(4));
+            input.style.display = 'none';
+          }
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        input.replaceWith(wrap);
+        wrap.append(select, input);
+        input.dataset.lpReady = '1';
+      }
+      syncLinkPicker(input);
+    });
+  }
+
+  function refreshLinkPickers() {
+    document.querySelectorAll('.link-picker-select').forEach((select) => {
+      select.innerHTML = linkPickerOptionsHtml();
+      syncLinkPicker(select.parentElement.querySelector('input[data-linkpick]'));
+    });
+  }
+
   async function loadCategories() {
     categoriesCache = await apiFetch('/categories');
+    refreshLinkPickers();
     const options = categoriesCache.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('s_products_category').innerHTML = '<option value="">Todas</option>' + options;
     document.getElementById('s_related_category').innerHTML = '<option value="">Automático (misma clase del producto)</option>' + options;
@@ -3040,7 +3124,7 @@
         <div style="flex:1; display:flex; flex-direction:column; gap:var(--space-2); min-width:0;">
           <input class="input-sm" placeholder="Texto (máx. 90 caracteres)" maxlength="90" data-am-text value="${esc(m.text)}">
           <input class="input-sm" placeholder="Destacado en negrita (opcional)" maxlength="90" data-am-highlight value="${esc(m.highlight)}">
-          <input class="input-sm" placeholder="Enlace (opcional): /catalogo.html o https://..." data-am-link value="${esc(m.link_url)}">
+          <input class="input-sm" data-linkpick placeholder="Enlace (opcional): /catalogo.html o https://..." data-am-link value="${esc(m.link_url)}">
           <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
             <div class="field" style="margin-bottom:0; flex:1; min-width:160px;">
               <label class="text-small">Desde (opcional)</label>
@@ -3136,7 +3220,7 @@
           <input class="input-sm" placeholder="Pie de foto (opcional, debajo de la imagen)" data-gi-caption value="${esc(img.caption)}">
           <input class="input-sm" placeholder="Título encima de la foto (opcional)" data-gi-title value="${esc(img.title)}">
           <input class="input-sm" placeholder="Subtítulo encima de la foto (opcional)" data-gi-subtitle value="${esc(img.subtitle)}">
-          <input class="input-sm" placeholder="Enlace (opcional): si agregas texto de botón se ve como botón, si no, toda la foto queda clicable" data-gi-link value="${esc(img.link_url)}">
+          <input class="input-sm" data-linkpick placeholder="Enlace (opcional): si agregas texto de botón se ve como botón, si no, toda la foto queda clicable" data-gi-link value="${esc(img.link_url)}">
           <div style="display:flex; gap:var(--space-2);">
             <input class="input-sm" placeholder="Texto del botón (opcional)" data-gi-cta-label value="${esc(img.cta_label)}" style="flex:1;">
             <input type="color" data-gi-cta-color value="${esc(img.cta_color) || '#D3AE6A'}" style="height:44px; width:44px; padding:var(--space-1); cursor:pointer; flex-shrink:0;">
@@ -3245,7 +3329,7 @@
           <input class="input-sm" placeholder="URL de la imagen (móvil, 800×1000 recomendado — opcional)" data-bs-image-mobile value="${esc(slide.image_url_mobile)}">
           <input class="input-sm" placeholder="Título (opcional)" data-bs-title value="${esc(slide.title)}">
           <input class="input-sm" placeholder="Subtítulo (opcional)" data-bs-subtitle value="${esc(slide.subtitle)}">
-          <input class="input-sm" placeholder="Enlace del botón (opcional): /catalogo.html" data-bs-link value="${esc(slide.link_url)}">
+          <input class="input-sm" data-linkpick placeholder="Enlace del botón (opcional): /catalogo.html" data-bs-link value="${esc(slide.link_url)}">
           <div style="display:flex; gap:var(--space-2);">
             <input class="input-sm" placeholder="Texto del botón" data-bs-cta-label value="${esc(slide.cta_label)}" style="flex:1;">
             <input type="color" data-bs-cta-color value="${esc(slide.cta_color) || '#D3AE6A'}" style="height:44px; width:44px; padding:var(--space-1); cursor:pointer; flex-shrink:0;">
@@ -3353,14 +3437,17 @@
   document.getElementById('addAnnouncementMessageBtn').addEventListener('click', () => {
     document.getElementById('announcementMessageList').insertAdjacentHTML('beforeend', announcementMessageRowHtml());
     bindAnnouncementMessageRows();
+    setupLinkPickers(document.getElementById('announcementMessageList'));
   });
   document.getElementById('addGalleryImageBtn').addEventListener('click', () => {
     document.getElementById('galleryImageList').insertAdjacentHTML('beforeend', galleryImageRowHtml());
     bindGalleryImageRows();
+    setupLinkPickers(document.getElementById('galleryImageList'));
   });
   document.getElementById('addBannerSlideBtn').addEventListener('click', () => {
     document.getElementById('bannerSlideList').insertAdjacentHTML('beforeend', bannerSlideRowHtml());
     bindBannerSlideRows();
+    setupLinkPickers(document.getElementById('bannerSlideList'));
   });
 
   function openSectionDialog(section, forcedType) {
@@ -3535,6 +3622,7 @@
       document.getElementById('s_promo_button_link').value = c.button_link || '';
       document.getElementById('s_promo_size').value = c.size || 'medium';
     }
+    setupLinkPickers(document.getElementById('sectionForm'));
     document.getElementById('sectionDialog').showModal();
   }
 
