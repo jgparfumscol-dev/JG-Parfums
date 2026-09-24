@@ -9,6 +9,8 @@ os.environ["WOMPI_INTEGRITY_SECRET"] = "test_integrity_secret"
 os.environ["WOMPI_EVENTS_SECRET"] = "test_events_secret"
 os.environ["MERCADOPAGO_ACCESS_TOKEN"] = "TEST-token"
 os.environ["MERCADOPAGO_WEBHOOK_SECRET"] = "test_mp_secret"
+os.environ["N8N_WEBHOOK_URL"] = "http://localhost:9999/webhook/test-chat"
+os.environ["N8N_WEBHOOK_SECRET"] = "test_n8n_secret"
 
 import pytest
 from fastapi.testclient import TestClient

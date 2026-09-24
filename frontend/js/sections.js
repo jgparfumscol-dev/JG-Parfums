@@ -1083,6 +1083,121 @@ function initBrandsCarousel(el) {
   initSnapCarousel(wrap, { loop: true });
 }
 
+// Sección administrable "Chat" (+ Añadir sección, cualquier página):
+// burbuja fija en una esquina que despliega un panel de chat conectado al
+// webhook de n8n (ver POST /chat/message en el backend — nunca se llama a
+// n8n directo desde acá, así el token del usuario nunca sale del backend).
+// Posición (lado + distancia del borde inferior), tamaño (compacto/amplio,
+// a propósito chicos: es un widget, no un chat de pantalla completa) y
+// color quedan en content, con fallback a los valores de marca de siempre
+// si el admin no los toca.
+function renderChatWidget(section) {
+  const c = section.content || {};
+  const position = c.position === 'left' ? 'left' : 'right';
+  const size = c.size === 'medium' ? 'medium' : 'small';
+  const offset = Number(c.offset) || 24;
+  const color = (c.color || '').trim();
+  const title = c.title || 'Habla con nosotros';
+  const greeting = (c.greeting || '').replace(/"/g, '&quot;');
+  return `
+    <div class="pgs-chat-widget pgs-chat-widget--${position} pgs-chat-widget--${size}" data-section-id="${section.id}" data-greeting="${greeting}"
+      style="--pgs-chat-offset:${offset}px;${color ? ` --pgs-chat-color:${color};` : ''}">
+      <button type="button" class="pgs-chat-bubble" aria-label="Abrir chat" aria-expanded="false" aria-controls="pgsChatPanel${section.id}">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      </button>
+      <div class="pgs-chat-panel" id="pgsChatPanel${section.id}" hidden>
+        <div class="pgs-chat-header">
+          <span>${title}</span>
+          <button type="button" class="pgs-chat-close" aria-label="Cerrar chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+          </button>
+        </div>
+        <div class="pgs-chat-messages" aria-live="polite"></div>
+        <form class="pgs-chat-form">
+          <input type="text" name="message" placeholder="Escribe tu mensaje…" aria-label="Mensaje" required autocomplete="off">
+          <button type="submit" aria-label="Enviar">${ICON_NEXT}</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// Un solo id de sesión por navegador (no por pestaña ni por sección) — así
+// n8n mantiene la misma memoria de conversación si el visitante cierra el
+// panel y lo vuelve a abrir, o navega a otra página con el mismo widget.
+function getChatSessionId() {
+  const key = 'jg_chat_session';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+function initChatWidget(el) {
+  const bubble = el.querySelector('.pgs-chat-bubble');
+  const panel = el.querySelector('.pgs-chat-panel');
+  const closeBtn = el.querySelector('.pgs-chat-close');
+  const messagesEl = el.querySelector('.pgs-chat-messages');
+  const form = el.querySelector('.pgs-chat-form');
+  const input = form.querySelector('input');
+  const greeting = el.dataset.greeting || '';
+  let greeted = false;
+
+  function appendMessage(role, text) {
+    const div = document.createElement('div');
+    // textContent, nunca innerHTML: el texto del usuario y la respuesta de
+    // n8n/el LLM no son contenido de confianza del admin como el resto de
+    // esta sección (heading, título) — no hay que interpretarlo como HTML.
+    div.className = `pgs-chat-msg pgs-chat-msg--${role}`;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function open() {
+    panel.hidden = false;
+    bubble.setAttribute('aria-expanded', 'true');
+    if (!greeted && greeting) {
+      appendMessage('bot', greeting);
+      greeted = true;
+    }
+    input.focus();
+  }
+  function close() {
+    panel.hidden = true;
+    bubble.setAttribute('aria-expanded', 'false');
+  }
+  bubble.addEventListener('click', () => (panel.hidden ? open() : close()));
+  closeBtn.addEventListener('click', close);
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    appendMessage('user', text);
+    const pending = appendMessage('bot', 'Escribiendo…');
+    pending.classList.add('pgs-chat-msg--pending');
+    try {
+      // apiFetch adjunta el token si hay sesión — el backend arma el
+      // contexto (pedidos recientes, etc.) del lado del servidor, nunca se
+      // manda el token en sí hacia n8n (ver POST /chat/message).
+      const result = await apiFetch('/chat/message', {
+        method: 'POST',
+        body: JSON.stringify({ message: text, session_id: getChatSessionId() }),
+      });
+      pending.textContent = result.reply;
+    } catch (_err) {
+      pending.textContent = 'No pudimos conectar con el asistente. Intenta de nuevo en un momento.';
+    } finally {
+      pending.classList.remove('pgs-chat-msg--pending');
+    }
+  });
+}
+
 function renderTestimonials(section) {
   const items = (section.content && section.content.items) || [];
   if (items.length === 0) return '';
@@ -1267,6 +1382,7 @@ const SECTION_RENDERERS = {
   gallery: renderGallery,
   classes_carousel: renderClassesCarousel,
   brands_carousel: renderBrandsCarousel,
+  chat_widget: renderChatWidget,
 };
 
 async function renderPageSections(pageKey, mountId = 'dynamicSections') {
@@ -1319,6 +1435,7 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
       mount.querySelectorAll('.pgs-classes-carousel[data-section-id]').forEach((el) => initClassesCarousel(el));
       mount.querySelectorAll('.pgs-brands-carousel[data-section-id]').forEach((el) => initBrandsCarousel(el));
       mount.querySelectorAll('.pgs-products-carousel[data-section-id]').forEach((el) => initSnapCarousel(el.querySelector('.pgs-carousel-wrap')));
+      mount.querySelectorAll('.pgs-chat-widget[data-section-id]').forEach((el) => initChatWidget(el));
     }
   } catch (_err) {
     // Si falla, la página sigue funcionando igual sin las secciones extra.

@@ -87,6 +87,7 @@ def test_create_page_section_accepts_new_block_types(client, admin_headers):
         ("categories", {"heading": "Explora por familia"}),
         ("image", {"image_url": "https://example.com/foto.jpg"}),
         ("footer", {"heading": "Últimas unidades"}),
+        ("chat_widget", {"title": "Habla con nosotros", "position": "right", "offset": 24, "size": "small"}),
     ]:
         response = client.post(
             "/page-sections",

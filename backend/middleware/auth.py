@@ -85,7 +85,16 @@ def get_optional_user(
 ) -> User | None:
     if credentials is None:
         return None
-    user_id = _decode_user_id(credentials.credentials, request)
+    try:
+        user_id = _decode_user_id(credentials.credentials, request)
+    except HTTPException:
+        # "Optional" en serio: un token vencido o inválido acá no debe tumbar
+        # la ruta con 401, solo tratarse como visitante anónimo (el front,
+        # ver apiFetch en api.js, redirige a login apenas ve un 401 con
+        # token adjunto — eso sí tiene sentido en rutas que exigen sesión,
+        # pero rompería widgets pasivos como el chat: nadie pidió loguearse,
+        # solo estaba escribiendo con un token viejo en localStorage).
+        return None
     user = db.query(User).filter(User.id == user_id).first()
     if user is None or not user.is_active:
         return None

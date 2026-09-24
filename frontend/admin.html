@@ -354,6 +354,10 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="8" r="3.5"/><circle cx="17" cy="8" r="3.5"/><circle cx="12" cy="16" r="3.5"/></svg>
             <span>Carrusel de marcas</span>
           </button>
+          <button type="button" class="addsec-card" data-addsec="chat_widget">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span>Chat</span>
+          </button>
         </div>
         <button type="button" class="addsec-card addsec-card-wide" data-addsec="custom">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="9 6 4 12 9 18"/><polyline points="15 6 20 12 15 18"/></svg>
@@ -376,6 +380,7 @@
             <option value="footer">Footer</option>
             <option value="classes_carousel">Carrusel de clases</option>
             <option value="brands_carousel">Carrusel de marcas</option>
+            <option value="chat_widget">Chat</option>
             <option value="testimonials">Testimonios</option>
             <option value="counters">Contadores</option>
             <option value="custom_html">Código HTML/CSS</option>
@@ -947,6 +952,32 @@
           <div class="field" style="flex:1;"><label for="s_brandcar_mobile">Móvil</label><input id="s_brandcar_mobile" type="number" min="1" max="8" value="3"></div>
           <div class="field" style="flex:1;"><label for="s_brandcar_tablet">Tablet</label><input id="s_brandcar_tablet" type="number" min="1" max="10" value="5"></div>
           <div class="field" style="flex:1;"><label for="s_brandcar_desktop">Escritorio</label><input id="s_brandcar_desktop" type="number" min="1" max="12" value="7"></div>
+        </div>
+      </div>
+
+      <div id="sectionFieldsChatWidget" hidden>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Burbuja de chat conectada al asistente (n8n). Agregala en cada página donde la quieras ver — no es automático en todo el sitio.</p>
+        <div class="field"><label for="s_chat_title">Título del panel</label><input id="s_chat_title" placeholder="Habla con nosotros"></div>
+        <div class="field"><label for="s_chat_greeting">Mensaje de bienvenida (opcional)</label>
+          <textarea id="s_chat_greeting" rows="2" placeholder="¡Hola! ¿En qué te puedo ayudar?"></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="s_chat_position">Lado</label>
+            <select id="s_chat_position">
+              <option value="right">Derecha</option>
+              <option value="left">Izquierda</option>
+            </select>
+          </div>
+          <div class="field"><label for="s_chat_offset">Distancia del borde inferior (px)</label><input id="s_chat_offset" type="number" min="0" max="200" value="24"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="s_chat_size">Tamaño del panel</label>
+            <select id="s_chat_size">
+              <option value="small">Compacto</option>
+              <option value="medium">Amplio</option>
+            </select>
+          </div>
+          <div class="field"><label for="s_chat_color">Color</label><input id="s_chat_color" type="color" value="#201E1F" style="padding:4px; height:48px;"></div>
         </div>
       </div>
 
@@ -2422,7 +2453,7 @@
     categories: 'Categorías', image: 'Imagen', gallery: 'Galería de fotos', testimonials: 'Testimonios', counters: 'Contadores',
     footer: 'Footer', custom_html: 'Código HTML/CSS',
     section_heading: 'Título de sección', decant_callout: 'Bloque de decants', manifesto: 'Manifiesto de marca',
-    classes_carousel: 'Carrusel de clases', brands_carousel: 'Carrusel de marcas',
+    classes_carousel: 'Carrusel de clases', brands_carousel: 'Carrusel de marcas', chat_widget: 'Chat',
   };
 
   let editingSectionId = null;
@@ -2527,6 +2558,10 @@
         const modeLabel = c.mode === 'manual' ? `${(c.brand_ids || []).length} marca(s) seleccionadas` : 'todas las activas';
         const carouselLabel = c.carousel_mode === 'continuous' ? 'continuo' : 'flechas';
         return `${c.heading || modeLabel} · ${carouselLabel}`;
+      }
+      case 'chat_widget': {
+        const sideLabel = c.position === 'left' ? 'izquierda' : 'derecha';
+        return `${c.title || 'Habla con nosotros'} · ${sideLabel}`;
       }
       default: return 'Código personalizado';
     }
@@ -2686,6 +2721,7 @@
     section_heading: 'sectionFieldsSectionHeading', decant_callout: 'sectionFieldsDecantCallout',
     manifesto: 'sectionFieldsManifesto', hero_product: 'sectionFieldsHeroProduct',
     classes_carousel: 'sectionFieldsClassesCarousel', brands_carousel: 'sectionFieldsBrandsCarousel',
+    chat_widget: 'sectionFieldsChatWidget',
   };
 
   function showSectionTypeFields(type) {
@@ -3400,6 +3436,13 @@
       document.getElementById('s_brandcar_desktop').value = c.logos_desktop || 7;
       renderBrandCarouselPicker(c.brand_ids || []);
       updateBrandCarouselEmptyNotice();
+    } else if (type === 'chat_widget') {
+      document.getElementById('s_chat_title').value = c.title || '';
+      document.getElementById('s_chat_greeting').value = c.greeting || '';
+      document.getElementById('s_chat_position').value = c.position || 'right';
+      document.getElementById('s_chat_offset').value = c.offset != null ? c.offset : 24;
+      document.getElementById('s_chat_size').value = c.size || 'small';
+      document.getElementById('s_chat_color').value = c.color || '#201E1F';
     }
     document.getElementById('sectionDialog').showModal();
   }
@@ -3573,6 +3616,15 @@
         logos_mobile: Number(document.getElementById('s_brandcar_mobile').value) || 3,
         logos_tablet: Number(document.getElementById('s_brandcar_tablet').value) || 5,
         logos_desktop: Number(document.getElementById('s_brandcar_desktop').value) || 7,
+      };
+    } else if (type === 'chat_widget') {
+      content = {
+        title: document.getElementById('s_chat_title').value.trim() || null,
+        greeting: document.getElementById('s_chat_greeting').value.trim() || null,
+        position: document.getElementById('s_chat_position').value,
+        offset: Number(document.getElementById('s_chat_offset').value) || 0,
+        size: document.getElementById('s_chat_size').value,
+        color: document.getElementById('s_chat_color').value,
       };
     } else {
       content = {

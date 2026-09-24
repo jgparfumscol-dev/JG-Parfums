@@ -48,6 +48,7 @@ from routes import (  # noqa: E402
     auth,
     brands,
     categories,
+    chat,
     contact_messages,
     orders,
     page_sections,
@@ -67,6 +68,7 @@ app.include_router(stats.router)
 app.include_router(page_sections.router)
 app.include_router(settings.router)
 app.include_router(contact_messages.router)
+app.include_router(chat.router)
 
 
 @app.get("/")

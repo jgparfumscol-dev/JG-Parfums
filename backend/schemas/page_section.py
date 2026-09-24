@@ -23,6 +23,7 @@ SectionType = Literal[
     "gallery",
     "classes_carousel",
     "brands_carousel",
+    "chat_widget",
 ]
 
 

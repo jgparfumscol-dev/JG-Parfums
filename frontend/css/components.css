@@ -1514,3 +1514,144 @@ body.pgs-ready .site-footer { opacity: 1; }
   transition: border-color 150ms;
 }
 .pgs-category-chip:hover { border-color: var(--gold-600); }
+
+/* Sección administrable "Chat" (ver renderChatWidget/initChatWidget en
+   sections.js) — burbuja fija + panel desplegable. Colores tomados de la
+   marca por default (--jg-onyx, mismo que .btn-primary); --pgs-chat-color
+   lo pisa el admin si elige un color propio. --pgs-chat-offset (distancia
+   del borde inferior) y el lado (izquierda/derecha) también los pone el
+   admin — ver s_chat_position/s_chat_offset en admin.html. */
+.pgs-chat-widget {
+  position: fixed;
+  bottom: var(--pgs-chat-offset, 24px);
+  z-index: 60;
+}
+.pgs-chat-widget--right { right: var(--space-6); }
+.pgs-chat-widget--left { left: var(--space-6); }
+
+.pgs-chat-bubble {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pgs-chat-color, var(--jg-onyx));
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+  transition: transform 150ms;
+}
+.pgs-chat-bubble:hover { transform: scale(1.05); }
+.pgs-chat-bubble:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+
+/* Tamaños "chicos" a propósito (es un widget, no un chat de pantalla
+   completa) — dos pasos nada más: compacto y uno un poco más cómodo. */
+.pgs-chat-panel {
+  position: absolute;
+  bottom: calc(100% + var(--space-3));
+  width: 320px;
+  height: 420px;
+  background: var(--jg-white);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pgs-chat-widget--medium .pgs-chat-panel { width: 360px; height: 520px; }
+.pgs-chat-widget--right .pgs-chat-panel { right: 0; }
+.pgs-chat-widget--left .pgs-chat-panel { left: 0; }
+.pgs-chat-panel[hidden] { display: none; }
+
+.pgs-chat-header {
+  flex-shrink: 0;
+  background: var(--pgs-chat-color, var(--jg-onyx));
+  color: #FFFFFF;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+}
+.pgs-chat-close {
+  background: none;
+  border: none;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-1);
+  opacity: 0.8;
+}
+.pgs-chat-close:hover { opacity: 1; }
+
+.pgs-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.pgs-chat-msg {
+  max-width: 85%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pgs-chat-msg--bot { align-self: flex-start; background: var(--ink-100); color: var(--jg-onyx); }
+.pgs-chat-msg--user { align-self: flex-end; background: var(--pgs-chat-color, var(--jg-onyx)); color: #FFFFFF; }
+.pgs-chat-msg--pending { opacity: 0.6; }
+
+.pgs-chat-form {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--ink-100);
+}
+.pgs-chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius);
+  background: var(--jg-white);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.pgs-chat-form input:focus { outline: none; border-color: var(--gold-600); }
+.pgs-chat-form button {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--pgs-chat-color, var(--jg-onyx));
+  color: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pgs-chat-form button:hover { opacity: 0.92; }
+
+/* Móvil: el panel flotante de escritorio (320-360px) no entra cómodo en
+   una pantalla de ~360-400px de ancho — pasa a ser una hoja fija cerca de
+   los bordes en vez de un cuadradito pegado a la burbuja. */
+@media (max-width: 480px) {
+  .pgs-chat-panel {
+    position: fixed;
+    inset: auto var(--space-3) calc(var(--pgs-chat-offset, 24px) + 72px) var(--space-3);
+    width: auto;
+    height: min(70vh, 520px);
+  }
+}
