@@ -10,12 +10,30 @@ function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+// El widget de chat (ver sections.js, getChatSessionId/getChatHistory) guarda
+// su session_id y el historial visible en sessionStorage bajo estas claves.
+// Se borran acá, en el único lugar por donde pasa todo login/logout, para
+// que la memoria de una cuenta (tanto la del navegador como la de n8n, que
+// usa el session_id como llave de su propia memoria de conversación) nunca
+// se filtre a otra cuenta en el mismo navegador.
+function resetChatSession() {
+  try {
+    sessionStorage.removeItem('jg_chat_session');
+    sessionStorage.removeItem('jg_chat_history');
+  } catch (_err) {
+    // sessionStorage inaccesible (ej. modo privado estricto) — no hay nada
+    // que limpiar entonces, seguir sin romper el login/logout por esto.
+  }
+}
+
 function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
+  resetChatSession();
 }
 
 function removeToken() {
   localStorage.removeItem(TOKEN_KEY);
+  resetChatSession();
 }
 
 function isLoggedIn() {

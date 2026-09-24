@@ -1099,8 +1099,12 @@ function renderChatWidget(section) {
   const color = (c.color || '').trim();
   const title = c.title || 'Habla con nosotros';
   const greeting = (c.greeting || '').replace(/"/g, '&quot;');
+  // Bienvenida distinta con sesión iniciada (el cliente puede preguntar por
+  // sus pedidos) — si el admin no la personalizó, cae a un default propio en
+  // vez del genérico de arriba, ver initChatWidget().
+  const greetingLoggedIn = (c.greeting_logged_in || '').replace(/"/g, '&quot;');
   return `
-    <div class="pgs-chat-widget pgs-chat-widget--${position} pgs-chat-widget--${size}" data-section-id="${section.id}" data-greeting="${greeting}"
+    <div class="pgs-chat-widget pgs-chat-widget--${position} pgs-chat-widget--${size}" data-section-id="${section.id}" data-greeting="${greeting}" data-greeting-logged-in="${greetingLoggedIn}"
       style="--pgs-chat-offset:${offset}px;${color ? ` --pgs-chat-color:${color};` : ''}">
       <button type="button" class="pgs-chat-bubble" aria-label="Abrir chat" aria-expanded="false" aria-controls="pgsChatPanel${section.id}">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -1122,17 +1126,60 @@ function renderChatWidget(section) {
   `;
 }
 
-// Un solo id de sesión por navegador (no por pestaña ni por sección) — así
-// n8n mantiene la misma memoria de conversación si el visitante cierra el
-// panel y lo vuelve a abrir, o navega a otra página con el mismo widget.
+// session_id e historial visible del chat viven en sessionStorage (no
+// localStorage): así se pierden solos al cerrar la pestaña, y sobre todo se
+// pueden borrar a mano al iniciar/cerrar sesión (ver resetChatSession en
+// api.js) sin dejar memoria de una cuenta filtrándose a otra en el mismo
+// navegador — tanto la del propio widget (estos mensajes) como la de n8n
+// (que usa este mismo session_id como llave para su memoria de conversación
+// del lado del workflow).
+const CHAT_SESSION_KEY = 'jg_chat_session';
+const CHAT_HISTORY_KEY = 'jg_chat_history';
+
 function getChatSessionId() {
-  const key = 'jg_chat_session';
-  let id = localStorage.getItem(key);
+  let id = sessionStorage.getItem(CHAT_SESSION_KEY);
   if (!id) {
     id = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem(key, id);
+    sessionStorage.setItem(CHAT_SESSION_KEY, id);
   }
   return id;
+}
+
+function getChatHistory() {
+  try {
+    return JSON.parse(sessionStorage.getItem(CHAT_HISTORY_KEY) || '[]');
+  } catch (_err) {
+    return [];
+  }
+}
+
+function pushChatHistory(role, text) {
+  const history = getChatHistory();
+  history.push({ role, text });
+  sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+}
+
+// Un puñado de rutas propias que el bot puede mencionar en texto plano (ej.
+// "inicia sesión en /login") y que sí tiene sentido volver clicables —
+// nunca HTML del lado de n8n/el LLM, solo estos paths reconocidos o URLs
+// completas, ver renderMessageText().
+const CHAT_LINK_TARGETS = { '/login': '/login.html', '/registro': '/registro.html', '/mi-cuenta': '/mi-cuenta.html' };
+const CHAT_LINK_PATTERN = /(https?:\/\/[^\s]+|\/(?:login|registro|mi-cuenta)(?:\.html)?)/g;
+
+function renderMessageText(container, text) {
+  let lastIndex = 0;
+  let match;
+  CHAT_LINK_PATTERN.lastIndex = 0;
+  while ((match = CHAT_LINK_PATTERN.exec(text))) {
+    if (match.index > lastIndex) container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    const a = document.createElement('a');
+    a.href = CHAT_LINK_TARGETS[match[0]] || match[0];
+    a.textContent = match[0];
+    if (match[0].startsWith('http')) { a.target = '_blank'; a.rel = 'noopener'; }
+    container.appendChild(a);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) container.appendChild(document.createTextNode(text.slice(lastIndex)));
 }
 
 function initChatWidget(el) {
@@ -1142,20 +1189,31 @@ function initChatWidget(el) {
   const messagesEl = el.querySelector('.pgs-chat-messages');
   const form = el.querySelector('.pgs-chat-form');
   const input = form.querySelector('input');
-  const greeting = el.dataset.greeting || '';
-  let greeted = false;
+  const loggedIn = typeof isLoggedIn === 'function' && isLoggedIn();
+  const greeting = loggedIn
+    ? (el.dataset.greetingLoggedIn || 'Puedo ayudarte con tus pedidos y lo que necesites.')
+    : (el.dataset.greeting || '');
+  let greeted = getChatHistory().length > 0;
 
-  function appendMessage(role, text) {
+  // role 'bot'/'user' igual que antes; persist=false solo al repintar
+  // historial ya guardado, para no duplicarlo en sessionStorage.
+  function appendMessage(role, text, { persist = true } = {}) {
     const div = document.createElement('div');
-    // textContent, nunca innerHTML: el texto del usuario y la respuesta de
-    // n8n/el LLM no son contenido de confianza del admin como el resto de
-    // esta sección (heading, título) — no hay que interpretarlo como HTML.
     div.className = `pgs-chat-msg pgs-chat-msg--${role}`;
-    div.textContent = text;
+    // Nodos de texto armados a mano (renderMessageText), nunca innerHTML: el
+    // texto del usuario y la respuesta de n8n/el LLM no son contenido de
+    // confianza del admin como el resto de esta sección — no se interpreta
+    // como HTML, solo se reconocen unos pocos links propios en texto plano.
+    renderMessageText(div, text);
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (persist) pushChatHistory(role, text);
     return div;
   }
+
+  // Repinta lo que ya había en sessionStorage (ej. el visitante navegó a
+  // otra página con el mismo widget) antes de decidir si hace falta saludo.
+  getChatHistory().forEach((msg) => appendMessage(msg.role, msg.text, { persist: false }));
 
   function open() {
     panel.hidden = false;
@@ -1179,17 +1237,20 @@ function initChatWidget(el) {
     if (!text) return;
     input.value = '';
     appendMessage('user', text);
-    const pending = appendMessage('bot', 'Escribiendo…');
+    const pending = appendMessage('bot', 'Escribiendo…', { persist: false });
     pending.classList.add('pgs-chat-msg--pending');
     try {
-      // apiFetch adjunta el token si hay sesión — el backend arma el
-      // contexto (pedidos recientes, etc.) del lado del servidor, nunca se
-      // manda el token en sí hacia n8n (ver POST /chat/message).
+      // apiFetch adjunta el token si hay sesión (Authorization: Bearer) — el
+      // backend arma el customer_context (pedidos recientes, ya en texto
+      // listo para el prompt) del lado del servidor a partir de ese token,
+      // nunca se manda el token en sí hacia n8n (ver POST /chat/message).
       const result = await apiFetch('/chat/message', {
         method: 'POST',
         body: JSON.stringify({ message: text, session_id: getChatSessionId() }),
       });
-      pending.textContent = result.reply;
+      pending.textContent = '';
+      renderMessageText(pending, result.reply);
+      pushChatHistory('bot', result.reply);
     } catch (_err) {
       pending.textContent = 'No pudimos conectar con el asistente. Intenta de nuevo en un momento.';
     } finally {

@@ -1609,6 +1609,7 @@ body.pgs-ready .site-footer { opacity: 1; }
 .pgs-chat-msg--bot { align-self: flex-start; background: var(--ink-100); color: var(--jg-onyx); }
 .pgs-chat-msg--user { align-self: flex-end; background: var(--pgs-chat-color, var(--jg-onyx)); color: #FFFFFF; }
 .pgs-chat-msg--pending { opacity: 0.6; }
+.pgs-chat-msg a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 .pgs-chat-form {
   flex-shrink: 0;

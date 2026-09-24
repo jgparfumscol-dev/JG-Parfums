@@ -958,8 +958,11 @@
       <div id="sectionFieldsChatWidget" hidden>
         <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Burbuja de chat conectada al asistente (n8n). Agregala en cada página donde la quieras ver — no es automático en todo el sitio.</p>
         <div class="field"><label for="s_chat_title">Título del panel</label><input id="s_chat_title" placeholder="Habla con nosotros"></div>
-        <div class="field"><label for="s_chat_greeting">Mensaje de bienvenida (opcional)</label>
+        <div class="field"><label for="s_chat_greeting">Mensaje de bienvenida sin sesión (opcional)</label>
           <textarea id="s_chat_greeting" rows="2" placeholder="¡Hola! ¿En qué te puedo ayudar?"></textarea>
+        </div>
+        <div class="field"><label for="s_chat_greeting_logged_in">Mensaje de bienvenida con sesión iniciada (opcional)</label>
+          <textarea id="s_chat_greeting_logged_in" rows="2" placeholder="Puedo ayudarte con tus pedidos y lo que necesites."></textarea>
         </div>
         <div class="grid-2">
           <div class="field"><label for="s_chat_position">Lado</label>
@@ -3439,6 +3442,7 @@
     } else if (type === 'chat_widget') {
       document.getElementById('s_chat_title').value = c.title || '';
       document.getElementById('s_chat_greeting').value = c.greeting || '';
+      document.getElementById('s_chat_greeting_logged_in').value = c.greeting_logged_in || '';
       document.getElementById('s_chat_position').value = c.position || 'right';
       document.getElementById('s_chat_offset').value = c.offset != null ? c.offset : 24;
       document.getElementById('s_chat_size').value = c.size || 'small';
@@ -3621,6 +3625,7 @@
       content = {
         title: document.getElementById('s_chat_title').value.trim() || null,
         greeting: document.getElementById('s_chat_greeting').value.trim() || null,
+        greeting_logged_in: document.getElementById('s_chat_greeting_logged_in').value.trim() || null,
         position: document.getElementById('s_chat_position').value,
         offset: Number(document.getElementById('s_chat_offset').value) || 0,
         size: document.getElementById('s_chat_size').value,
