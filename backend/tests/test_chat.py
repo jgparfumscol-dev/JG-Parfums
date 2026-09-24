@@ -61,7 +61,7 @@ def test_chat_message_anonymous_sends_empty_customer_context(client, monkeypatch
     assert captured["json"]["customer_context"] == ""
     assert captured["json"]["message"] == "Hola"
     assert captured["json"]["session_id"] == "abc123"
-    assert captured["headers"]["X-Webhook-Secret"] == "test_n8n_secret"
+    assert captured["headers"]["X-Chat-Secret"] == "test_n8n_secret"
 
 
 def test_chat_message_authenticated_includes_own_recent_orders(client, admin_headers, monkeypatch):

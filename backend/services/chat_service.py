@@ -38,7 +38,7 @@ def send_to_n8n(message: str, session_id: str, customer_context: str, is_logged_
     if not N8N_WEBHOOK_URL:
         raise ChatServiceError("N8N_CHAT_WEBHOOK_URL no configurada")
 
-    headers = {"X-Webhook-Secret": N8N_WEBHOOK_SECRET} if N8N_WEBHOOK_SECRET else {}
+    headers = {"X-Chat-Secret": N8N_WEBHOOK_SECRET} if N8N_WEBHOOK_SECRET else {}
     try:
         response = httpx.post(
             N8N_WEBHOOK_URL,
