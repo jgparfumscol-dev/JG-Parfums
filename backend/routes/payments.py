@@ -1,7 +1,7 @@
 import logging
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -28,7 +28,7 @@ def _get_payable_order(order_number: str, db: Session) -> Order:
 
 
 @router.post("/wompi/webhook", status_code=status.HTTP_200_OK)
-async def wompi_webhook(request: Request, db: Session = Depends(get_db)):
+async def wompi_webhook(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     payload = await request.json()
     if not wompi_service.verify_webhook_signature(payload):
         logger.warning("Webhook de Wompi con firma inválida")
@@ -44,12 +44,13 @@ async def wompi_webhook(request: Request, db: Session = Depends(get_db)):
         provider_status=event["status"],
         transaction_id=event["transaction_id"],
         provider="wompi",
+        background_tasks=background_tasks,
     )
     return {"received": True}
 
 
 @router.post("/mercadopago/webhook", status_code=status.HTTP_200_OK)
-async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
+async def mercadopago_webhook(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     body = await request.json()
     data_id = body.get("data", {}).get("id")
     if body.get("type") != "payment" or not data_id:
@@ -70,6 +71,7 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
             provider_status=payment["status"],
             transaction_id=str(payment["payment_id"]),
             provider="mercado_pago",
+            background_tasks=background_tasks,
         )
     return {"received": True}
 

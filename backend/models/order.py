@@ -53,6 +53,10 @@ class Order(Base):
     payment_status = Column(SQLEnum(PaymentStatus), nullable=False, default=PaymentStatus.pending)
     payment_reference = Column(String, nullable=True, index=True)
 
+    # Cuándo se avisó por Telegram del pago: el cerrojo para no avisar dos veces
+    # si la pasarela repite el webhook (ver services/telegram_service.py).
+    notified_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

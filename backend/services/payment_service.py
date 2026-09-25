@@ -7,10 +7,12 @@ Así agregar un tercer proveedor no toca la lógica de negocio, solo un parser n
 
 import logging
 
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from models.order import Order, OrderStatus, PaymentStatus
 from services.email_service import email_pago_aprobado
+from services.telegram_service import notify_order_paid
 
 logger = logging.getLogger("jg_parfums.payments")
 
@@ -32,7 +34,12 @@ _MERCADOPAGO_STATUS_MAP = {
 
 
 def apply_payment_update(
-    db: Session, order_number: str, provider_status: str, transaction_id: str, provider: str
+    db: Session,
+    order_number: str,
+    provider_status: str,
+    transaction_id: str,
+    provider: str,
+    background_tasks: BackgroundTasks | None = None,
 ) -> Order | None:
     order = db.query(Order).filter(Order.order_number == order_number).first()
     if order is None:
@@ -57,6 +64,8 @@ def apply_payment_update(
     db.refresh(order)
 
     if new_status == PaymentStatus.approved and not already_approved:
+        # Antes del correo: si algo del correo fallara, el aviso interno igual sale.
+        notify_order_paid(db, order, provider, background_tasks)
         email_pago_aprobado(order.guest_email, order.order_number)
 
     return order
