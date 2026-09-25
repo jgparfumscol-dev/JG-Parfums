@@ -76,11 +76,13 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Política de tratamiento de datos / términos | ✅ Publicada en /politicas.html (privacidad, datos recopilados, asistente con IA, cookies, derechos del titular — Ley 1581 de 2012) como secciones editables, con revisión legal y datos del responsable completos |
 | Aviso de cookies y enlaces del editor | ✅ Aviso discreto que recuerda la respuesta; selector de destino (URL / catálogo / solo decants / clase) en todos los botones y enlaces de las secciones, botón opcional en "productos" que además filtra sus productos, y botón de WhatsApp de contacto ligado a Ajustes — construido y probado |
 | Chatbot de la tienda (widget + n8n) | ✅ Widget con historial, respuestas con sus pedidos (con sesión), catálogo como contexto y enlaces verificados construidos y probados — modelo del chatbot subido de gama, ya sin precios inventados |
-| Dominio propio | ✅ Frontend en [jgparfums.com.co](https://jgparfums.com.co) y backend también con dominio propio |
+| Dominio propio | ✅ Frontend en [jgparfums.com.co](https://jgparfums.com.co) — el backend sigue en el subdominio de Railway (`*.up.railway.app`), que funciona con HTTPS y no es necesario reemplazar |
 
 ## Pendientes
 
-Ninguno: todo lo que estaba abierto antes del lanzamiento (catálogo real, revisión legal de la política de datos, dominio propio en Resend y en el backend, chatbot, envío, cuenta admin y productos de prueba, fotos del carrusel) quedó resuelto. Lo nuevo entra por [Operación en producción](#operación-en-producción).
+Ninguno: todo lo que estaba abierto antes del lanzamiento (catálogo real, revisión legal de la política de datos, dominio propio en Resend, chatbot, envío, cuenta admin y productos de prueba, fotos del carrusel) quedó resuelto. Lo nuevo entra por [Operación en producción](#operación-en-producción).
+
+**Opcional:** dominio propio para el backend (p. ej. `api.jgparfums.com.co`). No es necesario; si se hace, hay que cambiar `BACKEND_URL` en Railway (con redeploy manual), `API_URL` en `frontend/js/api.js` y revisar la URL del webhook de eventos en el panel de Wompi.
 
 ## Operación en producción
 
@@ -362,7 +364,7 @@ pytest tests/test_payments.py -v   # un archivo puntual
 
 ## Despliegue
 
-- **Backend** → Railway, en línea con dominio propio
+- **Backend** → Railway, en línea en `jg-parfums-production.up.railway.app` (dominio propio opcional; ver abajo)
 - **Frontend** → Cloudflare Pages, en línea en [jgparfums.com.co](https://jgparfums.com.co) (dominio propio del cliente, apuntando al proyecto de Cloudflare Pages)
 - **Base de datos** → PostgreSQL en Railway, esquema ya migrado
 - **Correos transaccionales** → Resend, con el dominio propio verificado como remitente
