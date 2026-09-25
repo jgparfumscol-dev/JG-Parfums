@@ -6,7 +6,7 @@
 
 Autenticación · Catálogo · Categorías · Decants (5ml/10ml) · Carrito · Checkout (registrado e invitado) · Pagos (Wompi + Mercado Pago) · Panel administrativo con tienda en vivo editable
 
-### 🔗 [jgparfums.com.co](https://jgparfums.com.co) — frontend y backend en línea, en construcción
+### 🔗 [jgparfums.com.co](https://jgparfums.com.co) — en producción
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -26,10 +26,11 @@ Autenticación · Catálogo · Categorías · Decants (5ml/10ml) · Carrito · C
 
 - [Sobre el proyecto](#-sobre-el-proyecto)
 - [Estado actual](#-estado-actual)
-- [Qué falta antes de lanzar](#-qué-falta-antes-de-lanzar)
+- [Operación en producción](#operación-en-producción)
+- [Pendientes](#pendientes)
 - [Arquitectura](#-arquitectura)
 - [Características](#-características)
-- [Novedades recientes](#-novedades-recientes)
+- [Novedades recientes](#novedades-recientes)
 - [Stack técnico](#-stack-técnico)
 - [Estructura del proyecto](#-estructura-del-proyecto)
 - [Instalación rápida](#-instalación-rápida)
@@ -47,7 +48,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 ## Estado actual
 
-**El sitio todavía no está vendiendo.** El pipeline técnico completo (frontend, backend, base de datos, correos, pagos) ya está en línea, probado de punta a punta y con credenciales reales de producción. Lo que falta es contenido real del cliente.
+**Proyecto finiquitado y en producción real desde el 25 de septiembre de 2026.** El pipeline técnico completo (frontend, backend, base de datos, correos, pagos, aviso de pedidos por Telegram) está en línea, probado de punta a punta y con credenciales reales de producción. Desde acá los fallos los reportan usuarios reales y se atienden según [Operación en producción](#operación-en-producción). Los ítems ⏳ de la tabla y las listas de "Pendientes" siguen abiertos como trabajo de contenido y mejora, ya no como condición para salir al aire.
 
 | Módulo | Estado |
 |---|---|
@@ -77,9 +78,11 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Chatbot de la tienda (widget + n8n) | ✅ Widget con historial, respuestas con sus pedidos (con sesión), catálogo como contexto y enlaces verificados construidos y probados — ⏳ el modelo actual (Gemini flash-lite) todavía inventa algún precio; pendiente subirlo de gama |
 | Dominio propio | ⏳ Frontend ya en [jgparfums.com.co](https://jgparfums.com.co) — el backend sigue en el subdominio de Railway (`*.up.railway.app`) |
 
-## Qué falta antes de lanzar
+## Pendientes
 
-**Bloqueante para vender:**
+El sitio ya está en producción; esto es lo que sigue abierto (contenido, legal y mejoras).
+
+**Prioritarios:**
 - [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene productos de prueba, sin fotos)
 - [ ] Revisión legal de la política de tratamiento de datos ya publicada en /politicas.html (Habeas Data, Ley 1581 de 2012) y completar los datos del responsable (razón social/NIT, dirección, correo de contacto) — hoy solo dice "JG Parfums"; además confirmar cuánto tiempo conserva n8n el historial del chat, que el texto describe sin plazo
 - [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
@@ -91,6 +94,33 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 - [ ] Cargar el costo de envío real en Ajustes (el campo ya existe y el checkout ya lo suma; hoy está en 0 por defecto)
 - [ ] Dominio propio para el backend (hoy `*.up.railway.app`) — el del frontend ya está listo (`jgparfums.com.co`)
 - [ ] Revisar las fotos del carrusel de clases del home: algunas quedaron apuntando a enlaces de resultados de imágenes de Google/Brave en vez de a fotos propias hospedadas — no son estables para hotlinking (pueden dejar de verse sin aviso) y conviene reemplazarlas por las fotos reales del cliente subidas a un storage propio
+
+## Operación en producción
+
+El sitio está en producción real: cada fallo puede afectar a una compra de verdad. El mantenimiento es continuo y tiene dos frentes.
+
+### Reporte de fallos
+
+- Los fallos los reportan los propios usuarios (por el formulario de contacto, cuyos mensajes se revisan en el panel admin, o por los canales de atención de la tienda). Cada reporte se reproduce, se corrige con un test que lo cubra y se despliega con commit en `main`.
+- Prioridad de atención: primero lo que impide comprar o pagar (checkout, pasarelas, webhooks, correos transaccionales), luego acceso a cuentas (login, recuperación de contraseña), luego lo visual o de contenido.
+- Un fallo corregido queda registrado en [Novedades recientes](#novedades-recientes) con su causa, para no repetirlo.
+
+### Monitoreo (revisión constante)
+
+- **Disponibilidad:** `GET /health` (y `/db-check` para la base de datos) del backend en Railway, y la carga del frontend en Cloudflare Pages.
+- **Logs del backend en Railway:** revisar en cada despliegue y de forma periódica los errores de pagos (webhooks de Wompi y Mercado Pago con firma inválida o pedidos inexistentes), de correos (`Resend rechazó el email…`, con el motivo que devuelve Resend) y del aviso a Telegram. Ninguno de estos logs incluye tokens ni claves.
+- **Flujo de compra completo:** tras cada cambio que toque pedidos, pagos o correos, repetir la prueba de punta a punta (pedido → pago → correo de confirmación → aviso a Telegram).
+- **Migraciones:** el `Procfile` corre `alembic upgrade head` en cada despliegue; confirmar en el log del deploy que se aplicaron.
+
+### Ciberseguridad (revisión constante)
+
+- **Secretos:** ninguna credencial vive en el repositorio (`backend/.env` está en `.gitignore`; solo se versiona `.env.example`). Las claves se administran en las variables de Railway y se rotan si se sospecha de una filtración.
+- **Pagos:** los webhooks de Wompi y Mercado Pago verifican la firma; el estado de un pago de Mercado Pago nunca se toma del cuerpo del webhook, se vuelve a consultar por id.
+- **Cuentas y sesiones:** contraseñas con hash (bcrypt), JWT con vencimiento, recuperación de contraseña con token de un solo uso que vence en una hora, y respuestas que no revelan si un correo existe.
+- **Abuso:** límite de peticiones por IP (`slowapi`) en los endpoints sensibles, y CORS restringido a los orígenes de `FRONTEND_URL`.
+- **Privacidad:** el chatbot nunca recibe el token del usuario ni datos sensibles (dirección, teléfono, documento, datos de pago), y las estadísticas propias no usan cookies ni datos personales.
+- **Dependencias:** revisar periódicamente las versiones de `backend/requirements.txt` en busca de vulnerabilidades conocidas y actualizarlas con la suite de tests completa en verde.
+- **Cada cambio:** la suite de tests (`pytest`) debe pasar completa antes de cada commit; los logs nunca imprimen tokens (hay tests que lo verifican para Telegram).
 
 ## Arquitectura
 
@@ -184,8 +214,9 @@ flowchart LR
 
 ## Novedades recientes
 
-> Changelog de la construcción inicial del proyecto.
+> Changelog del proyecto: construcción inicial y, desde el 25 de septiembre de 2026, correcciones en producción.
 
+- Proyecto finiquitado y en producción real. Se documenta la operación continua (reporte de fallos por usuarios, monitoreo y revisiones de ciberseguridad) en la sección [Operación en producción](#operación-en-producción).
 - Enlace roto en el correo de recuperación de contraseña: `FRONTEND_URL` en Railway lleva varios orígenes separados por coma (para CORS), y el enlace se armaba con la variable entera (`https://jgparfums.com.co,https://jg-parfums.pages.dev/reset-password.html?...`). Nuevo `services/urls.py` con `frontend_origins()` (CORS) y `frontend_base_url()` (el primero de la lista); lo usan CORS, el correo de recuperación y las URL de retorno de Wompi y Mercado Pago, que tenían el mismo defecto. 5 tests nuevos (`tests/test_urls.py`, 226 en total).
 - Aviso por Telegram cuando un pedido pasa a pagado. Nuevo `services/telegram_service.py`: manda a `sendMessage` (con `httpx`, timeout de 10 s) un texto plano en español — número de pedido, total en COP con separador de miles y pasarela (Wompi o Mercado Pago), una línea por producto con su presentación (frasco o decant de 5/10 ml) y cantidad, cliente, teléfono, ciudad, dirección, notas de entrega y costo de envío. Sin `parse_mode` a propósito, para que nombres con `_`, `*` o corchetes no rompan el envío. Se dispara desde `apply_payment_update` (el mismo punto del correo de confirmación, así que cubre los webhooks de Wompi y de Mercado Pago, compra de invitado o con cuenta) y solo en la transición real a pagado. Una sola vez por pedido: columna nueva `orders.notified_at` (migración `a3b4c5d6e7f8`) que se reclama con un `UPDATE ... WHERE notified_at IS NULL`, así un webhook repetido o dos simultáneos no duplican el aviso. El envío corre en una `BackgroundTask` (el texto se arma antes, con la sesión abierta) y todo va en try/except: si Telegram falla, tarda o faltan `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`, el pedido y la respuesta a la pasarela no cambian, solo queda un log. El token nunca se loguea: no se usa `logger.exception` (la excepción de `httpx` trae la URL con el token) y un filtro redacta el token en los logs de `httpx`/`httpcore` (que registran cada request con su URL) y también en los tracebacks de `uvicorn`/`starlette`/`fastapi`, por si una excepción escapara de la tarea de fondo. Sin enlace al pedido: el panel admin no tiene URL propia por pedido. 23 tests nuevos (`tests/test_telegram.py`, 218 en total).
 - El chatbot conoce el catálogo y responde sin dar enlaces a perfumes. `POST /chat/message` suma `catalog_context` al payload que ya mandaba a n8n (junto a `customer_context`): texto plano de `services/chat_catalog.py`, solo con información pública, en tres partes — DETALLE (notas, decants y clases de los 6 perfumes que mejor encajan con el mensaje; el perfume nombrado entra primero aunque lo escriban con otros espacios, "sugar daddy" por "Sugardaddy", y la coincidencia ignora tildes y plurales), CLASES (con cuántos perfumes tiene cada una) y CATÁLOGO COMPLETO (una línea por perfume con nombre, casa y precio final). Cada precio va etiquetado ("precio final"), con el descuento si lo hay; la disponibilidad del frasco es solo disponible/agotado, nunca el stock exacto; el texto pesa ~4.100 caracteres con los 19 perfumes actuales y, si el catálogo crece, el índice se recorta por relevancia y avisa cuántos faltaron. Si algo falla al armarlo, el chat sigue funcionando sin catálogo. A propósito no lleva ningún enlace: las fichas cargan bien con el enlace correcto (verificado en producción), pero el modelo del flujo (Gemini flash-lite) copiaba mal los slugs o los inventaba y el cliente terminaba en un 404, así que el bot menciona los perfumes por nombre y casa, y el enlace del catálogo solo cuando el cliente pide dónde ver o comprar, o es imprescindible. El system message completo queda versionado en `n8n/system-message.txt` (copiarlo desde el archivo y no desde la terminal, que cortaba fragmentos; lleva `{{ $('Webhook').item.json.body.catalog_context }}` y `{{ ...customer_context }}`). Con flash-lite el bot igual inventó precios (Carmina a $280.000 en vez de $1.300.000), copió la cifra de un perfume vecino (Dynasty a $230.000 en vez de $239.000) y llegó a devolver literalmente los marcadores de un ejemplo del prompt, por eso se quitó el ejemplo, el catálogo va al final del prompt y hay un chequeo de puntos antes de responder; subir el modelo queda como pendiente. 24 tests cubren el catálogo y la verificación de enlaces (`tests/test_chat_catalog.py`, 195 en la suite).
