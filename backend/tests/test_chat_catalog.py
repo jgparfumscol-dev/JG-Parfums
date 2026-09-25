@@ -27,7 +27,7 @@ def _product(db, slug, name, categories=(), notes=(), variants=(), **kwargs):
     return product
 
 
-def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and_url(db):
+def test_catalog_context_lists_classes_and_products_with_price_notes_and_decants(db):
     arabes = _category(db, "Árabes", "arabes")
     _product(
         db, "oud-royal", "Oud Royal", categories=[arabes], house="Casa Nube", concentration="EDP",
@@ -40,7 +40,7 @@ def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and
     text = build_catalog_context(db, "Hola")
 
     assert "CLASES (1 en total" in text
-    assert "- Árabes (1 perfume): https://jgparfums.com.co/catalogo.html?category_id=" in text
+    assert "- Árabes (1 perfume)" in text
     assert "Oud Royal (Casa Nube)" in text
     assert "EDP" in text and "100 ml" in text
     # 350.000 con 10% de descuento = 315.000; el precio de antes también sale.
@@ -51,7 +51,6 @@ def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and
     assert "clases: Árabes" in text
     assert "notas (de más suave a más fuerte): Bergamota, Rosa, Oud" in text
     assert "descripción: Amaderado y profundo." in text
-    assert "https://jgparfums.com.co/producto.html?slug=oud-royal" in text
 
 
 def test_catalog_context_excludes_inactive_products_and_classes_and_hides_exact_stock(db):
@@ -101,7 +100,7 @@ def test_catalog_context_matches_plural_and_accents(db):
     assert text.index("Zeta") < text.index("Otro")
 
 
-def test_catalog_context_index_lists_every_perfume_with_price_and_link(db):
+def test_catalog_context_index_lists_every_perfume_with_price(db):
     for i in range(10):
         _product(db, f"p{i}", f"Perfume {i}", price=100000 + i)
     db.commit()
@@ -112,7 +111,6 @@ def test_catalog_context_index_lists_every_perfume_with_price_and_link(db):
     index = text.split("CATÁLOGO COMPLETO", 1)[1]
     for i in range(10):
         assert f"- Perfume {i} · precio final ${100000 + i:,}".replace(",", ".") in index
-        assert f"https://jgparfums.com.co/producto.html?slug=p{i}" in index
 
 
 def test_catalog_context_detail_is_limited_to_the_most_relevant(db):
@@ -142,7 +140,6 @@ def test_catalog_context_index_respects_char_budget_and_says_what_is_missing(db,
     index = text.split("CATÁLOGO COMPLETO", 1)[1]
     assert "Rosa Nocturna" in index  # lo relevante entra primero
     assert "Faltan" in index
-    assert "https://jgparfums.com.co/catalogo.html" in index
 
 
 def test_catalog_context_finds_product_named_with_different_spacing(db):
@@ -170,12 +167,30 @@ def test_catalog_context_empty_catalog_says_so_instead_of_being_blank(db):
     assert "no tiene perfumes activos" in text
 
 
-def test_catalog_context_uses_site_url_env(db, monkeypatch):
+def test_catalog_context_has_no_links_so_the_bot_names_perfumes_only(db):
+    _category(db, "Florales", "florales")
     _product(db, "x", "X")
     db.commit()
+
+    text = build_catalog_context(db, "")
+
+    assert "http" not in text
+    assert "?slug=" not in text
+    assert "category_id" not in text
+
+
+def test_sanitize_uses_site_url_env(db, monkeypatch):
+    _product(db, "x", "X")
     monkeypatch.setenv("SITE_URL", "https://staging.example.com/")
 
-    assert "https://staging.example.com/producto.html?slug=x" in build_catalog_context(db, "")
+    assert (
+        sanitize_reply_links(db, "Mira https://staging.example.com/producto.html?slug=x.")
+        == "Mira https://staging.example.com/producto.html?slug=x."
+    )
+    assert (
+        sanitize_reply_links(db, "Mira https://staging.example.com/producto.html?slug=no-existe")
+        == "Mira https://staging.example.com/catalogo.html"
+    )
 
 
 def test_catalog_context_never_breaks_the_chat(db, monkeypatch):

@@ -51,7 +51,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (194 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (195 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Descuento por producto (% sobre frasco y decants, precio final calculado en el servidor) | ✅ Backend, panel admin y tienda construidos y probados — migración `c9d0e1f2a3b4` se aplica sola en el próximo despliegue (el `Procfile` corre `alembic upgrade head` al arrancar) |
@@ -174,7 +174,7 @@ flowchart LR
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (194) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (195) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -184,6 +184,7 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- El chatbot deja de dar enlaces a perfumes. Las fichas cargan bien con el enlace correcto (verificado en producción), pero el modelo (Gemini flash-lite) copiaba mal los slugs o los inventaba y el cliente terminaba en un 404. Ahora menciona los perfumes solo por nombre y casa, y el enlace del catálogo únicamente cuando el cliente pide dónde ver o comprar, o cuando es imprescindible — no al final de cada respuesta. `catalog_context` ya no lleva ningún enlace (ni de fichas ni de clases): sale más corto y sin la tentación de copiarlos. `sanitize_reply_links` sigue verificando cualquier enlace a la tienda que se cuele en una respuesta. `n8n/system-message.txt` actualizado (9 tests ajustados, 195 en total).
 - El chatbot no aprovechaba el catálogo (probado contra producción: negaba tener perfumes que sí existen, como Yara u Odisea Aqua, inventaba casas y solo daba el enlace del catálogo). El backend generaba el texto correcto, pero eran ~9.000 caracteres de detalle de todos los perfumes por mensaje. `catalog_context` ahora va en tres partes: CLASES (con cuántos perfumes tiene cada una y su enlace), CATÁLOGO COMPLETO (índice de una línea por perfume con precio final y enlace de su ficha — así el bot ve todo lo que existe) y DETALLE (notas, decants y clases solo de los 6 que mejor encajan con el mensaje; el perfume nombrado entra primero aunque lo escriban con otros espacios, "sugar daddy" por "Sugardaddy"). Baja a ~5.500 caracteres con los 19 perfumes actuales. Con Gemini flash-lite (el modelo del flujo) el bot seguía copiando cifras de la línea de al lado (Dynasty a $230.000 en vez de $239.000) y llegó a devolver literalmente los marcadores de un ejemplo del prompt (`<Nombre del perfume>`), así que cada precio va etiquetado ("precio final"), el DETALLE de lo más relevante va primero, y en el system message se quitó el ejemplo y el catálogo pasó al final, con un chequeo de tres puntos antes de responder. El system message completo y limpio queda versionado en `n8n/system-message.txt` (copiarlo desde ahí, no desde la terminal, que cortaba fragmentos). 4 tests nuevos (194 en total).
 - Enlaces del chatbot rotos, corregido. Causa: el widget armaba el `href` con todo lo que hubiera hasta el siguiente espacio, así que un enlace que el modelo deja pegado a un ".", ",", ")", "?" o "**" (o escrito en markdown, `[texto](url)`) llevaba ese carácter adentro — `?slug=ya-ra.` pasaba a pedir un producto que no existe y devolvía 404 (verificado contra producción: `ya-ra` 200, `ya-ra.` / `ya-ra)` / `ya-ra**` 404). Arreglo en dos capas. Frontend (`renderMessageText` en `sections.js`): recorta la puntuación final (un ")" solo si sobra), entiende `[texto](url)` mostrando solo el texto, vuelve clicables las rutas propias conocidas (`/catalogo`, `/producto?slug=`, `/contacto`, `/politicas`, etc., con o sin `.html`) y deja como texto cualquier destino que no sea http(s) o una ruta conocida (nada de `javascript:`). Backend (`sanitize_reply_links` en `services/chat_catalog.py`, aplicado a cada respuesta de `/chat/message`): verifica contra la base de datos cada enlace a la tienda — ficha con un slug que existe y está activo (sin distinguir mayúsculas), clase que existe y está activa, páginas conocidas — y lleva al catálogo lo que el modelo haya inventado (un slug con otro sufijo, `/perfumes/xyz`, el dominio escrito `jgparfums.com`); los enlaces a otros sitios (wa.me, Instagram) no se tocan. 9 tests nuevos (190 en total).
 - El chatbot ahora conoce el catálogo. `POST /chat/message` suma `catalog_context` al payload que ya mandaba a n8n (junto a `customer_context`): texto plano generado en `services/chat_catalog.py` con las clases activas (y cuántos perfumes tiene cada una) y los perfumes activos con precio final y descuento, disponibilidad del frasco (solo disponible/agotado, nunca el stock exacto), decants con su precio, clases, notas de más suave a más fuerte, descripción corta y enlace a la ficha. Va ordenado por relevancia respecto a lo que el cliente acaba de escribir (coincidencia en nombre, casa, clases, notas y descripción, sin tildes ni plurales) y tiene tope de ~9.000 caracteres: si no cabe todo, quedan primero los más relevantes y se avisa cuántos faltaron. Solo información pública; si algo falla al armarlo el chat sigue funcionando sin catálogo. En n8n hay que agregar `{{ $('Webhook').item.json.body.catalog_context }}` al system message (10 tests nuevos, 181 en total).
@@ -284,7 +285,7 @@ flowchart LR
 │   ├── services/           # Wompi, Mercado Pago, email, pricing (descuentos)
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (194 tests)
+│   └── tests/                   # pytest, SQLite en memoria (195 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño
@@ -333,7 +334,7 @@ pytest tests/test_payments.py -v   # un archivo puntual
 | `MERCADOPAGO_ACCESS_TOKEN` / `MERCADOPAGO_WEBHOOK_SECRET` | Integración de pagos con Mercado Pago |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Envío de correos transaccionales vía Resend |
 | `N8N_CHAT_WEBHOOK_URL` / `N8N_CHAT_WEBHOOK_SECRET` | Webhook del chatbot en n8n |
-| `SITE_URL` | Opcional. Dirección pública de la tienda para los enlaces del catálogo que recibe el chatbot (por defecto `https://jgparfums.com.co`) |
+| `SITE_URL` | Opcional. Dirección pública de la tienda; con ella se verifican y corrigen los enlaces a la tienda que responde el chatbot (por defecto `https://jgparfums.com.co`) |
 
 > No se incluyen credenciales ni secretos en este repositorio — ver `backend/.env.example`.
 

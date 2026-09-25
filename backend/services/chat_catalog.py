@@ -4,8 +4,12 @@ El asistente vive en n8n y no tiene acceso a la base de datos, así que sin
 esto no puede saber qué vende la tienda y solo puede hablar en general. En
 cada mensaje se le manda, junto al `customer_context`, un resumen en texto
 plano de las clases y los perfumes activos (precio final, descuento, notas,
-decants, disponibilidad y enlace a la ficha) para que recomiende solo lo que
-de verdad hay.
+decants y disponibilidad) para que recomiende solo lo que de verdad hay.
+
+A propósito NO lleva enlaces: el bot menciona los perfumes por nombre. Un
+modelo chico copiaba mal los slugs (o los inventaba) y el cliente terminaba
+en un 404; la respuesta igual pasa por sanitize_reply_links por si algún
+enlace a la tienda se cuela.
 
 Solo sale información pública: lo mismo que ya ve cualquier visitante en el
 catálogo — productos y clases activos, nunca stock exacto ni nada del panel.
@@ -28,11 +32,10 @@ logger = logging.getLogger("jg_parfums.chat")
 # alcanza de sobra para una tienda de nicho y evita traer todo si crece.
 _MAX_PRODUCTS_LOADED = 300
 
-# El texto que recibe el bot tiene tres partes, de lo más general a lo más
-# específico: las clases, un ÍNDICE con todos los perfumes (nombre, casa,
-# precio y enlace, una línea corta cada uno) y el DETALLE de los pocos que
-# mejor encajan con lo que el cliente acaba de escribir (notas, decants,
-# clases). Antes se mandaba el detalle de todos: ~9.000 caracteres por mensaje
+# El texto que recibe el bot tiene tres partes: el DETALLE de los pocos
+# perfumes que mejor encajan con lo que el cliente acaba de escribir (notas,
+# decants, clases), las clases y un ÍNDICE con todos los perfumes (nombre,
+# casa y precio, una línea corta cada uno). Antes se mandaba el detalle de todos: ~9.000 caracteres por mensaje
 # que un modelo chico o con poco contexto no aprovechaba — respondía "no
 # tengo ese perfume" con el perfume en la lista. Así el bot ve TODO lo que
 # existe (índice) sin tener que leer una pared de texto para encontrarlo.
@@ -136,16 +139,12 @@ def _display_name(product: Product) -> str:
     return f"{name} ({house})" if house else name
 
 
-def _product_url(product: Product, site_url: str) -> str:
-    return f"{site_url}/producto.html?slug={product.slug}"
-
-
-def _index_line(product: Product, site_url: str) -> str:
+def _index_line(product: Product) -> str:
     sold_out = " · frasco agotado" if product.stock <= 0 else ""
-    return f"- {_display_name(product)} · {_price_text(product)}{sold_out} · {_product_url(product, site_url)}"
+    return f"- {_display_name(product)} · {_price_text(product)}{sold_out}"
 
 
-def _detail_line(product: Product, site_url: str) -> str:
+def _detail_line(product: Product) -> str:
     parts = [_display_name(product)]
     if product.concentration:
         parts.append(" ".join(product.concentration.split()))
@@ -162,11 +161,10 @@ def _detail_line(product: Product, site_url: str) -> str:
     description = _shorten(product.description, _MAX_DESCRIPTION_CHARS)
     if description:
         parts.append(f"descripción: {description}")
-    parts.append(_product_url(product, site_url))
     return "- " + " · ".join(parts)
 
 
-def _build_classes_block(db: Session, site_url: str) -> str:
+def _build_classes_block(db: Session) -> str:
     categories = (
         db.query(Category).filter(Category.is_active.is_(True)).order_by(Category.sort_order, Category.id).all()
     )
@@ -179,16 +177,15 @@ def _build_classes_block(db: Session, site_url: str) -> str:
         .group_by(product_categories.c.category_id)
         .all()
     )
-    lines = [f"CLASES ({len(categories)} en total; cada una filtra el catálogo):"]
+    lines = [f"CLASES ({len(categories)} en total):"]
     for c in categories:
         count = counts.get(c.id, 0)
         noun = "perfume" if count == 1 else "perfumes"
-        lines.append(f"- {c.name} ({count} {noun}): {site_url}/catalogo.html?category_id={c.id}")
+        lines.append(f"- {c.name} ({count} {noun})")
     return "\n".join(lines)
 
 
 def _build_catalog_context(db: Session, message: str) -> str:
-    site_url = _site_url()
     products = (
         db.query(Product)
         .options(selectinload(Product.notes), selectinload(Product.variants), selectinload(Product.categories))
@@ -197,7 +194,7 @@ def _build_catalog_context(db: Session, message: str) -> str:
         .limit(_MAX_PRODUCTS_LOADED)
         .all()
     )
-    classes_block = _build_classes_block(db, site_url)
+    classes_block = _build_classes_block(db)
     if not products:
         empty = "PERFUMES: el catálogo no tiene perfumes activos por ahora."
         return "\n\n".join(b for b in (classes_block, empty) if b)
@@ -216,7 +213,7 @@ def _build_catalog_context(db: Session, message: str) -> str:
     index_lines: list[str] = []
     used = 0
     for product in ranked:
-        line = _index_line(product, site_url)
+        line = _index_line(product)
         if used + len(line) + 1 > _MAX_INDEX_CHARS and index_lines:
             break
         index_lines.append(line)
@@ -224,14 +221,14 @@ def _build_catalog_context(db: Session, message: str) -> str:
     index_block = [f"CATÁLOGO COMPLETO ({len(products)} perfumes activos; solo estos existen):", *index_lines]
     if len(index_lines) < len(products):
         index_block.append(
-            f"(Faltan {len(products) - len(index_lines)} perfumes que no caben acá; el catálogo completo está en {site_url}/catalogo.html)"
+            f"(Faltan {len(products) - len(index_lines)} perfumes que no caben acá; existen más en el catálogo de la tienda)"
         )
 
     detail_block = []
     budget = _MAX_CATALOG_CHARS - len(classes_block) - used - 300
     detail_lines: list[str] = []
     for product in ranked[:_DETAIL_COUNT]:
-        line = _detail_line(product, site_url)
+        line = _detail_line(product)
         if len(line) + 1 > budget and detail_lines:
             break
         detail_lines.append(line)
@@ -239,7 +236,7 @@ def _build_catalog_context(db: Session, message: str) -> str:
     if detail_lines:
         detail_block = [
             f"DETALLE de los {len(detail_lines)} perfumes que mejor encajan con lo que el cliente acaba de escribir "
-            "(copia de aquí precios, notas y enlaces, nunca de memoria):",
+            "(copia de aquí precios y notas, nunca de memoria):",
             *detail_lines,
         ]
 
