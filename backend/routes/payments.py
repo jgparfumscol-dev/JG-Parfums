@@ -9,12 +9,12 @@ from models.order import Order, OrderStatus, PaymentProvider
 from schemas.payment import PaymentInitResponse
 from services import mercadopago_service, wompi_service
 from services.payment_service import apply_payment_update
+from services.urls import frontend_base_url
 
 logger = logging.getLogger("jg_parfums.payments")
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:8000")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8080")
 
 
@@ -79,7 +79,7 @@ async def mercadopago_webhook(request: Request, background_tasks: BackgroundTask
 @router.post("/wompi/{order_number}", response_model=PaymentInitResponse)
 def init_wompi_payment(order_number: str, db: Session = Depends(get_db)):
     order = _get_payable_order(order_number, db)
-    redirect_url = f"{FRONTEND_URL}/pedido-confirmado.html?order={order_number}"
+    redirect_url = f"{frontend_base_url()}/pedido-confirmado.html?order={order_number}"
     config = wompi_service.build_checkout_config(order.order_number, order.total, redirect_url)
 
     order.payment_provider = PaymentProvider.wompi
@@ -106,7 +106,7 @@ def init_mercadopago_payment(order_number: str, db: Session = Depends(get_db)):
         order_number=order.order_number,
         items=items,
         notification_url=f"{BACKEND_URL}/payments/mercadopago/webhook",
-        back_url=f"{FRONTEND_URL}/pedido-confirmado.html?order={order_number}",
+        back_url=f"{frontend_base_url()}/pedido-confirmado.html?order={order_number}",
     )
 
     order.payment_provider = PaymentProvider.mercado_pago

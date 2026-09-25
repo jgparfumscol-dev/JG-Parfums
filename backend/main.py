@@ -1,5 +1,4 @@
 import logging
-import os
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -9,6 +8,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from sqlalchemy import text
+
+from services.urls import frontend_origins
 
 load_dotenv()
 
@@ -29,11 +30,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-_allowed_origins = [
-    origin.strip()
-    for origin in os.environ.get("FRONTEND_URL", "http://localhost:8000").split(",")
-    if origin.strip()
-]
+_allowed_origins = frontend_origins()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,

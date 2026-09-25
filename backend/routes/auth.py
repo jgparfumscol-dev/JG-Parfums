@@ -1,5 +1,4 @@
 import logging
-import os
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -28,12 +27,11 @@ from schemas.auth import (
     UserResponse,
 )
 from services.email_service import email_bienvenida, email_reset_password
+from services.urls import frontend_base_url
 
 logger = logging.getLogger("jg_parfums.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:8000")
 
 # Mensaje genérico deliberado: no debe distinguir "email no existe" de "password incorrecta".
 _INVALID_CREDENTIALS = "Email o contraseña incorrectos"
@@ -108,7 +106,7 @@ def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Sessio
     db.add(reset_token)
     db.commit()
 
-    reset_url = f"{FRONTEND_URL}/reset-password.html?token={token}"
+    reset_url = f"{frontend_base_url()}/reset-password.html?token={token}"
     email_reset_password(user.email, reset_url)
     return generic_response
 
