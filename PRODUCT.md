@@ -24,7 +24,7 @@ Perfumes de nicho 100% originales a un precio más accesible que las boutiques t
 - Correos transaccionales centralizados vía Resend (bienvenida, recuperación de clave, confirmación de pedido).
 - Panel administrativo propio (SPA con tabs) para gestión de productos y pedidos — sin depender de un CMS externo.
 - Backend FastAPI/PostgreSQL desplegado en Railway; frontend estático (HTML/CSS/JS vanilla, sin build step) desplegado en Cloudflare Pages.
-- Ley 1581 de 2012 (Colombia) exige política de tratamiento de datos personales — todavía no publicada.
+- Ley 1581 de 2012 (Colombia) exige política de tratamiento de datos personales — publicada en /politicas.html desde 2026-09-24 (privacidad, asistente con IA, cookies, derechos del titular); pendiente de revisión legal y de los datos del responsable.
 
 ## Capabilities and Constraints
 

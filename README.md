@@ -54,7 +54,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (171 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
-| Descuento por producto (% sobre frasco y decants, precio final calculado en el servidor) | ✅ Backend, panel admin y tienda construidos y probados — migración `c9d0e1f2a3b4` pendiente de aplicar en Railway |
+| Descuento por producto (% sobre frasco y decants, precio final calculado en el servidor) | ✅ Backend, panel admin y tienda construidos y probados — migración `c9d0e1f2a3b4` se aplica sola en el próximo despliegue (el `Procfile` corre `alembic upgrade head` al arrancar) |
 | Decants (5ml/10ml por producto, precio y stock propios) | ✅ Backend, panel admin y ficha de producto construidos y probados |
 | Notas de producto libres (nombre + color por nota, escalera con la más fuerte abajo) | ✅ Backend, panel admin y ficha de producto/hero construidos y probados |
 | Categorías y estadísticas propias de tráfico (sin cookies ni datos personales) | ✅ Backend, panel admin y filtro de catálogo construidos y probados |
@@ -72,14 +72,15 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Pago con Wompi | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
 | Pago con Mercado Pago | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
 | Catálogo con productos reales | ⏳ Productos de prueba cargados — falta contenido y fotografía real del cliente |
-| Política de tratamiento de datos / términos | ❌ Pendiente (obligatorio en Colombia, Ley 1581 de 2012) |
+| Política de tratamiento de datos / términos | ⏳ Publicada en /politicas.html (privacidad, datos recopilados, asistente con IA, cookies, derechos del titular — Ley 1581 de 2012) como secciones editables; migración `e1f2a3b4c5d6` se aplica en el próximo despliegue. Falta revisión legal y los datos del responsable (razón social/NIT, dirección, correo) |
+| Aviso de cookies y enlaces del editor | ✅ Aviso discreto que recuerda la respuesta; selector de destino (URL / catálogo / solo decants / clase) en todos los botones y enlaces de las secciones, botón opcional en "productos" que además filtra sus productos, y botón de WhatsApp de contacto ligado a Ajustes — construido y probado |
 | Dominio propio | ⏳ Frontend ya en [jgparfums.com.co](https://jgparfums.com.co) — el backend sigue en el subdominio de Railway (`*.up.railway.app`) |
 
 ## Qué falta antes de lanzar
 
 **Bloqueante para vender:**
 - [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene productos de prueba, sin fotos)
-- [ ] Página de política de tratamiento de datos personales (Habeas Data, Ley 1581 de 2012) — distinta de la página de Envíos y políticas de cambio ya construida, que cubre devoluciones/garantía (Ley 1480), no manejo de datos personales
+- [ ] Revisión legal de la política de tratamiento de datos ya publicada en /politicas.html (Habeas Data, Ley 1581 de 2012) y completar los datos del responsable (razón social/NIT, dirección, correo de contacto) — hoy solo dice "JG Parfums"; además confirmar cuánto tiempo conserva n8n el historial del chat, que el texto describe sin plazo
 - [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
 
 **No bloqueante, pero pendiente:**
