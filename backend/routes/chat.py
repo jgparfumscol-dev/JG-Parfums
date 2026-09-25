@@ -8,6 +8,7 @@ from models.order import Order, OrderStatus
 from models.order_item import OrderItem
 from models.user import User
 from schemas.chat import ChatMessageRequest, ChatMessageResponse
+from services.chat_catalog import build_catalog_context
 from services.chat_service import ChatServiceError, send_to_n8n
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -115,8 +116,13 @@ def send_chat_message(
     # cliente — nunca el JWT en sí, así n8n no puede actuar en su nombre ni
     # necesita saber nada de nuestro esquema de auth.
     customer_context, is_logged_in = build_customer_context(db, user)
+    # Catálogo público (clases y perfumes activos, ordenado según lo que el
+    # cliente acaba de escribir) para que recomiende lo que de verdad hay.
+    catalog_context = build_catalog_context(db, payload.message)
     try:
-        reply = send_to_n8n(payload.message, payload.session_id, customer_context, is_logged_in)
+        reply = send_to_n8n(
+            payload.message, payload.session_id, customer_context, is_logged_in, catalog_context
+        )
     except ChatServiceError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

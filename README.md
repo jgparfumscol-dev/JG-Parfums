@@ -51,7 +51,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 | Módulo | Estado |
 |---|---|
-| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (171 tests, SQLite en CI / Postgres real en producción) |
+| Backend (auth, catálogo, categorías, marcas, decants, notas, pedidos, pagos, ajustes, mensajes de contacto, admin) | ✅ Construido y probado (181 tests, SQLite en CI / Postgres real en producción) |
 | Backend desplegado (Railway) | ✅ En línea — `jg-parfums-production.up.railway.app` |
 | Migraciones aplicadas en la base de datos de producción | ✅ Aplicadas en Railway |
 | Descuento por producto (% sobre frasco y decants, precio final calculado en el servidor) | ✅ Backend, panel admin y tienda construidos y probados — migración `c9d0e1f2a3b4` se aplica sola en el próximo despliegue (el `Procfile` corre `alembic upgrade head` al arrancar) |
@@ -174,7 +174,7 @@ flowchart LR
 - Integración con Mercado Pago (preferencias + verificación HMAC de webhook)
 - Envío de correos transaccionales centralizado (Resend)
 - Rate limiting en endpoints sensibles (login, registro, checkout, mensajes de contacto)
-- Suite de tests (171) contra SQLite en memoria, sin tocar servicios externos
+- Suite de tests (181) contra SQLite en memoria, sin tocar servicios externos
 
 </td>
 </tr>
@@ -184,6 +184,7 @@ flowchart LR
 
 > Changelog de la construcción inicial del proyecto.
 
+- El chatbot ahora conoce el catálogo. `POST /chat/message` suma `catalog_context` al payload que ya mandaba a n8n (junto a `customer_context`): texto plano generado en `services/chat_catalog.py` con las clases activas (y cuántos perfumes tiene cada una) y los perfumes activos con precio final y descuento, disponibilidad del frasco (solo disponible/agotado, nunca el stock exacto), decants con su precio, clases, notas de más suave a más fuerte, descripción corta y enlace a la ficha. Va ordenado por relevancia respecto a lo que el cliente acaba de escribir (coincidencia en nombre, casa, clases, notas y descripción, sin tildes ni plurales) y tiene tope de ~9.000 caracteres: si no cabe todo, quedan primero los más relevantes y se avisa cuántos faltaron. Solo información pública; si algo falla al armarlo el chat sigue funcionando sin catálogo. En n8n hay que agregar `{{ $('Webhook').item.json.body.catalog_context }}` al system message (10 tests nuevos, 181 en total).
 - Política de privacidad y aviso de cookies. Migración `e1f2a3b4c5d6` agrega 7 secciones de texto al final de /politicas.html (privacidad, qué datos se recopilan, para qué, con quién se comparten, asistente virtual con IA — qué recibe y qué nunca recibe, cookies y almacenamiento del navegador, derechos del titular bajo la Ley 1581 de 2012); son secciones normales editables desde el panel, se anexan después de lo que ya haya y no duplican si ya existe una con el mismo título. Las secciones de texto ahora tienen ancla (`id` = título en minúsculas y con guiones) y `renderPageSections` salta a `#ancla` una vez cargadas. Aviso de cookies discreto (tarjeta chica abajo a la izquierda, sin bloquear nada, se mueve si choca con el chat o la barra inferior) en toda página que cargue `site-settings.js`, incluido el login: recuerda la respuesta en `localStorage` (`jg_cookie_notice_v1`) y solo vuelve a aparecer si se sube esa versión. El sitio no usa cookies de publicidad ni seguimiento, así que el aviso es informativo con un único botón. Contacto: el botón de WhatsApp ahora abre el chat con un saludo escrito, y el número de Ajustes se limpia (`whatsappUrl`: quita `+`, espacios y guiones, y antepone 57 a un celular de 10 dígitos) para no generar enlaces `wa.me` rotos — también en el footer.
 - Selector de destino en todos los enlaces del editor de "tienda en vivo" (botones de banner, galería, hero, decants, footer, barra inferior, promo emergente, imagen, y enlaces de la barra de anuncios): cada campo ahora ofrece "URL personalizada", "Catálogo completo", "Catálogo: solo perfumes con decant" (`/catalogo.html?has_decant=true`, que el catálogo ahora lee de la URL y deja marcado "Solo perfumes con decant disponible") o cualquiera de las clases, leídas en vivo de la pestaña Clases (las que se creen después aparecen solas). Elegir una clase escribe `/catalogo.html?category_id=<id>` en el mismo campo de siempre, así que el backend y lo ya guardado no cambian; un enlace a una clase eliminada vuelve a mostrarse como URL para poder corregirlo. La sección "productos" suma un botón opcional al pie (texto + enlace con el mismo selector, campos `cta_label`/`cta_link`; sin texto muestra "Ver todos"; los productos mostrados se filtran igual que el enlace — si apunta a una clase o a `?has_decant=true`, la sección muestra solo esos, y el enlace manda sobre la categoría propia de la sección). Footer de la tienda: línea "© año Nombre de la tienda. Todos los derechos reservados." (año automático, nombre tomado de Ajustes) en las 9 páginas que tienen footer; se sube la versión (`?v=`) de CSS/JS compartidos.
 - Descuento por producto: columna `products.discount_percent` (0–99, default 0) con migración `c9d0e1f2a3b4`, y campo "Descuento (%)" en el formulario de crear/editar producto del panel, con vista previa del precio final. Aplica al frasco y a todos sus decants. El servidor calcula el precio final (`services/pricing.py`, redondeo al peso más cercano) y lo expone como `final_price` en productos y decants; `POST /orders` cobra ese precio y el `OrderItem` guarda el snapshot ya con descuento, así que Wompi/Mercado Pago cobran lo mismo que ve el cliente. Los filtros `min_price`/`max_price` del catálogo comparan contra el precio con descuento. En la tienda (catálogo, ficha, relacionados, secciones del home) se muestra el precio final, el original tachado y la etiqueta "-X%" (`priceHtml` en `js/api.js`). Un carrito que ya tenía el producto conserva el precio anterior hasta volver a agregarlo, pero el pedido siempre cobra el vigente. 9 tests nuevos (171 en total).
@@ -281,7 +282,7 @@ flowchart LR
 │   ├── services/           # Wompi, Mercado Pago, email, pricing (descuentos)
 │   ├── middleware/           # Auth (JWT) y dependencias de rol
 │   ├── alembic/                # Migraciones de base de datos
-│   └── tests/                   # pytest, SQLite en memoria (171 tests)
+│   └── tests/                   # pytest, SQLite en memoria (181 tests)
 ├── frontend/          # Páginas HTML, css/ y js/ compartidos, assets/payment (iconos del footer)
 ├── Logos/             # Assets de marca originales (manual de marca en PDF)
 ├── BRAND.md           # Manual de marca — fuente de verdad de diseño
@@ -329,6 +330,8 @@ pytest tests/test_payments.py -v   # un archivo puntual
 | `WOMPI_PUBLIC_KEY` / `WOMPI_INTEGRITY_SECRET` / `WOMPI_EVENTS_SECRET` | Integración de pagos con Wompi |
 | `MERCADOPAGO_ACCESS_TOKEN` / `MERCADOPAGO_WEBHOOK_SECRET` | Integración de pagos con Mercado Pago |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Envío de correos transaccionales vía Resend |
+| `N8N_CHAT_WEBHOOK_URL` / `N8N_CHAT_WEBHOOK_SECRET` | Webhook del chatbot en n8n |
+| `SITE_URL` | Opcional. Dirección pública de la tienda para los enlaces del catálogo que recibe el chatbot (por defecto `https://jgparfums.com.co`) |
 
 > No se incluyen credenciales ni secretos en este repositorio — ver `backend/.env.example`.
 

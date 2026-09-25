@@ -24,7 +24,9 @@ class ChatServiceError(Exception):
     irreconocible — el router la traduce a un 502/503 con mensaje genérico."""
 
 
-def send_to_n8n(message: str, session_id: str, customer_context: str, is_logged_in: bool) -> str:
+def send_to_n8n(
+    message: str, session_id: str, customer_context: str, is_logged_in: bool, catalog_context: str = ""
+) -> str:
     """Reenvía el mensaje al workflow de n8n (Webhook + Respond to Webhook,
     ver el nodo de memoria/AI Agent para el historial por session_id) y
     devuelve el texto de la respuesta.
@@ -34,6 +36,10 @@ def send_to_n8n(message: str, session_id: str, customer_context: str, is_logged_
     usuario ni ningún dato sensible (dirección, teléfono, correo, documento,
     datos de pago), así n8n no puede actuar como el usuario ni necesita saber
     nada de nuestro esquema de auth. Ver routes/chat.py, build_customer_context.
+
+    `catalog_context` es el resumen público de clases y perfumes activos (ver
+    services/chat_catalog.py) para que el asistente recomiende solo lo que la
+    tienda tiene. No lleva nada del cliente.
     """
     if not N8N_WEBHOOK_URL:
         raise ChatServiceError("N8N_CHAT_WEBHOOK_URL no configurada")
@@ -48,6 +54,7 @@ def send_to_n8n(message: str, session_id: str, customer_context: str, is_logged_
                 "session_id": session_id,
                 "is_logged_in": is_logged_in,
                 "customer_context": customer_context,
+                "catalog_context": catalog_context,
             },
             timeout=20,
         )
