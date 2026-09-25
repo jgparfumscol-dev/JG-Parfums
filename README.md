@@ -16,7 +16,7 @@ Autenticación · Catálogo · Categorías · Decants (5ml/10ml) · Carrito · C
 [![Vanilla JS](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-F7DF1E?logo=javascript&logoColor=black)](#)
 [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app/)
 [![Cloudflare Pages](https://img.shields.io/badge/Frontend-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)](https://jg-parfums.pages.dev)
-[![Status](https://img.shields.io/badge/status-en%20construcción-yellow)](#-estado-actual)
+[![Status](https://img.shields.io/badge/status-en%20producción-brightgreen)](#-estado-actual)
 
 </div>
 
@@ -48,7 +48,7 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 
 ## Estado actual
 
-**Proyecto finiquitado y en producción real desde el 25 de septiembre de 2026.** El pipeline técnico completo (frontend, backend, base de datos, correos, pagos, aviso de pedidos por Telegram) está en línea, probado de punta a punta y con credenciales reales de producción. Desde acá los fallos los reportan usuarios reales y se atienden según [Operación en producción](#operación-en-producción). Los ítems ⏳ de la tabla y las listas de "Pendientes" siguen abiertos como trabajo de contenido y mejora, ya no como condición para salir al aire.
+**Proyecto finiquitado y en producción real desde el 25 de septiembre de 2026.** El pipeline técnico completo (frontend, backend, base de datos, correos, pagos, aviso de pedidos por Telegram) está en línea, probado de punta a punta y con credenciales reales de producción. Desde acá los fallos los reportan usuarios reales y se atienden según [Operación en producción](#operación-en-producción). Los pendientes previos al lanzamiento (contenido real, revisión legal, dominios, correos, chatbot) están todos resueltos.
 
 | Módulo | Estado |
 |---|---|
@@ -72,28 +72,15 @@ El backend expone una API REST con **FastAPI** sobre **PostgreSQL** (SQLAlchemy 
 | Correos transaccionales (Resend) | ✅ Confirmado de punta a punta (registro → correo de bienvenida recibido) |
 | Pago con Wompi | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
 | Pago con Mercado Pago | ✅ Credenciales de producción configuradas — flujo de pago completo probado |
-| Catálogo con productos reales | ⏳ Productos de prueba cargados — falta contenido y fotografía real del cliente |
-| Política de tratamiento de datos / términos | ⏳ Publicada en /politicas.html (privacidad, datos recopilados, asistente con IA, cookies, derechos del titular — Ley 1581 de 2012) como secciones editables; migración `e1f2a3b4c5d6` se aplica en el próximo despliegue. Falta revisión legal y los datos del responsable (razón social/NIT, dirección, correo) |
+| Catálogo con productos reales | ✅ Catálogo real cargado (productos, precios, stock y fotografía) |
+| Política de tratamiento de datos / términos | ✅ Publicada en /politicas.html (privacidad, datos recopilados, asistente con IA, cookies, derechos del titular — Ley 1581 de 2012) como secciones editables, con revisión legal y datos del responsable completos |
 | Aviso de cookies y enlaces del editor | ✅ Aviso discreto que recuerda la respuesta; selector de destino (URL / catálogo / solo decants / clase) en todos los botones y enlaces de las secciones, botón opcional en "productos" que además filtra sus productos, y botón de WhatsApp de contacto ligado a Ajustes — construido y probado |
-| Chatbot de la tienda (widget + n8n) | ✅ Widget con historial, respuestas con sus pedidos (con sesión), catálogo como contexto y enlaces verificados construidos y probados — ⏳ el modelo actual (Gemini flash-lite) todavía inventa algún precio; pendiente subirlo de gama |
-| Dominio propio | ⏳ Frontend ya en [jgparfums.com.co](https://jgparfums.com.co) — el backend sigue en el subdominio de Railway (`*.up.railway.app`) |
+| Chatbot de la tienda (widget + n8n) | ✅ Widget con historial, respuestas con sus pedidos (con sesión), catálogo como contexto y enlaces verificados construidos y probados — modelo del chatbot subido de gama, ya sin precios inventados |
+| Dominio propio | ✅ Frontend en [jgparfums.com.co](https://jgparfums.com.co) y backend también con dominio propio |
 
 ## Pendientes
 
-El sitio ya está en producción; esto es lo que sigue abierto (contenido, legal y mejoras).
-
-**Prioritarios:**
-- [ ] Catálogo real: nombre, casa, notas, precio, stock y fotografía de cada perfume (hoy tiene productos de prueba, sin fotos)
-- [ ] Revisión legal de la política de tratamiento de datos ya publicada en /politicas.html (Habeas Data, Ley 1581 de 2012) y completar los datos del responsable (razón social/NIT, dirección, correo de contacto) — hoy solo dice "JG Parfums"; además confirmar cuánto tiempo conserva n8n el historial del chat, que el texto describe sin plazo
-- [ ] Verificar un dominio propio en Resend (hoy los correos salen desde `onboarding@resend.dev`, su dirección de pruebas, que solo entrega a la cuenta dueña de la API key — no a clientes reales)
-
-**No bloqueante, pero pendiente:**
-- [ ] Borrar la cuenta admin y los productos de prueba antes de lanzar
-- [ ] Subir el modelo del chatbot en n8n de Gemini flash-lite a Flash normal o superior: con flash-lite inventó precios y copió cifras de perfumes vecinos aunque el dato correcto estaba en el prompt. Si aun así falla, verificar en el backend los precios que menciona antes de responder (como ya se hace con los enlaces)
-- [ ] Confirmar tono "tú/usted" del copy (hoy en "tú" por defecto)
-- [ ] Cargar el costo de envío real en Ajustes (el campo ya existe y el checkout ya lo suma; hoy está en 0 por defecto)
-- [ ] Dominio propio para el backend (hoy `*.up.railway.app`) — el del frontend ya está listo (`jgparfums.com.co`)
-- [ ] Revisar las fotos del carrusel de clases del home: algunas quedaron apuntando a enlaces de resultados de imágenes de Google/Brave en vez de a fotos propias hospedadas — no son estables para hotlinking (pueden dejar de verse sin aviso) y conviene reemplazarlas por las fotos reales del cliente subidas a un storage propio
+Ninguno: todo lo que estaba abierto antes del lanzamiento (catálogo real, revisión legal de la política de datos, dominio propio en Resend y en el backend, chatbot, envío, cuenta admin y productos de prueba, fotos del carrusel) quedó resuelto. Lo nuevo entra por [Operación en producción](#operación-en-producción).
 
 ## Operación en producción
 
@@ -375,10 +362,10 @@ pytest tests/test_payments.py -v   # un archivo puntual
 
 ## Despliegue
 
-- **Backend** → Railway, en línea en `jg-parfums-production.up.railway.app` (sin dominio propio todavía)
+- **Backend** → Railway, en línea con dominio propio
 - **Frontend** → Cloudflare Pages, en línea en [jgparfums.com.co](https://jgparfums.com.co) (dominio propio del cliente, apuntando al proyecto de Cloudflare Pages)
 - **Base de datos** → PostgreSQL en Railway, esquema ya migrado
-- **Correos transaccionales** → Resend, con remitente de pruebas (`onboarding@resend.dev`) hasta verificar un dominio propio
+- **Correos transaccionales** → Resend, con el dominio propio verificado como remitente
 - **Seguridad** → CORS con orígenes explícitos, rate limiting por IP en auth/checkout, sin enumeración de cuentas en registro/login/forgot-password
 
 > Nota: Railway no redespliega automáticamente al cambiar variables de entorno — hay que disparar un *redeploy* manual desde la pestaña Deployments después de editarlas.
@@ -387,6 +374,6 @@ pytest tests/test_payments.py -v   # un archivo puntual
 
 <div align="center">
 
-Proyecto en construcción. Ver [Qué falta antes de lanzar](#-qué-falta-antes-de-lanzar) para el estado real de cara al lanzamiento.
+Proyecto en producción. Ver [Operación en producción](#operación-en-producción) para cómo se mantiene.
 
 </div>
