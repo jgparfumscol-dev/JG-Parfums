@@ -107,12 +107,15 @@ def _shorten(text: str, max_chars: int) -> str:
 
 
 def _price_text(product: Product) -> str:
+    # Etiquetado ("precio final") porque en una lista de 19 líneas con
+    # cifras parecidas un modelo chico confunde el precio de un perfume con
+    # el del de al lado.
     if product.discount_percent:
         return (
-            f"{_format_cop(product.final_price)} (antes {_format_cop(product.price)}, "
+            f"precio final {_format_cop(product.final_price)} (antes {_format_cop(product.price)}, "
             f"{product.discount_percent}% de descuento)"
         )
-    return _format_cop(product.price)
+    return f"precio final {_format_cop(product.price)}"
 
 
 def _decants_text(product: Product) -> str:
@@ -218,7 +221,7 @@ def _build_catalog_context(db: Session, message: str) -> str:
             break
         index_lines.append(line)
         used += len(line) + 1
-    index_block = [f"CATÁLOGO COMPLETO ({len(products)} perfumes activos, precio final; solo estos existen):", *index_lines]
+    index_block = [f"CATÁLOGO COMPLETO ({len(products)} perfumes activos; solo estos existen):", *index_lines]
     if len(index_lines) < len(products):
         index_block.append(
             f"(Faltan {len(products) - len(index_lines)} perfumes que no caben acá; el catálogo completo está en {site_url}/catalogo.html)"
@@ -235,12 +238,15 @@ def _build_catalog_context(db: Session, message: str) -> str:
         budget -= len(line) + 1
     if detail_lines:
         detail_block = [
-            f"DETALLE de los {len(detail_lines)} que mejor encajan con lo que el cliente acaba de escribir "
-            "(notas, decants y clases; para recomendar, elige de aquí):",
+            f"DETALLE de los {len(detail_lines)} perfumes que mejor encajan con lo que el cliente acaba de escribir "
+            "(copia de aquí precios, notas y enlaces, nunca de memoria):",
             *detail_lines,
         ]
 
-    return "\n\n".join(b for b in (classes_block, "\n".join(index_block), "\n".join(detail_block)) if b)
+    # Lo más relevante para esta pregunta va PRIMERO (un modelo chico atiende
+    # sobre todo al principio), después las clases y al final el índice
+    # completo, que es de consulta.
+    return "\n\n".join(b for b in ("\n".join(detail_block), classes_block, "\n".join(index_block)) if b)
 
 
 def build_catalog_context(db: Session, message: str) -> str:

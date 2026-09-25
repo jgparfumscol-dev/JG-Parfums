@@ -44,7 +44,7 @@ def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and
     assert "Oud Royal (Casa Nube)" in text
     assert "EDP" in text and "100 ml" in text
     # 350.000 con 10% de descuento = 315.000; el precio de antes también sale.
-    assert "$315.000 (antes $350.000, 10% de descuento)" in text
+    assert "precio final $315.000 (antes $350.000, 10% de descuento)" in text
     assert "frasco disponible" in text
     # El decant se cobra con el descuento del producto; el agotado no lleva precio.
     assert "decants: 5 ml $36.000, 10 ml agotado" in text
@@ -109,9 +109,9 @@ def test_catalog_context_index_lists_every_perfume_with_price_and_link(db):
     text = build_catalog_context(db, "hola")
 
     assert "CATÁLOGO COMPLETO (10 perfumes activos" in text
-    index = text.split("CATÁLOGO COMPLETO", 1)[1].split("DETALLE", 1)[0]
+    index = text.split("CATÁLOGO COMPLETO", 1)[1]
     for i in range(10):
-        assert f"- Perfume {i} · ${100000 + i:,}".replace(",", ".") in index
+        assert f"- Perfume {i} · precio final ${100000 + i:,}".replace(",", ".") in index
         assert f"https://jgparfums.com.co/producto.html?slug=p{i}" in index
 
 
@@ -123,11 +123,11 @@ def test_catalog_context_detail_is_limited_to_the_most_relevant(db):
 
     text = build_catalog_context(db, "una rosa")
 
-    detail = text.split("DETALLE", 1)[1]
+    detail = text.split("DETALLE", 1)[1].split("CATÁLOGO COMPLETO", 1)[0]
     assert detail.count("\n- ") == 6  # _DETAIL_COUNT líneas de detalle
     # El relevante entra al detalle (con notas); los irrelevantes solo al índice.
     assert "Rosa Nocturna" in detail and "notas (de más suave a más fuerte): Rosa" in detail
-    assert "Perfume 9" in text.split("DETALLE", 1)[0]
+    assert "Perfume 9" in text.split("CATÁLOGO COMPLETO", 1)[1]
 
 
 def test_catalog_context_index_respects_char_budget_and_says_what_is_missing(db, monkeypatch):
@@ -139,7 +139,7 @@ def test_catalog_context_index_respects_char_budget_and_says_what_is_missing(db,
 
     text = build_catalog_context(db, "una rosa")
 
-    index = text.split("CATÁLOGO COMPLETO", 1)[1].split("DETALLE", 1)[0]
+    index = text.split("CATÁLOGO COMPLETO", 1)[1]
     assert "Rosa Nocturna" in index  # lo relevante entra primero
     assert "Faltan" in index
     assert "https://jgparfums.com.co/catalogo.html" in index
@@ -153,7 +153,7 @@ def test_catalog_context_finds_product_named_with_different_spacing(db):
 
     text = build_catalog_context(db, "tienen el sugar daddy?")
 
-    detail = text.split("DETALLE", 1)[1]
+    detail = text.split("DETALLE", 1)[1].split("CATÁLOGO COMPLETO", 1)[0]
     assert detail.index("Sugardaddy") < detail.index("Perfume")
 
 
