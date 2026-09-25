@@ -6,7 +6,7 @@ import httpx
 logger = logging.getLogger("jg_parfums.email")
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-EMAIL_FROM = os.environ.get("EMAIL_FROM", "JG Parfums <pedidos@jgparfums.com>")
+EMAIL_FROM = os.environ.get("EMAIL_FROM", "JG Parfums <pedidos@jgparfums.com.co>")
 RESEND_URL = "https://api.resend.com/emails"
 
 
@@ -24,6 +24,16 @@ def send_email(to: str, subject: str, html: str) -> bool:
         )
         response.raise_for_status()
         return True
+    except httpx.HTTPStatusError as exc:
+        # El cuerpo de Resend dice el motivo (ej. "The domain is not verified");
+        # sin él, el log solo mostraba el código HTTP y había que adivinar.
+        logger.error(
+            "Resend rechazó el email a %s (HTTP %s): %s",
+            to,
+            exc.response.status_code,
+            exc.response.text[:300],
+        )
+        return False
     except httpx.HTTPError:
         logger.exception("Fallo enviando email a %s", to)
         return False
