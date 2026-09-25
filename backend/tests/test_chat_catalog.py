@@ -162,3 +162,91 @@ def test_chat_message_forwards_catalog_context_to_n8n(client, db, monkeypatch):
     assert "Oud Royal" in captured["json"]["catalog_context"]
     # El contexto del cliente sigue separado y vacío para un visitante.
     assert captured["json"]["customer_context"] == ""
+
+
+# --- sanitize_reply_links ----------------------------------------------------
+
+from services.chat_catalog import sanitize_reply_links  # noqa: E402
+
+SITE = "https://jgparfums.com.co"
+
+
+def test_sanitize_keeps_valid_product_link_and_leaves_punctuation_outside(db):
+    _product(db, "ya-ra", "Yara")
+    url = f"{SITE}/producto.html?slug=ya-ra"
+
+    assert sanitize_reply_links(db, f"Mira {url}.") == f"Mira {url}."
+    assert sanitize_reply_links(db, f"Mira ({url}) ahora") == f"Mira ({url}) ahora"
+    assert sanitize_reply_links(db, f"[Yara]({url}) es dulce") == f"[Yara]({url}) es dulce"
+    assert sanitize_reply_links(db, f"**{url}**") == f"**{url}**"
+
+
+def test_sanitize_sends_unknown_or_inactive_product_to_catalog(db):
+    _product(db, "apagado", "Apagado", is_active=False)
+
+    assert sanitize_reply_links(db, f"{SITE}/producto.html?slug=no-existe.") == f"{SITE}/catalogo.html."
+    assert sanitize_reply_links(db, f"{SITE}/producto.html?slug=apagado") == f"{SITE}/catalogo.html"
+    assert sanitize_reply_links(db, f"{SITE}/producto.html") == f"{SITE}/catalogo.html"
+
+
+def test_sanitize_fixes_slug_case_and_clean_url_form(db):
+    _product(db, "ya-ra", "Yara")
+
+    assert sanitize_reply_links(db, f"{SITE}/producto?slug=YA-RA") == f"{SITE}/producto.html?slug=ya-ra"
+
+
+def test_sanitize_rewrites_misspelled_brand_domain(db):
+    _product(db, "ya-ra", "Yara")
+
+    assert (
+        sanitize_reply_links(db, "Ficha: https://jgparfums.com/producto.html?slug=ya-ra")
+        == f"Ficha: {SITE}/producto.html?slug=ya-ra"
+    )
+    assert sanitize_reply_links(db, "Mira https://www.jgparfums.com.co/perfumes/oud") == f"Mira {SITE}/catalogo.html"
+
+
+def test_sanitize_validates_category_filter(db):
+    activa = _category(db, "Florales", "florales")
+    inactiva = _category(db, "Oculta", "oculta", is_active=False)
+    db.commit()
+
+    assert sanitize_reply_links(db, f"{SITE}/catalogo.html?category_id={activa.id}") == f"{SITE}/catalogo.html?category_id={activa.id}"
+    assert sanitize_reply_links(db, f"{SITE}/catalogo.html?category_id=9999") == f"{SITE}/catalogo.html"
+    assert sanitize_reply_links(db, f"{SITE}/catalogo.html?category_id={inactiva.id}") == f"{SITE}/catalogo.html"
+    assert sanitize_reply_links(db, f"{SITE}/catalogo.html?has_decant=true") == f"{SITE}/catalogo.html?has_decant=true"
+
+
+def test_sanitize_keeps_known_pages_and_replaces_invented_ones(db):
+    assert sanitize_reply_links(db, f"{SITE}/politicas.html#cookies-y-almacenamiento-en-tu-navegador") == f"{SITE}/politicas.html#cookies-y-almacenamiento-en-tu-navegador"
+    assert sanitize_reply_links(db, f"{SITE}/contacto") == f"{SITE}/contacto.html"
+    assert sanitize_reply_links(db, f"{SITE}/") == f"{SITE}/"
+    assert sanitize_reply_links(db, f"{SITE}/tienda/ofertas") == f"{SITE}/catalogo.html"
+
+
+def test_sanitize_does_not_touch_external_links(db):
+    text = "Escríbenos: https://wa.me/573001234567?text=Hola y https://instagram.com/jg_parfums."
+
+    assert sanitize_reply_links(db, text) == text
+
+
+def test_sanitize_never_breaks_the_reply(db, monkeypatch):
+    monkeypatch.setattr("services.chat_catalog._fix_own_url", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+
+    assert sanitize_reply_links(db, f"{SITE}/catalogo.html") == f"{SITE}/catalogo.html"
+
+
+def test_chat_route_returns_verified_links(client, db, monkeypatch):
+    _product(db, "ya-ra", "Yara")
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"reply": f"Prueba {SITE}/producto.html?slug=ya-ra-inventado. Y también {SITE}/producto.html?slug=ya-ra."}
+
+    monkeypatch.setattr("services.chat_service.httpx.post", lambda *a, **k: _Resp())
+
+    reply = client.post("/chat/message", json={"message": "hola", "session_id": "s1"}).json()["reply"]
+
+    assert reply == f"Prueba {SITE}/catalogo.html. Y también {SITE}/producto.html?slug=ya-ra."

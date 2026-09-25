@@ -14,6 +14,7 @@ import logging
 import os
 import re
 import unicodedata
+from urllib.parse import parse_qsl, quote, urlencode, urlparse
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
@@ -200,3 +201,113 @@ def build_catalog_context(db: Session, message: str) -> str:
     except Exception:  # noqa: BLE001 - el chat no puede caerse por el catálogo
         logger.exception("No se pudo armar el contexto de catálogo del chat")
         return ""
+
+
+# --- Verificación de los enlaces que responde el bot ------------------------
+#
+# Aunque el catálogo le da los enlaces exactos, un LLM a veces los "arregla"
+# o los inventa (un slug con otro sufijo, /perfumes/xyz, el dominio .com en
+# vez de .com.co). Todos terminan en un 404 que el cliente ve como "el
+# enlace del bot está roto". Antes de devolver la respuesta se revisa cada
+# enlace a la tienda contra la base de datos y, si no existe, se lleva al
+# catálogo. Los enlaces a otros sitios (wa.me, etc.) no se tocan.
+
+_KNOWN_PAGES = {
+    "catalogo", "contacto", "politicas", "quienes-somos", "carrito", "checkout",
+    "login", "registro", "mi-cuenta", "recuperar-password",
+}
+_URL_RE = re.compile(r"https?://[^\s<>]+")
+_TRAILING_PUNCTUATION = ".,;:!?'\"»*"
+
+
+def _split_trailing(raw: str) -> tuple[str, str]:
+    """Separa la puntuación que el texto deja pegada al final de una URL
+    (un ")" solo si sobra, para no romper una URL que lo lleve adentro)."""
+    end = len(raw)
+    while end > 0:
+        ch = raw[end - 1]
+        head = raw[:end]
+        if ch in _TRAILING_PUNCTUATION:
+            end -= 1
+        elif ch == ")" and head.count(")") > head.count("("):
+            end -= 1
+        elif ch == "]" and head.count("]") > head.count("["):
+            end -= 1
+        else:
+            break
+    return raw[:end], raw[end:]
+
+
+def _is_own_host(host: str, site_host: str) -> bool:
+    if host in (site_host, f"www.{site_host}"):
+        return True
+    # El modelo a veces escribe el dominio de la marca con otra terminación
+    # (jgparfums.com, jgparfums.co): sigue siendo "la tienda", solo mal escrito.
+    return "jgparfums" in host
+
+
+def _fix_own_url(db: Session, url: str, site_url: str) -> str:
+    parsed = urlparse(url)
+    catalog = f"{site_url}/catalogo.html"
+    page = parsed.path.strip("/")
+    if page.endswith(".html"):
+        page = page[: -len(".html")]
+    query = parse_qsl(parsed.query, keep_blank_values=False)
+    fragment = f"#{parsed.fragment}" if parsed.fragment else ""
+
+    if page in ("", "index"):
+        return f"{site_url}/"
+
+    if page == "producto":
+        slug = next((v for k, v in query if k == "slug"), "").strip()
+        product = (
+            db.query(Product)
+            .filter(func.lower(Product.slug) == slug.lower(), Product.is_active.is_(True))
+            .first()
+            if slug
+            else None
+        )
+        return f"{site_url}/producto.html?slug={quote(product.slug)}" if product else catalog
+
+    if page == "catalogo":
+        kept = []
+        for key, value in query:
+            if key == "category_id":
+                exists = value.isdigit() and (
+                    db.query(Category.id)
+                    .filter(Category.id == int(value), Category.is_active.is_(True))
+                    .first()
+                )
+                if exists:
+                    kept.append((key, value))
+            elif key in ("has_decant", "search", "min_price", "max_price", "sort"):
+                kept.append((key, value))
+        return f"{catalog}?{urlencode(kept)}" if kept else catalog
+
+    if page in _KNOWN_PAGES:
+        return f"{site_url}/{page}.html{fragment}"
+
+    # Cualquier otra ruta de la tienda no existe: mejor el catálogo que un 404.
+    return catalog
+
+
+def sanitize_reply_links(db: Session, reply: str) -> str:
+    """Devuelve `reply` con cada enlace a la tienda verificado: fichas y
+    clases que existen (y están activas) o, si no, el catálogo. La
+    puntuación pegada al enlace se conserva fuera de él. Nunca rompe el chat:
+    ante cualquier error devuelve la respuesta tal cual."""
+    try:
+        site_url = _site_url()
+        site_host = (urlparse(site_url).hostname or "").lower()
+
+        def _replace(match: re.Match) -> str:
+            core, trailing = _split_trailing(match.group(0))
+            host = (urlparse(core).hostname or "").lower()
+            if not host or not _is_own_host(host, site_host):
+                return match.group(0)
+            return _fix_own_url(db, core, site_url) + trailing
+
+        return _URL_RE.sub(_replace, reply)
+    except Exception:  # noqa: BLE001 - el chat no puede caerse por esto
+        logger.exception("No se pudieron verificar los enlaces de la respuesta del chat")
+        return reply

@@ -1196,25 +1196,88 @@ function pushChatHistory(role, text) {
   sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
 }
 
-// Un puñado de rutas propias que el bot puede mencionar en texto plano (ej.
-// "inicia sesión en /login") y que sí tiene sentido volver clicables —
-// nunca HTML del lado de n8n/el LLM, solo estos paths reconocidos o URLs
-// completas, ver renderMessageText().
-const CHAT_LINK_TARGETS = { '/login': '/login.html', '/registro': '/registro.html', '/mi-cuenta': '/mi-cuenta.html' };
-const CHAT_LINK_PATTERN = /(https?:\/\/[^\s]+|\/(?:login|registro|mi-cuenta)(?:\.html)?)/g;
+// Enlaces que el bot puede poner en su respuesta. Nunca se interpreta HTML
+// que venga de n8n/el LLM: solo se reconocen tres formas en texto plano y
+// cada una se convierte en un <a> creado con el DOM —
+//   1. [texto](url)  (markdown: los modelos lo escriben aunque se les pida que no)
+//   2. https://…     (URL suelta)
+//   3. /catalogo, /producto?slug=…, /login… (rutas propias conocidas)
+// Un LLM casi siempre deja la URL pegada a un ".", ",", ")" o "**" — eso NO
+// forma parte del enlace y, si se incluye, una ficha como ?slug=ya-ra pasa a
+// ?slug=ya-ra. y da 404. Por eso se recorta la puntuación final (ver
+// splitTrailingPunctuation) antes de armar el href.
+const CHAT_KNOWN_PAGES = [
+  'catalogo', 'producto', 'contacto', 'politicas', 'quienes-somos', 'carrito', 'checkout',
+  'login', 'registro', 'mi-cuenta',
+];
+const CHAT_LINK_PATTERN = new RegExp(
+  '\\[([^\\]\\n]+)\\]\\(([^)\\s]+)\\)' + // 1-2: [texto](destino)
+  '|(https?:\\/\\/[^\\s<>]+)' + // 3: URL suelta
+  '|(\\/(?:' + CHAT_KNOWN_PAGES.join('|') + ')(?:\\.html)?(?:[?#][^\\s<>]*)?)', // 4: ruta propia
+  'g'
+);
+
+// Separa la puntuación que un texto deja pegada al final de una URL. Un ")"
+// o "]" solo se recorta si sobra (sin su "(" o "[" dentro de la URL), para no
+// romper enlaces legítimos como .../Foo_(bar).
+function splitTrailingPunctuation(raw) {
+  let end = raw.length;
+  const count = (str, ch) => str.split(ch).length - 1;
+  while (end > 0) {
+    const ch = raw[end - 1];
+    const head = raw.slice(0, end);
+    if ('.,;:!?\'"»*'.includes(ch)) { end -= 1; continue; }
+    if (ch === ')' && count(head, ')') > count(head, '(')) { end -= 1; continue; }
+    if (ch === ']' && count(head, ']') > count(head, '[')) { end -= 1; continue; }
+    break;
+  }
+  return { url: raw.slice(0, end), trailing: raw.slice(end) };
+}
+
+// Destino final del enlace, o null si no es algo seguro y reconocido (así un
+// "javascript:" o una ruta inventada queda como texto, no como enlace).
+function resolveChatHref(target) {
+  if (/^https?:\/\//i.test(target)) return target;
+  const match = /^\/([a-z-]+)(?:\.html)?([?#].*)?$/.exec(target);
+  if (!match || !CHAT_KNOWN_PAGES.includes(match[1])) return null;
+  return `/${match[1]}.html${match[2] || ''}`;
+}
+
+function appendChatLink(container, label, target) {
+  const href = resolveChatHref(target);
+  if (!href) {
+    container.appendChild(document.createTextNode(label));
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = href;
+  a.textContent = label;
+  if (/^https?:\/\//i.test(href)) { a.target = '_blank'; a.rel = 'noopener'; }
+  container.appendChild(a);
+}
 
 function renderMessageText(container, text) {
   let lastIndex = 0;
   let match;
   CHAT_LINK_PATTERN.lastIndex = 0;
   while ((match = CHAT_LINK_PATTERN.exec(text))) {
+    const [full, mdLabel, mdTarget, bareUrl, relPath] = match;
+    // Una ruta propia pegada a otra palabra ("y/o", "foo/login") no es un
+    // enlace — sin lookbehind (Safari viejo no lo soporta), se mira la letra anterior.
+    if (relPath && match.index > 0 && /[\w./-]/.test(text[match.index - 1])) continue;
+
     if (match.index > lastIndex) container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-    const a = document.createElement('a');
-    a.href = CHAT_LINK_TARGETS[match[0]] || match[0];
-    a.textContent = match[0];
-    if (match[0].startsWith('http')) { a.target = '_blank'; a.rel = 'noopener'; }
-    container.appendChild(a);
-    lastIndex = match.index + match[0].length;
+    if (mdLabel) {
+      appendChatLink(container, mdLabel, mdTarget);
+      lastIndex = match.index + full.length;
+    } else {
+      const { url } = splitTrailingPunctuation(bareUrl || relPath);
+      appendChatLink(container, url, url);
+      // La puntuación recortada no es parte del enlace: se retoma el texto
+      // justo después de la URL para que salga como texto normal.
+      lastIndex = match.index + url.length;
+      CHAT_LINK_PATTERN.lastIndex = lastIndex;
+    }
   }
   if (lastIndex < text.length) container.appendChild(document.createTextNode(text.slice(lastIndex)));
 }

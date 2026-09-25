@@ -8,7 +8,7 @@ from models.order import Order, OrderStatus
 from models.order_item import OrderItem
 from models.user import User
 from schemas.chat import ChatMessageRequest, ChatMessageResponse
-from services.chat_catalog import build_catalog_context
+from services.chat_catalog import build_catalog_context, sanitize_reply_links
 from services.chat_service import ChatServiceError, send_to_n8n
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -128,4 +128,6 @@ def send_chat_message(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="No pudimos conectar con el asistente. Intenta de nuevo en un momento.",
         )
-    return ChatMessageResponse(reply=reply)
+    # Los enlaces a la tienda se verifican antes de entregarlos: un slug
+    # inventado o mal cortado sería un 404 para el cliente.
+    return ChatMessageResponse(reply=sanitize_reply_links(db, reply))
