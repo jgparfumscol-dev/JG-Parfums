@@ -109,6 +109,17 @@ function applyFontPairing(key) {
   document.documentElement.style.setProperty('--font-body', pairing.body);
 }
 
+// Enlace de WhatsApp a partir del número de Ajustes. wa.me solo acepta
+// dígitos (sin "+", espacios ni guiones), así que se limpia lo que el admin
+// haya escrito; y un celular colombiano de 10 dígitos sin indicativo
+// (3001234567) recibe el 57, si no wa.me abre una conversación inexistente.
+function whatsappUrl(number, text) {
+  let digits = String(number || '').replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.length === 10 && digits.startsWith('3')) digits = `57${digits}`;
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
 // Íconos genéricos (no los logotipos oficiales) — currentColor para heredar
 // el blanco del footer; el círculo que los envuelve viene de .footer-social-icon.
 const SOCIAL_ICONS = {
@@ -125,7 +136,7 @@ function applyFooterSocial(s) {
   if (!el) return;
 
   const links = [];
-  if (s.whatsapp_number) links.push({ href: `https://wa.me/${encodeURIComponent(s.whatsapp_number)}`, key: 'whatsapp', label: 'WhatsApp' });
+  if (whatsappUrl(s.whatsapp_number)) links.push({ href: whatsappUrl(s.whatsapp_number), key: 'whatsapp', label: 'WhatsApp' });
   if (s.instagram_url) links.push({ href: s.instagram_url, key: 'instagram', label: 'Instagram' });
   if (s.tiktok_url) links.push({ href: s.tiktok_url, key: 'tiktok', label: 'TikTok' });
 
@@ -142,7 +153,7 @@ function applyStoreExtras(s) {
   if (!extras || !list) return;
 
   const links = [];
-  if (s.whatsapp_number) links.push(`<li><a class="text-muted" href="https://wa.me/${encodeURIComponent(s.whatsapp_number)}" target="_blank" rel="noopener">WhatsApp</a></li>`);
+  if (whatsappUrl(s.whatsapp_number)) links.push(`<li><a class="text-muted" href="${whatsappUrl(s.whatsapp_number)}" target="_blank" rel="noopener">WhatsApp</a></li>`);
   if (s.instagram_url) links.push(`<li><a class="text-muted" href="${s.instagram_url}" target="_blank" rel="noopener">Instagram</a></li>`);
   if (s.tiktok_url) links.push(`<li><a class="text-muted" href="${s.tiktok_url}" target="_blank" rel="noopener">TikTok</a></li>`);
   if (s.contact_email) links.push(`<li><a class="text-muted" href="mailto:${s.contact_email}">${s.contact_email}</a></li>`);
@@ -381,6 +392,53 @@ function initSmartBackLinks() {
   });
 }
 
+/* ---- aviso de cookies ----
+   Discreto a propósito: una tarjeta chica en una esquina, sin fondo
+   oscurecido ni bloquear nada, que aparece un instante después de cargar la
+   página. El sitio no usa cookies de publicidad ni de seguimiento (solo
+   almacenamiento técnico: sesión, carrito, etc. — ver "Cookies y
+   almacenamiento en tu navegador" en /politicas.html), así que el aviso es
+   informativo y su único botón es "Entendido". La respuesta se recuerda en
+   localStorage con la versión en el nombre de la llave: si algún día cambia
+   lo que se guarda, basta subir la versión para volver a preguntar. */
+const COOKIE_NOTICE_KEY = 'jg_cookie_notice_v1';
+const COOKIE_POLICY_URL = '/politicas.html#cookies-y-almacenamiento-en-tu-navegador';
+
+function initCookieNotice() {
+  // Sin localStorage (modo privado estricto, storage bloqueado) no hay dónde
+  // recordar la respuesta: mostrarlo en cada página sería lo más molesto
+  // posible, y en ese caso el sitio tampoco puede guardar nada en el navegador.
+  try {
+    if (localStorage.getItem(COOKIE_NOTICE_KEY)) return;
+  } catch (_err) {
+    return;
+  }
+
+  const el = document.createElement('div');
+  el.className = 'cookie-notice';
+  el.setAttribute('role', 'region');
+  el.setAttribute('aria-label', 'Aviso de cookies');
+  el.innerHTML = `
+    <p>Solo usamos almacenamiento esencial para que la tienda funcione (sesión y carrito), sin cookies de publicidad ni de seguimiento. <a href="${COOKIE_POLICY_URL}">Más información</a></p>
+    <button type="button" class="cookie-notice-btn">Entendido</button>
+  `;
+  document.body.appendChild(el);
+
+  el.querySelector('button').addEventListener('click', () => {
+    try {
+      localStorage.setItem(COOKIE_NOTICE_KEY, JSON.stringify({ accepted: true, at: new Date().toISOString() }));
+    } catch (_err) {
+      // sin storage: se cierra igual, solo no se recuerda
+    }
+    el.classList.remove('is-visible');
+    setTimeout(() => el.remove(), 250);
+  });
+
+  // Un instante después de cargar, para que no compita con la primera
+  // pintura de la página ni se sienta como un portazo.
+  setTimeout(() => el.classList.add('is-visible'), 1200);
+}
+
 initMobileNavToggle();
 initMobileSearchToggle();
 initNavClasses();
@@ -390,3 +448,4 @@ initNavScrollState();
 initNavHideOnScroll();
 initSmartBackLinks();
 initImageProtection();
+initCookieNotice();

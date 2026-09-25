@@ -488,6 +488,26 @@ function renderHeader(section) {
 // components.css, mismo mecanismo que el catálogo) como a carrusel
 // (cuántas tarjetas entran por pantalla, ver --pgs-cards-mobile) — en
 // lista no aplica, cada producto ocupa una fila entera.
+// Filtros que el enlace del botón de la sección aplicaría en el catálogo
+// (?category_id= / ?has_decant=true). La sección los usa para mostrar los
+// mismos productos a los que lleva el botón — "solo decants" muestra solo
+// perfumes con decant, no todo el catálogo con un botón que filtra aparte.
+// Solo cuenta un enlace interno al catálogo: cualquier otra URL no filtra.
+function catalogFiltersFromLink(link) {
+  if (!link) return {};
+  try {
+    const url = new URL(link, window.location.origin);
+    if (url.origin !== window.location.origin || url.pathname !== '/catalogo.html') return {};
+    const filters = {};
+    const categoryId = url.searchParams.get('category_id');
+    if (/^\d+$/.test(categoryId || '')) filters.category_id = categoryId;
+    if (url.searchParams.get('has_decant') === 'true') filters.has_decant = 'true';
+    return filters;
+  } catch (_err) {
+    return {};
+  }
+}
+
 async function renderProducts(section) {
   const c = section.content || {};
   // Cantidad de productos por separado para móvil/tablet y PC — se decide
@@ -501,6 +521,9 @@ async function renderProducts(section) {
   const limit = isDesktop ? (c.limit_desktop || c.limit || 8) : (c.limit_mobile || c.limit || 6);
   const params = new URLSearchParams({ page_size: String(limit) });
   if (c.category_id) params.set('category_id', c.category_id);
+  // El enlace del botón manda sobre la categoría propia de la sección: si
+  // apunta a una clase o a "solo decants", los productos se filtran igual.
+  Object.entries(catalogFiltersFromLink(c.cta_link)).forEach(([key, value]) => params.set(key, value));
   try {
     const data = await apiFetch(`/products?${params.toString()}`);
     if (data.items.length === 0) return '';
@@ -551,12 +574,23 @@ async function renderProducts(section) {
   }
 }
 
+// "Cookies y almacenamiento" → "cookies-y-almacenamiento": ancla para
+// enlazar directo a una sección de texto (ej. el aviso de cookies apunta a
+// /politicas.html#cookies-y-almacenamiento-en-tu-navegador).
+function headingAnchor(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
 function renderText(section) {
   const c = section.content || {};
   if (!c.body) return '';
   const paragraphs = c.body.split('\n').filter((p) => p.trim()).map((p) => `<p class="text-muted" style="max-width:68ch;">${p}</p>`).join('');
+  const anchor = headingAnchor(c.heading);
   return `
-    <section class="section">
+    <section class="section"${anchor ? ` id="${anchor}"` : ''}>
       <div class="container">
         ${c.heading ? `<h2 class="h2 section-title">${c.heading}</h2>` : ''}
         ${paragraphs}
@@ -1653,5 +1687,11 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
     // Revela el footer (ver .site-footer en components.css) haya salido
     // bien o mal el fetch — nunca se queda escondido para siempre.
     document.body.classList.add('pgs-ready');
+    // Las secciones llegan después de la carga (fetch), así que el salto
+    // nativo a #ancla ya pasó sin encontrar nada — se repite acá.
+    if (window.location.hash.length > 1) {
+      const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+      if (target) requestAnimationFrame(() => target.scrollIntoView());
+    }
   }
 }
