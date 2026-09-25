@@ -28,12 +28,19 @@ logger = logging.getLogger("jg_parfums.chat")
 # alcanza de sobra para una tienda de nicho y evita traer todo si crece.
 _MAX_PRODUCTS_LOADED = 300
 
-# Tope de caracteres del texto que va al prompt (~2.500 tokens). Si el
-# catálogo no cabe, se prioriza lo más relevante para lo que escribió el
-# cliente y se avisa cuántos quedaron fuera.
+# El texto que recibe el bot tiene tres partes, de lo más general a lo más
+# específico: las clases, un ÍNDICE con todos los perfumes (nombre, casa,
+# precio y enlace, una línea corta cada uno) y el DETALLE de los pocos que
+# mejor encajan con lo que el cliente acaba de escribir (notas, decants,
+# clases). Antes se mandaba el detalle de todos: ~9.000 caracteres por mensaje
+# que un modelo chico o con poco contexto no aprovechaba — respondía "no
+# tengo ese perfume" con el perfume en la lista. Así el bot ve TODO lo que
+# existe (índice) sin tener que leer una pared de texto para encontrarlo.
+_DETAIL_COUNT = 6
+_MAX_INDEX_CHARS = 5000
 _MAX_CATALOG_CHARS = 9000
 
-_MAX_DESCRIPTION_CHARS = 140
+_MAX_DESCRIPTION_CHARS = 100
 
 _TOKEN_RE = re.compile(r"[a-z0-9]{3,}")
 # Palabras que aparecen en casi cualquier mensaje y no dicen nada del
@@ -59,6 +66,12 @@ def _normalize(text: str) -> str:
     return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
 
 
+def _compact(text: str) -> str:
+    """Solo letras y números, sin tildes ni espacios: "Sugar Daddy" y
+    "Sugardaddy" se vuelven la misma clave."""
+    return re.sub(r"[^a-z0-9]", "", _normalize(text))
+
+
 def _message_tokens(message: str) -> list[str]:
     return [t for t in _TOKEN_RE.findall(_normalize(message)) if t not in _STOPWORDS]
 
@@ -72,10 +85,18 @@ def _haystack(product: Product) -> str:
     return _normalize(" ".join(parts))
 
 
-def _relevance(tokens: list[str], haystack: str) -> int:
+def _relevance(product: Product, tokens: list[str], message_key: str) -> int:
+    haystack = _haystack(product)
     # También prueba el token sin "s" final: "amaderados" debe encontrar
     # "amaderado" (y viceversa entra por la búsqueda por subcadena).
-    return sum(1 for t in tokens if t in haystack or (t.endswith("s") and t[:-1] in haystack))
+    score = sum(1 for t in tokens if t in haystack or (t.endswith("s") and t[:-1] in haystack))
+    # Nombrar el perfume vale mucho más que coincidir con una nota: si el
+    # mensaje contiene el nombre (aunque venga con otros espacios, "sugar
+    # daddy" por "Sugardaddy"), va primero.
+    name_key = _compact(product.name)
+    if len(name_key) >= 4 and name_key in message_key:
+        score += 10
+    return score
 
 
 def _shorten(text: str, max_chars: int) -> str:
@@ -105,11 +126,26 @@ def _decants_text(product: Product) -> str:
     return "decants: " + ", ".join(items)
 
 
-def _product_line(product: Product, site_url: str) -> str:
-    head = product.name + (f" ({product.house})" if product.house else "")
-    parts = [head]
+def _display_name(product: Product) -> str:
+    # Los nombres del panel a veces traen espacios de más ("Odisea Aqua ").
+    name = " ".join(product.name.split())
+    house = " ".join((product.house or "").split())
+    return f"{name} ({house})" if house else name
+
+
+def _product_url(product: Product, site_url: str) -> str:
+    return f"{site_url}/producto.html?slug={product.slug}"
+
+
+def _index_line(product: Product, site_url: str) -> str:
+    sold_out = " · frasco agotado" if product.stock <= 0 else ""
+    return f"- {_display_name(product)} · {_price_text(product)}{sold_out} · {_product_url(product, site_url)}"
+
+
+def _detail_line(product: Product, site_url: str) -> str:
+    parts = [_display_name(product)]
     if product.concentration:
-        parts.append(product.concentration)
+        parts.append(" ".join(product.concentration.split()))
     parts.append(f"{product.size_ml} ml")
     parts.append(_price_text(product))
     parts.append("frasco disponible" if product.stock > 0 else "frasco agotado")
@@ -123,7 +159,7 @@ def _product_line(product: Product, site_url: str) -> str:
     description = _shorten(product.description, _MAX_DESCRIPTION_CHARS)
     if description:
         parts.append(f"descripción: {description}")
-    parts.append(f"{site_url}/producto.html?slug={product.slug}")
+    parts.append(_product_url(product, site_url))
     return "- " + " · ".join(parts)
 
 
@@ -140,12 +176,11 @@ def _build_classes_block(db: Session, site_url: str) -> str:
         .group_by(product_categories.c.category_id)
         .all()
     )
-    lines = ["CLASES DISPONIBLES (cada una filtra el catálogo):"]
+    lines = [f"CLASES ({len(categories)} en total; cada una filtra el catálogo):"]
     for c in categories:
         count = counts.get(c.id, 0)
-        detail = f" — {_shorten(c.eyebrow, 80)}" if c.eyebrow else ""
         noun = "perfume" if count == 1 else "perfumes"
-        lines.append(f"- {c.name}{detail}: {count} {noun} · {site_url}/catalogo.html?category_id={c.id}")
+        lines.append(f"- {c.name} ({count} {noun}): {site_url}/catalogo.html?category_id={c.id}")
     return "\n".join(lines)
 
 
@@ -165,37 +200,54 @@ def _build_catalog_context(db: Session, message: str) -> str:
         return "\n\n".join(b for b in (classes_block, empty) if b)
 
     tokens = _message_tokens(message)
+    message_key = _compact(message)
     # Más relevantes primero; a igual relevancia, lo disponible antes que lo
     # agotado, lo destacado antes y lo más reciente antes (el orden de la
     # consulta ya viene por fecha, y sorted es estable).
     ranked = sorted(
         products,
-        key=lambda p: (-_relevance(tokens, _haystack(p)), p.stock <= 0, not p.is_featured),
+        key=lambda p: (-_relevance(p, tokens, message_key), p.stock <= 0, not p.is_featured),
     )
 
-    budget = _MAX_CATALOG_CHARS - len(classes_block) - 200
-    lines: list[str] = []
+    # Índice con TODOS los perfumes (hasta el tope de caracteres).
+    index_lines: list[str] = []
     used = 0
     for product in ranked:
-        line = _product_line(product, site_url)
-        if used + len(line) + 1 > budget and lines:
+        line = _index_line(product, site_url)
+        if used + len(line) + 1 > _MAX_INDEX_CHARS and index_lines:
             break
-        lines.append(line)
+        index_lines.append(line)
         used += len(line) + 1
-
-    block = [f"PERFUMES ACTIVOS ({len(lines)} de {len(products)}):", *lines]
-    if len(lines) < len(products):
-        block.append(
-            f"(Faltan {len(products) - len(lines)} perfumes que no caben acá; el catálogo completo está en {site_url}/catalogo.html)"
+    index_block = [f"CATÁLOGO COMPLETO ({len(products)} perfumes activos, precio final; solo estos existen):", *index_lines]
+    if len(index_lines) < len(products):
+        index_block.append(
+            f"(Faltan {len(products) - len(index_lines)} perfumes que no caben acá; el catálogo completo está en {site_url}/catalogo.html)"
         )
-    return "\n\n".join(b for b in (classes_block, "\n".join(block)) if b)
+
+    detail_block = []
+    budget = _MAX_CATALOG_CHARS - len(classes_block) - used - 300
+    detail_lines: list[str] = []
+    for product in ranked[:_DETAIL_COUNT]:
+        line = _detail_line(product, site_url)
+        if len(line) + 1 > budget and detail_lines:
+            break
+        detail_lines.append(line)
+        budget -= len(line) + 1
+    if detail_lines:
+        detail_block = [
+            f"DETALLE de los {len(detail_lines)} que mejor encajan con lo que el cliente acaba de escribir "
+            "(notas, decants y clases; para recomendar, elige de aquí):",
+            *detail_lines,
+        ]
+
+    return "\n\n".join(b for b in (classes_block, "\n".join(index_block), "\n".join(detail_block)) if b)
 
 
 def build_catalog_context(db: Session, message: str) -> str:
-    """Texto plano con las clases y los perfumes activos, ordenados por
-    relevancia respecto a `message`. Nunca rompe el chat: si algo falla se
-    devuelve vacío y el asistente sigue respondiendo, solo que sin catálogo
-    (su prompt le dice que en ese caso no invente productos)."""
+    """Texto plano con las clases, el índice completo de perfumes y el detalle
+    de los más relevantes respecto a `message`. Nunca rompe el chat: si algo
+    falla se devuelve vacío y el asistente sigue respondiendo, solo que sin
+    catálogo (su prompt le dice que en ese caso no invente productos)."""
     try:
         return _build_catalog_context(db, message)
     except Exception:  # noqa: BLE001 - el chat no puede caerse por el catálogo

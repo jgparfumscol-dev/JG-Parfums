@@ -28,7 +28,7 @@ def _product(db, slug, name, categories=(), notes=(), variants=(), **kwargs):
 
 
 def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and_url(db):
-    arabes = _category(db, "Árabes", "arabes", eyebrow="Intensos y resinosos")
+    arabes = _category(db, "Árabes", "arabes")
     _product(
         db, "oud-royal", "Oud Royal", categories=[arabes], house="Casa Nube", concentration="EDP",
         price=350000, discount_percent=10, notes=["Bergamota", "Rosa", "Oud"],
@@ -39,8 +39,8 @@ def test_catalog_context_lists_classes_and_products_with_price_notes_decants_and
 
     text = build_catalog_context(db, "Hola")
 
-    assert "CLASES DISPONIBLES" in text
-    assert "- Árabes — Intensos y resinosos: 1 perfume · https://jgparfums.com.co/catalogo.html?category_id=" in text
+    assert "CLASES (1 en total" in text
+    assert "- Árabes (1 perfume): https://jgparfums.com.co/catalogo.html?category_id=" in text
     assert "Oud Royal (Casa Nube)" in text
     assert "EDP" in text and "100 ml" in text
     # 350.000 con 10% de descuento = 315.000; el precio de antes también sale.
@@ -101,18 +101,67 @@ def test_catalog_context_matches_plural_and_accents(db):
     assert text.index("Zeta") < text.index("Otro")
 
 
-def test_catalog_context_truncates_by_budget_keeping_most_relevant(db, monkeypatch):
-    for i in range(6):
+def test_catalog_context_index_lists_every_perfume_with_price_and_link(db):
+    for i in range(10):
+        _product(db, f"p{i}", f"Perfume {i}", price=100000 + i)
+    db.commit()
+
+    text = build_catalog_context(db, "hola")
+
+    assert "CATÁLOGO COMPLETO (10 perfumes activos" in text
+    index = text.split("CATÁLOGO COMPLETO", 1)[1].split("DETALLE", 1)[0]
+    for i in range(10):
+        assert f"- Perfume {i} · ${100000 + i:,}".replace(",", ".") in index
+        assert f"https://jgparfums.com.co/producto.html?slug=p{i}" in index
+
+
+def test_catalog_context_detail_is_limited_to_the_most_relevant(db):
+    for i in range(10):
         _product(db, f"p{i}", f"Perfume {i}", description="x" * 100)
     _product(db, "rosa", "Rosa Nocturna", notes=["Rosa"])
     db.commit()
-    monkeypatch.setattr("services.chat_catalog._MAX_CATALOG_CHARS", 900)
 
     text = build_catalog_context(db, "una rosa")
 
-    assert "Rosa Nocturna" in text
-    assert "Faltan" in text
-    assert "https://jgparfums.com.co/catalogo.html" in text
+    detail = text.split("DETALLE", 1)[1]
+    assert detail.count("\n- ") == 6  # _DETAIL_COUNT líneas de detalle
+    # El relevante entra al detalle (con notas); los irrelevantes solo al índice.
+    assert "Rosa Nocturna" in detail and "notas (de más suave a más fuerte): Rosa" in detail
+    assert "Perfume 9" in text.split("DETALLE", 1)[0]
+
+
+def test_catalog_context_index_respects_char_budget_and_says_what_is_missing(db, monkeypatch):
+    for i in range(8):
+        _product(db, f"p{i}", f"Perfume {i}")
+    _product(db, "rosa", "Rosa Nocturna", notes=["Rosa"])
+    db.commit()
+    monkeypatch.setattr("services.chat_catalog._MAX_INDEX_CHARS", 300)
+
+    text = build_catalog_context(db, "una rosa")
+
+    index = text.split("CATÁLOGO COMPLETO", 1)[1].split("DETALLE", 1)[0]
+    assert "Rosa Nocturna" in index  # lo relevante entra primero
+    assert "Faltan" in index
+    assert "https://jgparfums.com.co/catalogo.html" in index
+
+
+def test_catalog_context_finds_product_named_with_different_spacing(db):
+    for i in range(8):
+        _product(db, f"p{i}", f"Perfume {i}")
+    _product(db, "sugar-dad", "Sugardaddy", notes=["Vainilla"])
+    db.commit()
+
+    text = build_catalog_context(db, "tienen el sugar daddy?")
+
+    detail = text.split("DETALLE", 1)[1]
+    assert detail.index("Sugardaddy") < detail.index("Perfume")
+
+
+def test_catalog_context_cleans_stray_spaces_in_names(db):
+    _product(db, "odi", "Odisea Aqua ", house=" Armaf ")
+    db.commit()
+
+    assert "- Odisea Aqua (Armaf) ·" in build_catalog_context(db, "")
 
 
 def test_catalog_context_empty_catalog_says_so_instead_of_being_blank(db):
