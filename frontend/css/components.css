@@ -93,6 +93,27 @@
   border-color: var(--gold-600);
 }
 
+/* Campo de contraseña con ojito para mostrar/ocultar (ver login.html). */
+.password-wrap { position: relative; display: flex; }
+.password-wrap input { flex: 1; min-width: 0; padding-right: 48px; }
+.password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.password-toggle:hover { color: var(--jg-onyx); }
+.password-toggle:focus-visible { outline: 2px solid var(--gold-600); outline-offset: -2px; border-radius: var(--radius); }
+.password-toggle svg[hidden] { display: none; }
+
 .field-error {
   font-size: 13px;
   color: var(--danger);
@@ -234,7 +255,7 @@ body.home-transparent-nav .nav.is-scrolled .nav-search input { color: var(--jg-o
 body.home-transparent-nav .nav.is-scrolled .nav-search input::placeholder { color: var(--text-muted); }
 body.home-transparent-nav .nav.is-scrolled .nav-search button { color: var(--text-muted); }
 
-.nav-logo { height: 28px; width: auto; }
+.nav-logo { height: 42px; width: auto; }
 .nav-logo-light { display: none; }
 body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-dark { display: none; }
 body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: block; }
@@ -542,13 +563,13 @@ body.home-transparent-nav .nav:not(.is-scrolled) .nav-logo-light { display: bloc
 .cookie-notice-btn:hover { background: var(--ink-800); }
 .cookie-notice-btn:focus-visible { outline: 2px solid var(--gold-600); outline-offset: 2px; }
 @media (min-width: 640px) {
-  body:has(.pgs-chat-widget--left) .cookie-notice { left: auto; right: var(--space-4); }
+  body:has(.pgs-chat-widget--left, .pgs-wa-widget--left) .cookie-notice { left: auto; right: var(--space-4); }
 }
 @media (max-width: 639px) {
   .cookie-notice { right: var(--space-4); width: auto; }
   body:has(.pgs-bottom-bar.is-visible) .cookie-notice { bottom: 76px; }
-  body:has(.pgs-chat-widget) .cookie-notice { bottom: 96px; }
-  body:has(.pgs-chat-widget):has(.pgs-bottom-bar.is-visible) .cookie-notice { bottom: 112px; }
+  body:has(.pgs-chat-widget, .pgs-wa-widget) .cookie-notice { bottom: 96px; }
+  body:has(.pgs-chat-widget, .pgs-wa-widget):has(.pgs-bottom-bar.is-visible) .cookie-notice { bottom: 112px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cookie-notice { transition: none; transform: none; }
@@ -1728,6 +1749,56 @@ body.pgs-ready .site-footer { opacity: 1; }
   justify-content: center;
 }
 .pgs-chat-form button:hover { opacity: 0.92; }
+
+/* Sección administrable "WhatsApp" (ver renderWhatsappWidget en
+   sections.js) — botón fijo con anuncio opcional al lado. z-index 60 como
+   el chat; placeWhatsappWidgets() lo sube sobre la burbuja si coinciden. */
+.pgs-wa-widget {
+  position: fixed;
+  bottom: var(--pgs-wa-offset, 24px);
+  z-index: 60;
+}
+.pgs-wa-widget--right { right: var(--space-6); }
+.pgs-wa-widget--left { left: var(--space-6); }
+.pgs-wa-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+}
+.pgs-wa-widget--left .pgs-wa-link { flex-direction: row-reverse; }
+.pgs-wa-btn {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pgs-wa-color, #25D366);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-float);
+  transition: transform 150ms;
+}
+.pgs-wa-link:hover .pgs-wa-btn { transform: scale(1.05); }
+.pgs-wa-link:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 4px; border-radius: 28px; }
+.pgs-wa-label {
+  max-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--jg-white);
+  color: var(--jg-onyx);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+body:has(.pgs-chat-panel:not([hidden])) .pgs-wa-widget--stacked { visibility: hidden; }
+@media (max-width: 480px) {
+  .pgs-wa-label { max-width: 160px; font-size: 13px; }
+}
 
 /* Móvil: el panel flotante de escritorio (320-360px) no entra cómodo en
    una pantalla de ~360-400px de ancho — pasa a ser una hoja fija cerca de

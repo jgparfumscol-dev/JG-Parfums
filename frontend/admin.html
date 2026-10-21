@@ -7,7 +7,7 @@
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/favicon/favicon-180.png">
 <link rel="stylesheet" href="/css/tokens.css?v=20260924f">
-<link rel="stylesheet" href="/css/components.css?v=20260924f">
+<link rel="stylesheet" href="/css/components.css?v=20261021a">
 <style>
   html, body { height: 100%; margin: 0; overflow: hidden; }
 
@@ -358,6 +358,10 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             <span>Chat</span>
           </button>
+          <button type="button" class="addsec-card" data-addsec="whatsapp_widget">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a9 9 0 0 0-7.75 13.5L3 21l4.5-1.25A9 9 0 1 0 12 3z"/><path d="M8.5 9.5c.3 2.5 2.5 4.7 5 5" stroke-linecap="round"/></svg>
+            <span>WhatsApp</span>
+          </button>
           <button type="button" class="addsec-card" data-addsec="bottom_bar">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="12" opacity="0.4"/><rect x="3" y="17" width="18" height="4"/></svg>
             <span>Barra inferior</span>
@@ -389,6 +393,7 @@
             <option value="classes_carousel">Carrusel de clases</option>
             <option value="brands_carousel">Carrusel de marcas</option>
             <option value="chat_widget">Chat</option>
+            <option value="whatsapp_widget">WhatsApp</option>
             <option value="bottom_bar">Barra inferior</option>
             <option value="promo_popup">Promoción emergente</option>
             <option value="testimonials">Testimonios</option>
@@ -1001,6 +1006,23 @@
           </div>
           <div class="field"><label for="s_chat_color">Color</label><input id="s_chat_color" type="color" value="#201E1F" style="padding:4px; height:48px;"></div>
         </div>
+      </div>
+
+      <div id="sectionFieldsWhatsappWidget" hidden>
+        <p class="text-muted text-small" style="margin-bottom: var(--space-4);">Botón flotante que abre una conversación de WhatsApp directa. Agrégalo en cada página donde lo quieras ver. Si lo pones del mismo lado que el chat, se acomoda solo encima para no encimarse.</p>
+        <div class="field"><label for="s_wa_label">Anuncio junto al botón (opcional)</label><input id="s_wa_label" maxlength="60" placeholder="Escríbenos por WhatsApp"></div>
+        <div class="field"><label for="s_wa_number">Número de WhatsApp (opcional)</label><input id="s_wa_number" placeholder="Vacío = el número de Ajustes"></div>
+        <div class="field"><label for="s_wa_message">Mensaje inicial (opcional)</label><textarea id="s_wa_message" rows="2" placeholder="Hola, quiero información sobre un perfume"></textarea></div>
+        <div class="grid-2">
+          <div class="field"><label for="s_wa_position">Lado</label>
+            <select id="s_wa_position">
+              <option value="right">Derecha</option>
+              <option value="left">Izquierda</option>
+            </select>
+          </div>
+          <div class="field"><label for="s_wa_offset">Distancia del borde inferior (px)</label><input id="s_wa_offset" type="number" min="0" max="200" value="24"></div>
+        </div>
+        <div class="field"><label for="s_wa_color">Color del botón</label><input id="s_wa_color" type="color" value="#25D366" style="padding:4px; height:48px;"></div>
       </div>
 
       <div id="sectionFieldsBottomBar" hidden>
@@ -2619,7 +2641,7 @@
     categories: 'Categorías', image: 'Imagen', gallery: 'Galería de fotos', testimonials: 'Testimonios', counters: 'Contadores',
     footer: 'Footer', custom_html: 'Código HTML/CSS',
     section_heading: 'Título de sección', decant_callout: 'Bloque de decants', manifesto: 'Manifiesto de marca',
-    classes_carousel: 'Carrusel de clases', brands_carousel: 'Carrusel de marcas', chat_widget: 'Chat',
+    classes_carousel: 'Carrusel de clases', brands_carousel: 'Carrusel de marcas', chat_widget: 'Chat', whatsapp_widget: 'WhatsApp',
     bottom_bar: 'Barra inferior', promo_popup: 'Promoción emergente',
   };
 
@@ -2730,6 +2752,7 @@
         const sideLabel = c.position === 'left' ? 'izquierda' : 'derecha';
         return `${c.title || 'Habla con nosotros'} · ${sideLabel}`;
       }
+      case 'whatsapp_widget': return `${c.label || 'Botón de WhatsApp'} · ${c.position === 'left' ? 'izquierda' : 'derecha'}`;
       case 'bottom_bar': return c.text || '(sin texto)';
       case 'promo_popup': return c.heading || c.text || (c.image_url ? '(solo imagen)' : '(sin contenido)');
       default: return 'Código personalizado';
@@ -2891,6 +2914,7 @@
     manifesto: 'sectionFieldsManifesto', hero_product: 'sectionFieldsHeroProduct',
     classes_carousel: 'sectionFieldsClassesCarousel', brands_carousel: 'sectionFieldsBrandsCarousel',
     chat_widget: 'sectionFieldsChatWidget',
+    whatsapp_widget: 'sectionFieldsWhatsappWidget',
     bottom_bar: 'sectionFieldsBottomBar', promo_popup: 'sectionFieldsPromoPopup',
   };
 
@@ -3619,6 +3643,13 @@
       document.getElementById('s_chat_offset').value = c.offset != null ? c.offset : 24;
       document.getElementById('s_chat_size').value = c.size || 'small';
       document.getElementById('s_chat_color').value = c.color || '#201E1F';
+    } else if (type === 'whatsapp_widget') {
+      document.getElementById('s_wa_label').value = c.label || '';
+      document.getElementById('s_wa_number').value = c.number || '';
+      document.getElementById('s_wa_message').value = c.message || '';
+      document.getElementById('s_wa_position').value = c.position || 'right';
+      document.getElementById('s_wa_offset').value = c.offset != null ? c.offset : 24;
+      document.getElementById('s_wa_color').value = c.color || '#25D366';
     } else if (type === 'bottom_bar') {
       document.getElementById('s_bb_text').value = c.text || '';
       document.getElementById('s_bb_button_label').value = c.button_label || '';
@@ -3817,6 +3848,15 @@
         offset: Number(document.getElementById('s_chat_offset').value) || 0,
         size: document.getElementById('s_chat_size').value,
         color: document.getElementById('s_chat_color').value,
+      };
+    } else if (type === 'whatsapp_widget') {
+      content = {
+        label: document.getElementById('s_wa_label').value.trim() || null,
+        number: document.getElementById('s_wa_number').value.trim() || null,
+        message: document.getElementById('s_wa_message').value.trim() || null,
+        position: document.getElementById('s_wa_position').value,
+        offset: Number(document.getElementById('s_wa_offset').value) || 0,
+        color: document.getElementById('s_wa_color').value,
       };
     } else if (type === 'bottom_bar') {
       content = {

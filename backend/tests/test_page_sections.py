@@ -88,6 +88,7 @@ def test_create_page_section_accepts_new_block_types(client, admin_headers):
         ("image", {"image_url": "https://example.com/foto.jpg"}),
         ("footer", {"heading": "Últimas unidades"}),
         ("chat_widget", {"title": "Habla con nosotros", "position": "right", "offset": 24, "size": "small"}),
+        ("whatsapp_widget", {"label": "Escríbenos por WhatsApp", "position": "right", "offset": 24}),
         ("bottom_bar", {"text": "Envío gratis hoy", "button_label": "Comprar", "button_link": "/catalogo.html"}),
         ("promo_popup", {"heading": "20% off", "text": "Solo hoy.", "size": "medium"}),
     ]:

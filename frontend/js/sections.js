@@ -971,6 +971,8 @@ function initContinuousCarousel(wrap) {
   let dragStartX = 0;
   let dragStartPosition = 0;
   let dragMoved = false;
+  let dragCaptured = false;
+  let dragPointerId = null;
   let lastTime = null;
 
   function normalize(p) {
@@ -1014,13 +1016,22 @@ function initContinuousCarousel(wrap) {
     dragMoved = false;
     dragStartX = e.clientX;
     dragStartPosition = position;
-    track.classList.add('is-dragging');
-    track.setPointerCapture(e.pointerId);
+    dragPointerId = e.pointerId;
+    dragCaptured = false;
   }
   function onPointerMove(e) {
     if (!dragging) return;
     const dx = e.clientX - dragStartX;
     if (Math.abs(dx) > 4) dragMoved = true;
+    // El puntero se captura recién cuando hay arrastre real: capturarlo en
+    // pointerdown redirige el click siguiente a la pista y, con mouse, el
+    // link de la tarjeta nunca recibía el clic (en táctil no pasaba).
+    if (dragMoved && !dragCaptured) {
+      dragCaptured = true;
+      track.classList.add('is-dragging');
+      try { track.setPointerCapture(dragPointerId); } catch (_err) { /* puntero ya liberado */ }
+    }
+    if (!dragMoved) return;
     position = normalize(dragStartPosition + dx);
     render();
   }
@@ -1028,12 +1039,18 @@ function initContinuousCarousel(wrap) {
     if (!dragging) return;
     dragging = false;
     track.classList.remove('is-dragging');
-    try { track.releasePointerCapture(e.pointerId); } catch (_err) { /* ya liberado */ }
+    if (dragCaptured) {
+      try { track.releasePointerCapture(e.pointerId); } catch (_err) { /* ya liberado */ }
+    }
+    dragCaptured = false;
   }
   track.addEventListener('pointerdown', onPointerDown);
   track.addEventListener('pointermove', onPointerMove);
   track.addEventListener('pointerup', onPointerUp);
   track.addEventListener('pointercancel', onPointerUp);
+  // Sin esto el navegador arranca su propio arrastre nativo de la imagen o
+  // el enlace y cancela el pointermove (el carrusel quedaba trabado).
+  track.addEventListener('dragstart', (e) => e.preventDefault());
   // Si de verdad arrastró (no fue un simple clic), que no navegue el link
   // de la tarjeta/logo que quedó debajo del dedo o el cursor al soltar.
   track.addEventListener('click', (e) => {
@@ -1161,6 +1178,58 @@ function renderChatWidget(section) {
       </div>
     </div>
   `;
+}
+
+// Sección administrable "WhatsApp" (+ Añadir sección, cualquier página):
+// botón fijo en una esquina que abre una conversación de WhatsApp directa
+// (wa.me), con un anuncio opcional al lado ("Escríbenos por WhatsApp").
+// Mismo criterio de posición que el chat (lado + distancia del borde
+// inferior). Si el admin no escribe un número, usa el de Ajustes.
+// placeWhatsappWidgets() evita que se encime con la burbuja del chat.
+async function renderWhatsappWidget(section) {
+  const c = section.content || {};
+  let number = (c.number || '').trim();
+  if (!number && typeof getSiteSettings === 'function') {
+    try { number = ((await getSiteSettings()) || {}).whatsapp_number || ''; } catch (_err) { /* sin ajustes */ }
+  }
+  const href = typeof whatsappUrl === 'function' ? whatsappUrl(number, (c.message || '').trim()) : null;
+  if (!href) return '';
+  const position = c.position === 'left' ? 'left' : 'right';
+  const offset = Number(c.offset) || 24;
+  const color = /^#[0-9A-Fa-f]{6}$/.test(c.color || '') ? c.color : '#25D366';
+  const label = (c.label || '').replace(/</g, '&lt;');
+  return `
+    <div class="pgs-wa-widget pgs-wa-widget--${position}" data-section-id="${section.id}" data-offset="${offset}"
+      style="--pgs-wa-offset:${offset}px; --pgs-wa-color:${color};">
+      <a class="pgs-wa-link" href="${href}" target="_blank" rel="noopener" aria-label="${label || 'Escríbenos por WhatsApp'}">
+        ${label ? `<span class="pgs-wa-label">${label}</span>` : ''}
+        <span class="pgs-wa-btn">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 0 0-8.47 15.02L2 22l5.12-1.34A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.13 15.08l-.3-.17-3 .79.8-2.92-.19-.3A8.1 8.1 0 0 1 12.04 3.8zM8.6 7.5c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.07 3.3 5.1 4.5 2.52 1 3.03.8 3.58.75.55-.05 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57z"/></svg>
+        </span>
+      </a>
+    </div>
+  `;
+}
+
+// El chat y WhatsApp comparten esquinas: si quedan del mismo lado y a
+// alturas que se tocarían (la burbuja mide 56px), WhatsApp sube justo
+// encima del chat en vez de taparlo. Con el panel del chat abierto, se
+// oculta (el panel se abre hacia arriba y lo taparía).
+function placeWhatsappWidgets() {
+  document.querySelectorAll('.pgs-wa-widget').forEach((wa) => {
+    const side = wa.classList.contains('pgs-wa-widget--left') ? 'left' : 'right';
+    let offset = Number(wa.dataset.offset) || 24;
+    let stacked = false;
+    document.querySelectorAll(`.pgs-chat-widget--${side}`).forEach((chat) => {
+      const chatOffset = parseFloat(chat.style.getPropertyValue('--pgs-chat-offset')) || 24;
+      if (Math.abs(offset - chatOffset) < 56 + 12) {
+        offset = chatOffset + 56 + 12;
+        stacked = true;
+      }
+    });
+    wa.style.setProperty('--pgs-wa-offset', `${offset}px`);
+    wa.classList.toggle('pgs-wa-widget--stacked', stacked);
+  });
 }
 
 // session_id e historial visible del chat viven en sessionStorage (no
@@ -1683,6 +1752,7 @@ const SECTION_RENDERERS = {
   classes_carousel: renderClassesCarousel,
   brands_carousel: renderBrandsCarousel,
   chat_widget: renderChatWidget,
+  whatsapp_widget: renderWhatsappWidget,
   bottom_bar: renderBottomBar,
   promo_popup: renderPromoPopup,
 };
@@ -1738,6 +1808,7 @@ async function renderPageSections(pageKey, mountId = 'dynamicSections') {
       mount.querySelectorAll('.pgs-brands-carousel[data-section-id]').forEach((el) => initBrandsCarousel(el));
       mount.querySelectorAll('.pgs-products-carousel[data-section-id]').forEach((el) => initSnapCarousel(el.querySelector('.pgs-carousel-wrap')));
       mount.querySelectorAll('.pgs-chat-widget[data-section-id]').forEach((el) => initChatWidget(el));
+      placeWhatsappWidgets();
       mount.querySelectorAll('.pgs-bottom-bar[data-section-id]').forEach((el) => initBottomBar(el));
       mount.querySelectorAll('.pgs-promo-popup[data-section-id]').forEach((el) => {
         const section = freeform.find((s) => String(s.id) === el.dataset.sectionId);

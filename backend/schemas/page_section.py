@@ -24,6 +24,7 @@ SectionType = Literal[
     "classes_carousel",
     "brands_carousel",
     "chat_widget",
+    "whatsapp_widget",
     "bottom_bar",
     "promo_popup",
 ]
